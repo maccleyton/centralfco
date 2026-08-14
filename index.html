@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Central local para geração de propostas e declarações FCO.">
+  <title>Central FCO Web | Relatórios</title>
+  <link rel="stylesheet" href="styles.css?v=1">
+  <script defer src="agencies.js?v=1"></script>
+  <script defer src="reports.js?v=3"></script>
+  <script defer src="app.js?v=1"></script>
+</head>
+<body>
+  <main id="loginScreen" class="login-screen">
+    <section class="login-card" aria-labelledby="loginTitle">
+      <div class="login-brand">
+        <img src="logo02.png" alt="Banco do Brasil">
+        <div><strong>Central FCO</strong><span>Acesso ao gerador de propostas</span></div>
+      </div>
+      <div class="login-copy">
+        <span class="eyebrow">IDENTIFICAÇÃO</span>
+        <h1 id="loginTitle">Informe seus dados para começar.</h1>
+        <p>A agência e o funcionário serão registrados no protocolo das propostas geradas.</p>
+      </div>
+      <form id="loginForm" class="login-form" novalidate>
+        <div class="field">
+          <label for="loginAgency">Agência</label>
+          <select id="loginAgency" required><option value="">Carregando agências de Mato Grosso do Sul...</option></select>
+          <small id="agencyLookupStatus">Carregando prefixos e endereços da planilha local.</small>
+        </div>
+        <div class="fields-grid fields-grid--2">
+          <div class="field">
+            <label for="employeeRegistration">Matrícula</label>
+            <input id="employeeRegistration" type="text" maxlength="8" autocomplete="off" placeholder="F1234567" required>
+          </div>
+          <div class="field">
+            <label for="employeeName">Nome do funcionário</label>
+            <input id="employeeName" type="text" autocomplete="name" placeholder="Nome completo" required>
+          </div>
+        </div>
+        <button id="btnLogin" class="button button--generate login-button" type="submit">Acessar Central FCO</button>
+        <div id="loginMessage" class="inline-message" role="status" aria-live="polite"></div>
+      </form>
+    </section>
+  </main>
+
+  <header class="topbar app-content" hidden>
+    <div class="topbar__accent" aria-hidden="true"></div>
+    <div class="shell topbar__content">
+      <a class="brand" href="#inicio" aria-label="Central FCO - início">
+        <span class="brand__symbol" aria-hidden="true"><img src="logo02.png" alt=""></span>
+        <span>
+          <strong>Central FCO</strong>
+          <small>Propostas e declarações</small>
+        </span>
+      </a>
+      <div class="topbar__meta">
+        <span class="status-dot" aria-hidden="true"></span>
+        <span id="sessionEmployee">Processamento local</span>
+      </div>
+    </div>
+  </header>
+
+  <main id="inicio" class="shell page app-content" hidden>
+    <section class="hero">
+      <div>
+        <span id="heroAgency" class="eyebrow">AGÊNCIA 1031 · BONITO-MS</span>
+        <h1>Gere o dossiê FCO<br>em poucos minutos.</h1>
+        <p>Informe o CNPJ, complete os dados da operação e baixe todos os documentos preenchidos em um único arquivo.</p>
+      </div>
+      <div class="hero__summary" aria-label="Resumo do fluxo">
+        <div><strong>01</strong><span>Consultar empresa</span></div>
+        <div><strong>02</strong><span>Completar operação</span></div>
+        <div><strong>03</strong><span>Gerar relatórios</span></div>
+      </div>
+    </section>
+
+    <form id="reportForm" novalidate>
+      <section class="form-section" aria-labelledby="empresaTitle">
+        <div class="section-heading">
+          <span class="section-number">01</span>
+          <div>
+            <h2 id="empresaTitle">Empresa</h2>
+            <p>O CNPJ é o único dado cadastral digitado manualmente.</p>
+          </div>
+        </div>
+
+        <div class="lookup-panel">
+          <div class="field field--grow">
+            <label for="cnpj">CNPJ</label>
+            <input id="cnpj" name="cnpj" type="text" maxlength="18" inputmode="text" autocomplete="off" spellcheck="false" placeholder="00.000.000/0000-00" required>
+            <small>Aceita o formato numérico e o novo CNPJ alfanumérico.</small>
+          </div>
+          <button id="btnConsultar" class="button button--primary lookup-button" type="button">
+            <span class="button__icon" aria-hidden="true">⌕</span>
+            Consultar CNPJ
+          </button>
+        </div>
+
+        <div id="companyMessage" class="inline-message" role="status" aria-live="polite"></div>
+
+        <div id="companyCard" class="company-card" hidden>
+          <div class="company-card__head">
+            <div class="company-avatar" aria-hidden="true">PJ</div>
+            <div>
+              <span>Dados encontrados</span>
+              <h3 id="companyName">—</h3>
+            </div>
+            <span id="companyStatus" class="badge badge--success">—</span>
+          </div>
+          <dl class="company-grid">
+            <div><dt>CNPJ</dt><dd id="companyCnpj">—</dd></div>
+            <div><dt>Nome fantasia</dt><dd id="companyTradeName">—</dd></div>
+            <div><dt>Natureza jurídica</dt><dd id="companyLegalType">—</dd></div>
+            <div><dt>Tipo</dt><dd id="companyBranchType">—</dd></div>
+            <div class="company-grid__wide"><dt>Endereço</dt><dd id="companyAddress">—</dd></div>
+          </dl>
+        </div>
+      </section>
+
+      <section class="form-section" aria-labelledby="operacaoTitle">
+        <div class="section-heading">
+          <span class="section-number">02</span>
+          <div>
+            <h2 id="operacaoTitle">Operação</h2>
+            <p>Dados financeiros e finalidade do financiamento.</p>
+          </div>
+        </div>
+
+        <div class="fields-grid fields-grid--3">
+          <div class="field">
+            <label for="tipoOperacao">Tipo de proposta</label>
+            <select id="tipoOperacao" name="tipoOperacao" required>
+              <option value="investimento">FCO Investimento</option>
+              <option value="giro_dissociado">FCO Capital de Giro Dissociado</option>
+            </select>
+          </div>
+          <div id="linhaCreditoField" class="field field--span-2">
+            <label for="linhaCredito">Linha de crédito</label>
+            <select id="linhaCredito" name="linhaCredito" required>
+              <option value="">Selecione</option>
+              <option>Desenvolvimento da Ciência, Tecnologia e Inovação</option>
+              <option>Desenvolvimento da Infraestrutura Econômica</option>
+              <option>Desenvolvimento do Turismo Regional</option>
+              <option>Desenvolvimento dos Setores Comercial e de Serviços</option>
+              <option>Desenvolvimento Industrial</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="propostaCop">Proposta COP</label>
+            <input id="propostaCop" name="propostaCop" type="text" placeholder="Opcional">
+          </div>
+          <div class="field field--span-2">
+            <label for="finalidade">Finalidade</label>
+            <input id="finalidade" name="finalidade" type="text" placeholder="Finalidade principal da operação" required>
+          </div>
+          <fieldset id="investmentModalityGroup" class="field field--span-3 choice-group">
+            <legend>Modalidade do empreendimento</legend>
+            <label class="check"><input type="checkbox" name="modalidades" value="implantacao"><span>Implantação</span></label>
+            <label class="check"><input type="checkbox" name="modalidades" value="ampliacao"><span>Ampliação</span></label>
+            <label class="check"><input type="checkbox" name="modalidades" value="modernizacao"><span>Modernização</span></label>
+            <label class="check"><input type="checkbox" name="modalidades" value="reforma"><span>Reforma</span></label>
+          </fieldset>
+          <fieldset id="giroPurposeGroup" class="field field--span-3 choice-group" hidden>
+            <legend>Aplicação do capital de giro</legend>
+            <label class="check"><input type="checkbox" name="finalidadesGiro" value="estoques"><span>Insumos, matéria-prima ou estoques</span></label>
+            <label class="check"><input type="checkbox" name="finalidadesGiro" value="gastos_gerais"><span>Gastos gerais da administração</span></label>
+          </fieldset>
+          <div class="field field--span-3">
+            <label for="descricaoFinalidade">Descrição do empreendimento</label>
+            <textarea id="descricaoFinalidade" name="descricaoFinalidade" rows="4" placeholder="Detalhe a finalidade, os objetivos e a aplicação dos recursos." required></textarea>
+          </div>
+          <div class="field field--span-3">
+            <label for="localEmpreendimento">Localização do empreendimento</label>
+            <input id="localEmpreendimento" name="localEmpreendimento" type="text" placeholder="Preenchido inicialmente com o endereço da empresa">
+          </div>
+        </div>
+
+        <div class="fields-grid fields-grid--4 financial-grid">
+          <div class="field">
+            <label for="valorOrcamento">Valor do orçamento</label>
+            <div class="input-prefix"><span>R$</span><input id="valorOrcamento" name="valorOrcamento" class="money-input" type="text" inputmode="numeric" autocomplete="off" placeholder="0,00" required></div>
+          </div>
+          <div class="field">
+            <label for="valorFinanciado">Valor a financiar, sem giro</label>
+            <div class="input-prefix"><span>R$</span><input id="valorFinanciado" name="valorFinanciado" class="money-input" type="text" inputmode="numeric" autocomplete="off" placeholder="0,00" required></div>
+            <small id="totalFinanciadoHint">Total financiado: R$ 0,00.</small>
+          </div>
+          <div class="field">
+            <label for="recursosProprios">Recursos próprios</label>
+            <div class="input-prefix"><span>R$</span><input id="recursosProprios" class="money-input" type="text" value="0,00" readonly></div>
+            <small>Calculado automaticamente: orçamento menos o total financiado.</small>
+          </div>
+          <div class="field">
+            <label for="prazoTotal">Prazo total</label>
+            <div class="input-suffix"><input id="prazoTotal" name="prazoTotal" type="number" min="1" step="1" required><span>meses</span></div>
+          </div>
+          <div class="field">
+            <label for="carencia">Carência</label>
+            <div class="input-suffix"><input id="carencia" name="carencia" type="number" min="0" step="1" required><span>meses</span></div>
+          </div>
+          <div class="field toggle-field">
+            <span class="field-label">Giro associado</span>
+            <label class="switch"><input id="giroAssociado" name="giroAssociado" type="checkbox"><span aria-hidden="true"></span><em>Incluir</em></label>
+          </div>
+          <div id="valorGiroField" class="field" hidden>
+            <label for="valorGiro">Valor do giro associado</label>
+            <div class="input-prefix"><span>R$</span><input id="valorGiro" name="valorGiro" class="money-input" type="text" inputmode="numeric" autocomplete="off" value="0,00"></div>
+          </div>
+          <div class="field">
+            <label for="agenciaDebito">Agência para débito</label>
+            <input id="agenciaDebito" name="agenciaDebito" type="text" inputmode="numeric" maxlength="5" placeholder="0000" required>
+          </div>
+          <div class="field">
+            <label for="contaDebito">Conta para débito</label>
+            <input id="contaDebito" name="contaDebito" type="text" placeholder="00000-0" required>
+          </div>
+          <div class="field field--span-4">
+            <label for="outrasInformacoes">Outras informações</label>
+            <textarea id="outrasInformacoes" name="outrasInformacoes" rows="3" placeholder="Informações adicionais relevantes para o deferimento."></textarea>
+          </div>
+        </div>
+      </section>
+
+      <section class="form-section" aria-labelledby="pessoasTitle">
+        <div class="section-heading">
+          <span class="section-number">03</span>
+          <div>
+            <h2 id="pessoasTitle">Dirigentes e representantes</h2>
+            <p>Preencha a ficha, escolha os papéis e adicione a pessoa à proposta.</p>
+          </div>
+        </div>
+        <div class="person-entry">
+          <div class="person-grid">
+            <div class="field field--span-2"><label for="personName">Nome completo</label><input id="personName" type="text"></div>
+            <div class="field"><label for="personCpf">CPF</label><input id="personCpf" type="text" inputmode="numeric" maxlength="14"></div>
+            <div class="field"><label for="personNationality">Nacionalidade</label><input id="personNationality" type="text" value="Brasileira"></div>
+            <div class="field"><label for="personCivilStatus">Estado civil</label><select id="personCivilStatus"><option value="">Selecione</option><option>Solteiro(a)</option><option>Casado(a)</option><option>Separado(a)</option><option>Divorciado(a)</option><option>Viúvo(a)</option><option>União estável</option></select></div>
+            <fieldset class="field choice-group roles"><legend>Papéis</legend>
+              <label class="check"><input id="personDirector" type="checkbox"><span>Dirigente</span></label>
+              <label class="check"><input id="personRepresentative" type="checkbox"><span>Representante legal</span></label>
+            </fieldset>
+            <div class="address-title">Endereço residencial</div>
+            <div class="field field--span-2"><label for="personStreet">Logradouro</label><input id="personStreet" type="text"></div>
+            <div class="field"><label for="personNumber">Número</label><input id="personNumber" type="text"></div>
+            <div class="field"><label for="personComplement">Complemento</label><input id="personComplement" type="text"></div>
+            <div class="field"><label for="personDistrict">Bairro</label><input id="personDistrict" type="text"></div>
+            <div class="field"><label for="personCity">Município</label><input id="personCity" type="text"></div>
+            <div class="field"><label for="personState">UF</label><input id="personState" type="text" maxlength="2"></div>
+            <div class="field"><label for="personCep">CEP</label><input id="personCep" type="text" maxlength="9"></div>
+          </div>
+          <div id="personMessage" class="inline-message" role="status" aria-live="polite"></div>
+          <button id="btnAddPerson" class="button button--primary person-entry__button" type="button">+ Adicionar pessoa</button>
+        </div>
+        <div class="subsection-heading"><div><h3>Pessoas adicionadas</h3><p>Os registros abaixo já fazem parte da proposta.</p></div></div>
+        <div id="peopleList" class="repeat-list"></div>
+      </section>
+
+      <section class="form-section" aria-labelledby="garantiasTitle">
+        <div class="section-heading section-heading--action">
+          <span class="section-number">04</span>
+          <div>
+            <h2 id="garantiasTitle">Garantias adicionais</h2>
+            <p>Todos os dirigentes são incluídos automaticamente como garantidores fidejussórios. Cadastre abaixo somente garantias adicionais, se houver.</p>
+          </div>
+          <button id="btnAddGuarantee" class="button button--secondary" type="button">+ Adicionar garantia adicional</button>
+        </div>
+        <div class="automatic-guarantees">
+          <span class="automatic-guarantees__label">Garantias fidejussórias automáticas</span>
+          <div id="automaticGuaranteesList" class="automatic-guarantees__list"></div>
+        </div>
+        <div id="guaranteesList" class="repeat-list additional-guarantees"></div>
+      </section>
+
+      <section class="form-section" aria-labelledby="declaracoesTitle">
+        <div class="section-heading">
+          <span class="section-number">05</span>
+          <div>
+            <h2 id="declaracoesTitle">Declarações e emissão</h2>
+            <p>Informações utilizadas nos documentos complementares.</p>
+          </div>
+        </div>
+        <div class="fields-grid fields-grid--3">
+          <div class="field">
+            <label for="localEmissao">Local de emissão</label>
+            <input id="localEmissao" name="localEmissao" type="text" value="Bonito-MS" required>
+          </div>
+          <div class="field">
+            <label for="dataEmissao">Data de emissão</label>
+            <input id="dataEmissao" name="dataEmissao" type="date" required>
+          </div>
+          <div class="field">
+            <label for="situacaoFundos">Situação junto aos fundos</label>
+            <select id="situacaoFundos" name="situacaoFundos" required>
+              <option value="nao_beneficiaria">Não beneficiária</option>
+              <option value="beneficiaria">Beneficiária</option>
+            </select>
+          </div>
+          <fieldset id="fundsGroup" class="field field--span-3 choice-group" hidden>
+            <legend>Fundos dos quais a empresa é beneficiária</legend>
+            <label class="check"><input type="checkbox" name="fundos" value="finor"><span>FINOR</span></label>
+            <label class="check"><input type="checkbox" name="fundos" value="finam"><span>FINAM</span></label>
+            <label class="check"><input type="checkbox" name="fundos" value="funres"><span>FUNRES</span></label>
+          </fieldset>
+        </div>
+
+        <aside class="agency-card">
+          <div id="agencyIcon" class="agency-card__icon" aria-hidden="true">1031</div>
+          <div>
+            <span>Dependência responsável</span>
+            <strong id="agencyName">Agência 1031 - BONITO-MS</strong>
+            <p id="agencyAddress">Rua Luiz da Costa Leite, 2279 · Centro · Bonito-MS · CEP 79.290-000</p>
+          </div>
+          <span id="agencySource" class="badge">Planilha agencias.xlsx</span>
+        </aside>
+      </section>
+
+      <section class="generate-panel">
+        <div>
+          <span class="eyebrow">ETAPA FINAL</span>
+          <h2>Pronto para gerar o dossiê?</h2>
+          <p>Serão criadas as declarações e a proposta correspondente ao tipo escolhido, reunidas em um arquivo ZIP.</p>
+        </div>
+        <button id="btnGenerate" class="button button--generate" type="submit">
+          <span aria-hidden="true">↓</span>
+          Gerar Relatórios
+        </button>
+      </section>
+      <div id="formMessage" class="form-message" role="status" aria-live="polite"></div>
+    </form>
+  </main>
+
+  <footer class="footer app-content" hidden>
+    <div class="shell">
+      <span id="footerAgency">Central FCO Web · Agência 1031</span>
+      <span class="footer-credit">Desenvolvido por Cleyton Duda Macedo - F2125360</span>
+      <span>Processamento integral no navegador, sem servidor Python.</span>
+    </div>
+  </footer>
+
+</body>
+</html>
