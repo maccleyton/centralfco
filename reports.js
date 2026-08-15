@@ -22,6 +22,11 @@
   const checked = value => value ? '☒' : '☐';
   const peopleBy = (data, role) => data.pessoas.filter(person => person[role]);
   const signaturePeople = data => peopleBy(data, 'representanteLegal').length ? peopleBy(data, 'representanteLegal') : peopleBy(data, 'dirigente');
+  const lowercaseNameWords = new Set(['da', 'do', 'das', 'dos', 'de', 'com']);
+  const properName = value => String(value ?? '').trim().replace(/\s+/g, ' ').toLocaleLowerCase('pt-BR').split(' ').map(word => {
+    if (lowercaseNameWords.has(word)) return word;
+    return word.replace(/(^|[-'’])\p{L}/gu, match => match.toLocaleUpperCase('pt-BR'));
+  }).join(' ');
 
   function personAddress(person) {
     const street = [person.logradouro, person.numero].filter(Boolean).join(', ');
@@ -33,7 +38,7 @@
 
   function personIdentity(person) {
     const address = personAddress(person);
-    return `${escapeHtml(person.nome)}, CPF ${escapeHtml(person.cpf)}${address ? `, residente em ${escapeHtml(address)}` : ''}`;
+    return `${escapeHtml(properName(person.nome))}, CPF ${escapeHtml(person.cpf)}${address ? `, domiciliado na ${escapeHtml(address)}` : ''}`;
   }
 
   function localDate(data) {
@@ -62,8 +67,8 @@
     return `${heading ? `<h3 class="signature-heading">${escapeHtml(heading)}</h3>` : ''}<div class="signature-grid">${actual.map(person => `
       <section class="signature">
         <div class="signature-line"></div>
-        <div>Razão Social: ${escapeHtml(companyName)}</div>
-        <div>Nome: ${escapeHtml(person.nome)}</div>
+        <div>Razão Social: ${escapeHtml(String(companyName ?? '').toLocaleUpperCase('pt-BR'))}</div>
+        <div>Nome: ${escapeHtml(String(person.nome ?? '').toLocaleUpperCase('pt-BR'))}</div>
         <div>CPF: ${escapeHtml(person.cpf)}</div>
       </section>`).join('')}</div>`;
   }
@@ -119,7 +124,7 @@
     const directorRole = singular ? 'dirigente' : 'dirigentes';
     const declarationVerb = singular ? 'DECLARA' : 'DECLARAM';
     const body = `
-      <p><strong>${escapeHtml(company.razaoSocial)}</strong>, ${escapeHtml(company.naturezaJuridica)}, com sede em ${escapeHtml(company.enderecoCompleto)}, inscrita no CNPJ sob o nº ${escapeHtml(company.cnpjFormatado)}, neste ato representada por ${possessive} ${legalRole} ${identities}, e ${possessive} ${directorRole} ${identities}, ${declarationVerb} ao Banco do Brasil S.A. que inexiste contra si decisão administrativa final sancionadora e/ou sentença condenatória transitada em julgado, exarada por autoridade ou órgão competente, em razão da prática de atos que importem em discriminação de raça, cor, etnia, religião, procedência nacional ou gênero, trabalho infantil, trabalho escravo, assédio moral ou sexual, crime contra o meio ambiente ou violência contra a mulher.</p>
+      <p><strong>${escapeHtml(company.razaoSocial)}</strong>, ${escapeHtml(company.naturezaJuridica)}, sediada na ${escapeHtml(company.enderecoCompleto)}, inscrita no CNPJ sob o nº ${escapeHtml(company.cnpjFormatado)}, neste ato representada por ${possessive} ${legalRole} ${identities}, e ${possessive} ${directorRole} ${identities}, ${declarationVerb} ao Banco do Brasil S.A. que inexiste contra si decisão administrativa final sancionadora e/ou sentença condenatória transitada em julgado, exarada por autoridade ou órgão competente, em razão da prática de atos que importem em discriminação de raça, cor, etnia, religião, procedência nacional ou gênero, trabalho infantil, trabalho escravo, assédio moral ou sexual, crime contra o meio ambiente ou violência contra a mulher.</p>
       <p>Os representantes legais da declarante estão cientes de que a falsidade da declaração ora prestada acarretará o vencimento antecipado do instrumento contratual no qual se formalizar a colaboração financeira do FCO Empresarial, sem prejuízo da aplicação das sanções legais cabíveis, de natureza civil e penal.</p>
       <p class="local-date">${localDate(data)}</p>
       ${signatures(people, company.razaoSocial, singular ? 'Representante legal' : 'Representantes legais')}
@@ -145,8 +150,8 @@
   }
 
   function guaranteeTables(data) {
-    const directors = peopleBy(data, 'dirigente').map(person => [person.nome, person.cpf]);
-    const personal = data.operacao.garantias.filter(item => item.categoria === 'pessoal').map(item => item.pessoaTipo === 'pj' ? [item.razaoSocial, item.cnpj] : [item.nome, item.cpf]);
+    const directors = peopleBy(data, 'dirigente').map(person => [properName(person.nome), person.cpf]);
+    const personal = data.operacao.garantias.filter(item => item.categoria === 'pessoal').map(item => item.pessoaTipo === 'pj' ? [item.razaoSocial, item.cnpj] : [properName(item.nome), item.cpf]);
     const real = data.operacao.garantias.filter(item => item.categoria === 'real').map(item => [`${item.bemTipo}: ${item.descricao}`, `${item.percentualVinculo}%`]);
     const rows = values => (values.length ? values : [['Nenhuma garantia adicional informada', '-']]).map(row => `<tr><td>${escapeHtml(row[0])}</td><td>${escapeHtml(row[1])}</td></tr>`).join('');
     return `<h2>3. Garantia(s) proposta(s)</h2><table><thead><tr><th colspan="2">Garantias Fidejussórias</th></tr><tr><th>Nome ou Razão Social</th><th>CPF/CNPJ</th></tr></thead><tbody>${rows([...directors, ...personal])}</tbody></table><table><thead><tr><th colspan="2">Garantias Reais</th></tr><tr><th>Tipo de Garantia</th><th>Percentual (%)</th></tr></thead><tbody>${rows(real)}</tbody></table>`;
@@ -166,7 +171,7 @@
       : `${checked(purposes.has('estoques'))} aquisição de insumos e/ou matéria-prima &nbsp; ${checked(purposes.has('gastos_gerais'))} gastos gerais relativos à administração`;
     const body = `${protocol(data)}
       <section class="proposal-identification"><h2>1. Identificação</h2><dl class="proposal-data"><dt>Razão Social:</dt><dd>${escapeHtml(data.empresa.razaoSocial)}</dd><dt>CNPJ:</dt><dd>${escapeHtml(data.empresa.cnpjFormatado)}</dd></dl></section>
-      <h2>2. Proposta</h2><dl class="proposal-data"><dt>Proposta COP:</dt><dd>${escapeHtml(operation.propostaCop || 'Não informada')}</dd><dt>Linha de crédito:</dt><dd>${escapeHtml(operation.linhaCredito)}</dd><dt>Finalidade:</dt><dd>${purpose}</dd><dt>Descrição:</dt><dd>${escapeHtml([operation.finalidade, operation.descricao].filter(Boolean).join('. '))}</dd><dt>Valor do orçamento:</dt><dd>${money(operation.valorOrcamento)}</dd>${investment ? `<dt>Giro associado:</dt><dd>${checked(operation.giroAssociado)} Sim &nbsp; ${checked(!operation.giroAssociado)} Não</dd><dt>Valor do giro:</dt><dd>${operation.giroAssociado ? money(operation.valorGiroAssociado) : 'Não se aplica'}</dd>` : ''}<dt>Valor a financiar:</dt><dd>${money(operation.valorFinanciado)}</dd><dt>Recursos próprios:</dt><dd>${money(operation.recursosProprios)}</dd><dt>Prazo:</dt><dd>${escapeHtml(operation.prazoTotalMeses)} meses, incluídos ${escapeHtml(operation.carenciaMeses)} meses de carência</dd>${investment ? `<dt>Localização:</dt><dd>${escapeHtml(operation.localEmpreendimento || data.empresa.enderecoCompleto)}</dd>` : ''}</dl>
+      <h2>2. Proposta</h2><dl class="proposal-data"><dt>Proposta COP:</dt><dd>${escapeHtml(operation.propostaCop || 'Não informada')}</dd><dt>Linha de crédito:</dt><dd>${escapeHtml(operation.linhaCredito)}</dd><dt>Condição especial:</dt><dd>${operation.fcoMulher ? 'FCO Mulher' : 'Não se aplica'}</dd><dt>Finalidade:</dt><dd>${purpose}</dd><dt>Descrição:</dt><dd>${escapeHtml([operation.finalidade, operation.descricao].filter(Boolean).join('. '))}</dd><dt>Valor do orçamento:</dt><dd>${money(operation.valorOrcamento)}</dd>${investment ? `<dt>Giro associado:</dt><dd>${checked(operation.giroAssociado)} Sim &nbsp; ${checked(!operation.giroAssociado)} Não</dd><dt>Valor do giro:</dt><dd>${operation.giroAssociado ? money(operation.valorGiroAssociado) : 'Não se aplica'}</dd>` : ''}<dt>Valor a financiar:</dt><dd>${money(operation.valorFinanciado)}</dd><dt>Recursos próprios:</dt><dd>${money(operation.recursosProprios)}</dd><dt>Prazo:</dt><dd>${escapeHtml(operation.prazoTotalMeses)} meses, incluídos ${escapeHtml(operation.carenciaMeses)} meses de carência</dd>${investment ? `<dt>Localização:</dt><dd>${escapeHtml(operation.localEmpreendimento || data.empresa.enderecoCompleto)}</dd>` : ''}</dl>
       ${guaranteeTables(data)}<p class="local-date">${localDate(data)}</p>${signatures(peopleBy(data, 'dirigente'), data.empresa.razaoSocial, 'Dirigentes')}`;
     const title = investment ? 'PROPOSTA DE FINANCIAMENTO – FCO INVESTIMENTO' : 'PROPOSTA DE FINANCIAMENTO – FCO CAPITAL DE GIRO DISSOCIADO';
     return documentPage(title, logo, body, 'proposal-document');

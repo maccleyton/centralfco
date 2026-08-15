@@ -5,10 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Central local para geração de propostas e declarações FCO.">
   <title>Central FCO Web | Relatórios</title>
-  <link rel="stylesheet" href="styles.css?v=1">
-  <script defer src="agencies.js?v=1"></script>
-  <script defer src="reports.js?v=4"></script>
-  <script defer src="app.js?v=1"></script>
+  <link rel="stylesheet" href="styles.css?v=9">
+  <script defer src="cnpj-api.js?v=1"></script>
+  <script defer src="agencies.js?v=2"></script>
+  <script defer src="reports.js?v=7"></script>
+  <script defer src="app.js?v=6"></script>
 </head>
 <body>
   <main id="loginScreen" class="login-screen">
@@ -54,9 +55,18 @@
           <small>Propostas e declarações</small>
         </span>
       </a>
-      <div class="topbar__meta">
-        <span class="status-dot" aria-hidden="true"></span>
-        <span id="sessionEmployee">Processamento local</span>
+      <div class="topbar__actions">
+        <a class="header-link" href="relatorios.html?from=web">
+          <span aria-hidden="true">▤</span>
+          Relatórios
+        </a>
+        <div class="topbar__meta">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span id="sessionEmployee">Processamento local</span>
+        </div>
+        <button id="btnLogout" class="logout-button" type="button" aria-label="Sair da Central" title="Sair">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 5H6.8A1.8 1.8 0 0 0 5 6.8v10.4A1.8 1.8 0 0 0 6.8 19H10M14.5 8.5 18 12l-3.5 3.5M9 12h9"/></svg>
+        </button>
       </div>
     </div>
   </header>
@@ -166,6 +176,10 @@
             <label class="check"><input type="checkbox" name="finalidadesGiro" value="estoques"><span>Insumos, matéria-prima ou estoques</span></label>
             <label class="check"><input type="checkbox" name="finalidadesGiro" value="gastos_gerais"><span>Gastos gerais da administração</span></label>
           </fieldset>
+          <div class="field field--span-3 special-condition">
+            <div><span class="special-condition__eyebrow">CONDIÇÃO ESPECIAL</span><strong>FCO Mulher</strong><small>Amplia os limites de prazo e carência da operação.</small></div>
+            <label class="switch"><input id="fcoMulher" name="fcoMulher" type="checkbox"><span aria-hidden="true"></span><em>Aplicar</em></label>
+          </div>
           <div class="field field--span-3">
             <label for="descricaoFinalidade">Descrição do empreendimento</label>
             <textarea id="descricaoFinalidade" name="descricaoFinalidade" rows="4" placeholder="Detalhe a finalidade, os objetivos e a aplicação dos recursos." required></textarea>
@@ -197,8 +211,9 @@
           </div>
           <div class="field">
             <label for="carencia">Carência</label>
-            <div class="input-suffix"><input id="carencia" name="carencia" type="number" min="0" step="1" required><span>meses</span></div>
+            <div class="input-suffix"><input id="carencia" name="carencia" type="number" min="3" step="3" required><span>meses</span></div>
           </div>
+          <div id="termRulePanel" class="term-rule-panel field--span-4" role="status" aria-live="polite"></div>
           <div class="field toggle-field">
             <span class="field-label">Giro associado</span>
             <label class="switch"><input id="giroAssociado" name="giroAssociado" type="checkbox"><span aria-hidden="true"></span><em>Incluir</em></label>
@@ -247,7 +262,7 @@
             <div class="field"><label for="personDistrict">Bairro</label><input id="personDistrict" type="text"></div>
             <div class="field"><label for="personCity">Município</label><input id="personCity" type="text"></div>
             <div class="field"><label for="personState">UF</label><input id="personState" type="text" maxlength="2"></div>
-            <div class="field"><label for="personCep">CEP</label><input id="personCep" type="text" maxlength="9"></div>
+            <div class="field"><label for="personCep">CEP</label><input id="personCep" type="text" maxlength="10" inputmode="numeric" placeholder="00.000-000"></div>
           </div>
           <div id="personMessage" class="inline-message" role="status" aria-live="polite"></div>
           <button id="btnAddPerson" class="button button--primary person-entry__button" type="button">+ Adicionar pessoa</button>

@@ -6,7 +6,7 @@ const state = {
   pessoas: [],
   garantias: [],
   agencia: {
-    prefixo: '1031', nome: 'BONITO-MS', nomeCompleto: 'Agência 1031 - BONITO-MS', endereco: 'R.LUIZ DA COSTA LEITE,2279',
+    prefixo: '1031', nome: 'BONITO-MS', nomeCompleto: 'Agência 1031 - BONITO-MS', endereco: 'Rua Luiz da Costa Leite, 2279',
     bairro: 'Centro', municipio: 'Bonito', uf: 'MS', cep: '79.290-000', fonte: 'Planilha agencias.xlsx'
   }
 };
@@ -25,6 +25,52 @@ const formMessage = $('#formMessage');
 const btnGenerate = $('#btnGenerate');
 const personMessage = $('#personMessage');
 const loginMessage = $('#loginMessage');
+const lowercaseNameWords = new Set(['da', 'do', 'das', 'dos', 'de', 'com']);
+const sessionKey = 'centralFcoSessionV1';
+
+function formatPersonName(value) {
+  return String(value || '').trim().replace(/\s+/g, ' ').toLocaleLowerCase('pt-BR').split(' ').map(word => {
+    if (lowercaseNameWords.has(word)) return word;
+    return word.replace(/(^|[-'’])\p{L}/gu, match => match.toLocaleUpperCase('pt-BR'));
+  }).join(' ');
+}
+
+function setAuthenticatedView(authenticated) {
+  $('#loginScreen').hidden = authenticated;
+  $$('.app-content').forEach(element => { element.hidden = !authenticated; });
+}
+
+function persistSession() {
+  try {
+    sessionStorage.setItem(sessionKey, JSON.stringify({ acesso: state.acesso, agencia: state.agencia }));
+  } catch (_) {
+    // O histórico do navegador ainda preserva a tela quando o armazenamento não está disponível.
+  }
+}
+
+function restoreSession() {
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(sessionKey) || 'null');
+    if (!saved?.acesso?.matricula || !saved?.acesso?.nome || !saved?.agencia?.prefixo) return;
+    state.acesso = saved.acesso;
+    state.agencia = saved.agencia;
+    $('#sessionEmployee').textContent = `${state.acesso.matricula} · ${state.acesso.nome}`;
+    renderAgency();
+    setAuthenticatedView(true);
+  } catch (_) {
+    try { sessionStorage.removeItem(sessionKey); } catch (_) { /* armazenamento indisponível */ }
+  }
+}
+
+function logoutApplication() {
+  try { sessionStorage.removeItem(sessionKey); } catch (_) { /* armazenamento indisponível */ }
+  state.acesso = null;
+  $('#loginForm').reset();
+  $('#sessionEmployee').textContent = 'Processamento local';
+  clearMessage(loginMessage);
+  setAuthenticatedView(false);
+  window.scrollTo({ top: 0, behavior: 'instant' });
+}
 
 document.addEventListener('DOMContentLoaded', () => {
   $('#dataEmissao').value = new Date().toISOString().slice(0, 10);
@@ -33,9 +79,11 @@ document.addEventListener('DOMContentLoaded', () => {
   renderGuarantees();
   syncConditionalFields();
   loadAgencies();
+  restoreSession();
 });
 
 $('#loginForm').addEventListener('submit', enterApplication);
+$('#btnLogout').addEventListener('click', logoutApplication);
 $('#employeeRegistration').addEventListener('input', event => {
   event.target.value = event.target.value.toUpperCase().replace(/[^F0-9]/g, '').slice(0, 8);
   clearMessage(loginMessage);
@@ -59,12 +107,16 @@ btnConsultar.addEventListener('click', consultCompany);
 $('#btnAddPerson').addEventListener('click', capturePerson);
 $('#btnAddGuarantee').addEventListener('click', addGuarantee);
 $('#tipoOperacao').addEventListener('change', syncConditionalFields);
+$('#fcoMulher').addEventListener('change', syncTermRules);
+$('#prazoTotal').addEventListener('input', () => validateTermInputs(true));
+$('#carencia').addEventListener('input', () => validateTermInputs(true));
 $('#loginAgency').addEventListener('change', event => consultAgency(event.target.value));
 $$('.money-input:not([readonly])').forEach(input => input.addEventListener('input', event => {
   event.target.value = formatMoneyInput(event.target.value);
   calculateOwnResources();
 }));
 $('#personCpf').addEventListener('input', event => { event.target.value = formatCpf(event.target.value); clearMessage(personMessage); });
+$('#personCep').addEventListener('input', event => { event.target.value = formatCep(event.target.value); clearMessage(personMessage); });
 $('#giroAssociado').addEventListener('change', syncConditionalFields);
 $('#situacaoFundos').addEventListener('change', syncConditionalFields);
 form.addEventListener('submit', generateReports);
@@ -152,7 +204,7 @@ async function enterApplication(event) {
   event.preventDefault();
   clearMessage(loginMessage);
   const matricula = $('#employeeRegistration').value.trim().toUpperCase();
-  const nome = $('#employeeName').value.trim();
+  const nome = formatPersonName($('#employeeName').value);
   const prefixo = $('#loginAgency').value;
   if (!prefixo) return showMessage(loginMessage, 'Selecione uma agência.', 'error');
   if (!/^F\d{7}$/.test(matricula)) return showMessage(loginMessage, 'Informe a matrícula no formato F seguido de sete números.', 'error');
@@ -167,8 +219,8 @@ async function enterApplication(event) {
   }
   state.acesso = { matricula, nome };
   $('#sessionEmployee').textContent = `${matricula} · ${nome}`;
-  $('#loginScreen').hidden = true;
-  $$('.app-content').forEach(element => { element.hidden = false; });
+  persistSession();
+  setAuthenticatedView(true);
   window.scrollTo({ top: 0, behavior: 'instant' });
 }
 
@@ -194,9 +246,7 @@ async function consultCompany() {
 
   setButtonLoading(btnConsultar, true, 'Consultando...');
   try {
-    const response = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${encodeURIComponent(cnpj)}`, { headers: { Accept: 'application/json' } });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data.message || 'CNPJ não encontrado.');
+    const data = await window.CnpjApi.request(cnpj);
 
     const typeStreet = data.descricao_tipo_de_logradouro || data.descricao_tipo_logradouro || '';
     const street = [typeStreet, data.logradouro].filter(Boolean).join(' ').trim();
@@ -232,7 +282,9 @@ async function consultCompany() {
 
 function formatCep(value) {
   const raw = String(value || '').replace(/\D/g, '').slice(0, 8);
-  return raw.length > 5 ? `${raw.slice(0, 5)}-${raw.slice(5)}` : raw;
+  if (raw.length <= 2) return raw;
+  if (raw.length <= 5) return `${raw.slice(0, 2)}.${raw.slice(2)}`;
+  return `${raw.slice(0, 2)}.${raw.slice(2, 5)}-${raw.slice(5)}`;
 }
 
 function joinAddress(address) {
@@ -303,12 +355,12 @@ function renderAgency() {
 function capturePerson() {
   clearMessage(personMessage);
   const person = {
-    id: id(), nome: $('#personName').value.trim(), cpf: $('#personCpf').value.trim(),
+    id: id(), nome: formatPersonName($('#personName').value), cpf: $('#personCpf').value.trim(),
     nacionalidade: $('#personNationality').value.trim(), estadoCivil: $('#personCivilStatus').value,
     logradouro: $('#personStreet').value.trim(), numero: $('#personNumber').value.trim(),
     complemento: $('#personComplement').value.trim(), bairro: $('#personDistrict').value.trim(),
     municipio: $('#personCity').value.trim(), uf: $('#personState').value.trim().toUpperCase(),
-    cep: $('#personCep').value.trim(), dirigente: $('#personDirector').checked,
+    cep: formatCep($('#personCep').value), dirigente: $('#personDirector').checked,
     representanteLegal: $('#personRepresentative').checked,
   };
   if (!person.nome || !person.cpf) return showMessage(personMessage, 'Informe nome e CPF.', 'error');
@@ -448,6 +500,65 @@ function renderEmpty(container, text) {
   container.innerHTML = `<div class="empty-state">${text}</div>`;
 }
 
+function getTermRule(type, fcoMulher) {
+  if (type === 'giro_dissociado') {
+    return fcoMulher
+      ? { maxTotal: 48, maxGrace: 6, maxRepayment: null, label: 'Capital de Giro · FCO Mulher' }
+      : { maxTotal: 24, maxGrace: 3, maxRepayment: null, label: 'Capital de Giro' };
+  }
+  return fcoMulher
+    ? { maxTotal: 168, maxGrace: 48, maxRepayment: 120, label: 'Investimento · FCO Mulher' }
+    : { maxTotal: 144, maxGrace: 24, maxRepayment: 120, label: 'Investimento' };
+}
+
+function termRuleErrors(operation) {
+  const rule = getTermRule(operation.tipo, operation.fcoMulher);
+  const total = Number(operation.prazoTotalMeses || 0);
+  const grace = Number(operation.carenciaMeses || 0);
+  const errors = [];
+  if (grace < 3 || grace % 3 !== 0) errors.push('A carência deve ser um múltiplo de 3, começando em 3 meses.');
+  if (grace > rule.maxGrace) errors.push(`A carência máxima para ${rule.label} é de ${rule.maxGrace} meses.`);
+  if (total > rule.maxTotal) errors.push(`O prazo total máximo para ${rule.label} é de ${rule.maxTotal} meses.`);
+  if (total > 0 && total <= grace) errors.push('O prazo total deve ser maior que a carência.');
+  if (rule.maxRepayment !== null && total > grace && total - grace > rule.maxRepayment) {
+    errors.push(`A amortização não pode superar ${rule.maxRepayment} meses; prazo total menos carência deve ser de até ${rule.maxRepayment}.`);
+  }
+  return errors;
+}
+
+function validateTermInputs(showState = false) {
+  const type = $('#tipoOperacao').value;
+  const fcoMulher = $('#fcoMulher').checked;
+  const total = numberValue($('#prazoTotal').value);
+  const grace = numberValue($('#carencia').value);
+  const rule = getTermRule(type, fcoMulher);
+  const operation = { tipo: type, fcoMulher, prazoTotalMeses: total, carenciaMeses: grace };
+  const errors = total > 0 || grace > 0 ? termRuleErrors(operation) : [];
+  const panel = $('#termRulePanel');
+  $('#prazoTotal').max = String(rule.maxTotal);
+  $('#carencia').max = String(rule.maxGrace);
+  $('#carencia').min = '3';
+  $('#carencia').step = '3';
+  $('#prazoTotal').setCustomValidity(errors.join(' '));
+  $('#carencia').setCustomValidity(errors.join(' '));
+  const repaymentText = rule.maxRepayment === null ? '' : ` e amortização de até ${rule.maxRepayment} meses`;
+  if (showState && errors.length) {
+    panel.textContent = errors.join(' ');
+    panel.className = 'term-rule-panel field--span-4 is-error';
+  } else if (showState && total > 0 && grace > 0) {
+    panel.innerHTML = `<strong>Configuração válida.</strong> ${grace} meses de carência + ${total - grace} meses de pagamento = ${total} meses no total.`;
+    panel.className = 'term-rule-panel field--span-4 is-valid';
+  } else {
+    panel.innerHTML = `<strong>${rule.label}:</strong> prazo total até ${rule.maxTotal} meses, carência até ${rule.maxGrace} meses${repaymentText}. Carência sempre em múltiplos de 3.`;
+    panel.className = 'term-rule-panel field--span-4';
+  }
+  return errors;
+}
+
+function syncTermRules() {
+  validateTermInputs(Boolean($('#prazoTotal').value || $('#carencia').value));
+}
+
 function syncConditionalFields() {
   const isInvestment = $('#tipoOperacao').value === 'investimento';
   $('#linhaCreditoField').hidden = !isInvestment;
@@ -461,6 +572,7 @@ function syncConditionalFields() {
   $('#valorGiroField').hidden = !$('#giroAssociado').checked;
   calculateOwnResources();
   $('#fundsGroup').hidden = $('#situacaoFundos').value !== 'beneficiaria';
+  syncTermRules();
 }
 
 function collectStaticData() {
@@ -476,14 +588,18 @@ function collectStaticData() {
     acesso: state.acesso,
     operacao: {
       tipo: data.get('tipoOperacao'), linhaCredito: data.get('tipoOperacao') === 'giro_dissociado' ? 'Capital de Giro Dissociado' : data.get('linhaCredito'), propostaCop: data.get('propostaCop'),
-      finalidade: data.get('finalidade'), modalidades: data.getAll('modalidades'), finalidadesGiro: data.getAll('finalidadesGiro'),
+      finalidade: data.get('finalidade'), modalidades: data.getAll('modalidades'), finalidadesGiro: data.getAll('finalidadesGiro'), fcoMulher: data.get('fcoMulher') === 'on',
       descricao: data.get('descricaoFinalidade'), localEmpreendimento: data.get('localEmpreendimento'),
       valorOrcamento, valorFinanciadoBase, valorFinanciado,
       recursosProprios: Math.max(0, valorOrcamento - valorFinanciado), prazoTotalMeses: numberValue(data.get('prazoTotal')),
       carenciaMeses: numberValue(data.get('carencia')), giroAssociado,
       valorGiroAssociado, agenciaDebito: data.get('agenciaDebito'), contaDebito: data.get('contaDebito'),
       outrasInformacoes: data.get('outrasInformacoes'), itens: [],
-      garantias: state.garantias.map(({ id: _, ...guarantee }) => ({ ...guarantee, percentualVinculo: numberValue(guarantee.percentualVinculo) }))
+      garantias: state.garantias.map(({ id: _, ...guarantee }) => ({
+        ...guarantee,
+        nome: formatPersonName(guarantee.nome),
+        percentualVinculo: numberValue(guarantee.percentualVinculo)
+      }))
     },
     pessoas: state.pessoas.map(({ id: _, ...person }) => person),
     declaracoes: { situacaoFundos: data.get('situacaoFundos'), fundos: data.getAll('fundos') },
@@ -508,6 +624,7 @@ function validatePayload(payload) {
   if (payload.operacao.giroAssociado && payload.operacao.valorGiroAssociado <= 0) errors.push('Informe o valor do giro associado.');
   if (payload.operacao.valorFinanciado > payload.operacao.valorOrcamento) errors.push('O valor a financiar não pode superar o valor do orçamento.');
   if (payload.operacao.prazoTotalMeses <= 0) errors.push('Informe o prazo total.');
+  errors.push(...termRuleErrors(payload.operacao));
   if (!payload.operacao.agenciaDebito.trim()) errors.push('Informe a agência para débito.');
   if (!payload.operacao.contaDebito.trim()) errors.push('Informe a conta para débito.');
   if (!payload.agencia?.prefixo || !payload.agencia?.endereco) errors.push('Selecione uma agência responsável com endereço consultado.');

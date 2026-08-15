@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Formulários, tutorial e regras de linhas e prazos do FCO.">
+  <title>Central FCO | Relatórios e orientações</title>
+  <link rel="stylesheet" href="styles.css?v=7">
+  <link rel="stylesheet" href="relatorios.css?v=6">
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script defer src="cnpj-api.js?v=1"></script>
+  <script defer src="relatorios.js?v=5"></script>
+  <script defer src="relatorios-ferramentas.js?v=2"></script>
+</head>
+<body class="reports-body">
+  <header class="topbar">
+    <div class="topbar__accent" aria-hidden="true"></div>
+    <div class="shell topbar__content">
+      <a id="reportsBackBrand" class="brand" href="index.html" aria-label="Voltar à Central FCO">
+        <span class="brand__symbol" aria-hidden="true"><img src="logo02.png" alt=""></span>
+        <span><strong>Central FCO</strong><small>Relatórios e orientações</small></span>
+      </a>
+      <a id="reportsBackLink" class="header-link" href="index.html"><span aria-hidden="true">←</span> Voltar à Central</a>
+    </div>
+  </header>
+
+  <main class="shell reports-page">
+    <section class="reports-hero">
+      <div>
+        <span class="eyebrow">CENTRAL DE APOIO</span>
+        <h1>Relatórios, formulários <br>e regras do FCO.</h1>
+        <p>Consulte os documentos oficiais e tire dúvidas sobre enquadramento, comprovação e prazos antes de montar a proposta.</p>
+      </div>
+      <nav class="reports-hero__nav" aria-label="Atalhos desta página">
+        <a href="#formularios"><strong>01</strong><span>Formulários</span></a>
+        <a href="#tutorial"><strong>02</strong><span>Tutorial FCO</span></a>
+        <a href="#linhas-prazos"><strong>03</strong><span>Linhas e prazos</span></a>
+        <a href="#compactador"><strong>04</strong><span>Compactador</span></a>
+        <a href="#consulta-cnpj"><strong>05</strong><span>Consulta CNPJ</span></a>
+      </nav>
+    </section>
+
+    <section id="formularios" class="report-section" aria-labelledby="formulariosTitle">
+      <div class="report-section__heading">
+        <span class="section-number">01</span>
+        <div><span class="report-kicker">DOCUMENTOS</span><h2 id="formulariosTitle">Formulários essenciais</h2><p>Preencha no sistema, confira e gere uma versão HTML pronta para imprimir.</p></div>
+      </div>
+      <div class="document-grid">
+        <article class="document-card">
+          <div class="document-card__icon document-card__icon--yellow" aria-hidden="true">NIF</div>
+          <div class="document-card__content">
+            <span class="document-card__type">DOMICÍLIO FISCAL</span>
+            <h3>Declaração de Domicílio Fiscal - NIF</h3>
+            <p>Use para declarar a residência fiscal do titular e os respectivos números de identificação fiscal.</p>
+            <div class="document-note"><strong>No Brasil:</strong> o NIF corresponde ao CPF, para pessoa física, ou ao CNPJ, para pessoa jurídica.</div>
+          </div>
+          <div class="document-card__actions">
+            <a class="report-button report-button--primary" href="#nifForm">Preencher formulário <span aria-hidden="true">↓</span></a>
+            <a class="report-button report-button--ghost" href="relatorio/nif.pdf" target="_blank" rel="noopener">Ver modelo PDF ↗</a>
+          </div>
+        </article>
+
+        <article class="document-card">
+          <div class="document-card__icon" aria-hidden="true">SCR</div>
+          <div class="document-card__content">
+            <span class="document-card__type">AUTORIZAÇÃO</span>
+            <h3>Autorização para Consulta ao SCR</h3>
+            <p>Formaliza a autorização prévia do cliente para consulta ao Sistema de Informações de Crédito do Banco Central.</p>
+            <div class="document-note"><strong>Preencher:</strong> local e data, nome do cliente, CPF ou CNPJ e assinatura.</div>
+          </div>
+          <div class="document-card__actions">
+            <a class="report-button report-button--primary" href="#scrForm">Preencher formulário <span aria-hidden="true">↓</span></a>
+            <a class="report-button report-button--ghost" href="relatorio/scr.pdf" target="_blank" rel="noopener">Ver modelo PDF ↗</a>
+          </div>
+        </article>
+      </div>
+
+      <div class="form-builders">
+        <form id="nifForm" class="report-form-card" novalidate>
+          <div class="report-form-card__head">
+            <div class="report-form-card__badge report-form-card__badge--yellow">NIF</div>
+            <div><span class="report-kicker">GERAÇÃO EM HTML</span><h3>Declaração de Domicílio Fiscal</h3><p>Informe os dados do titular. Para empresa, consulte o CNPJ para completar o cadastro automaticamente.</p></div>
+          </div>
+
+          <div class="fields-grid fields-grid--3">
+            <div class="field">
+              <label for="nifPersonType">Tipo de titular</label>
+              <select id="nifPersonType" name="personType"><option value="pf">Pessoa física</option><option value="pj">Pessoa jurídica</option></select>
+            </div>
+            <div class="field field--span-2">
+              <label id="nifDocumentLabel" for="nifDocument">CPF</label>
+              <div class="document-lookup"><input id="nifDocument" name="document" type="text" inputmode="numeric" maxlength="18" autocomplete="off" placeholder="000.000.000-00" required><button id="nifLookup" class="button button--primary" type="button" hidden>Consultar CNPJ</button></div>
+              <small id="nifDocumentHint">O CPF será usado como NIF brasileiro.</small>
+            </div>
+            <div class="field field--span-2">
+              <label id="nifNameLabel" for="nifName">Nome completo</label>
+              <input id="nifName" name="name" type="text" autocomplete="name" required>
+            </div>
+            <div id="nifBirthField" class="field">
+              <label for="nifBirthDate">Data de nascimento</label>
+              <input id="nifBirthDate" name="birthDate" type="date" required>
+            </div>
+            <div id="nifBirthCountryField" class="field">
+              <label for="nifBirthCountry">País de nascimento</label>
+              <input id="nifBirthCountry" name="birthCountry" type="text" value="Brasil" required>
+            </div>
+            <div class="field field--span-2">
+              <label for="nifAddress">Endereço da sede ou residência no Brasil</label>
+              <input id="nifAddress" name="address" type="text" autocomplete="street-address" required>
+            </div>
+          </div>
+
+          <div id="nifLookupMessage" class="inline-message" role="status" aria-live="polite"></div>
+
+          <div class="form-subsection">
+            <div><span class="report-kicker">RESIDÊNCIA FISCAL</span><h4>Países e números de identificação</h4></div>
+            <p>O primeiro registro é preenchido com o CPF ou CNPJ. Use o segundo caso exista outro domicílio fiscal.</p>
+          </div>
+          <div class="fields-grid fields-grid--2 fiscal-grid">
+            <div class="field"><label for="nifTaxCountry1">País/domicílio fiscal</label><input id="nifTaxCountry1" name="taxCountry1" type="text" value="Brasil" required></div>
+            <div class="field"><label for="nifTaxNumber1">NIF (CPF ou CNPJ no Brasil)</label><input id="nifTaxNumber1" name="taxNumber1" type="text" required></div>
+            <div class="field"><label for="nifTaxCountry2">Outro país/domicílio fiscal</label><input id="nifTaxCountry2" name="taxCountry2" type="text" placeholder="Opcional"></div>
+            <div class="field"><label for="nifTaxNumber2">Outro NIF</label><input id="nifTaxNumber2" name="taxNumber2" type="text" placeholder="Opcional"></div>
+          </div>
+          <div class="fields-grid fields-grid--3 form-signature-fields">
+            <div class="field"><label for="nifPlace">Local</label><input id="nifPlace" name="place" type="text" required></div>
+            <div class="field"><label for="nifDate">Data</label><input id="nifDate" name="date" type="date" required></div>
+            <div id="nifSignerField" class="field"><label for="nifSigner">Nome do signatário</label><input id="nifSigner" name="signer" type="text" required></div>
+          </div>
+          <div id="nifFormMessage" class="inline-message" role="status" aria-live="polite"></div>
+          <button class="button button--generate report-generate" type="submit"><span aria-hidden="true">↓</span> Gerar Declaração NIF</button>
+        </form>
+
+        <form id="scrForm" class="report-form-card" novalidate>
+          <div class="report-form-card__head">
+            <div class="report-form-card__badge">SCR</div>
+            <div><span class="report-kicker">GERAÇÃO EM HTML</span><h3>Autorização para Consulta ao SCR</h3><p>Identifique o cliente, confira os dados e gere o documento para assinatura.</p></div>
+          </div>
+          <div class="fields-grid fields-grid--3">
+            <div class="field">
+              <label for="scrPersonType">Tipo de cliente</label>
+              <select id="scrPersonType" name="personType"><option value="pf">Pessoa física</option><option value="pj">Pessoa jurídica</option></select>
+            </div>
+            <div class="field field--span-2">
+              <label id="scrDocumentLabel" for="scrDocument">CPF</label>
+              <div class="document-lookup"><input id="scrDocument" name="document" type="text" inputmode="numeric" maxlength="18" autocomplete="off" placeholder="000.000.000-00" required><button id="scrLookup" class="button button--primary" type="button" hidden>Consultar CNPJ</button></div>
+              <small>Para CNPJ, a razão social será carregada pela consulta.</small>
+            </div>
+            <div class="field field--span-3">
+              <label id="scrNameLabel" for="scrName">Nome completo</label>
+              <input id="scrName" name="name" type="text" required>
+            </div>
+          </div>
+          <div id="scrLookupMessage" class="inline-message" role="status" aria-live="polite"></div>
+          <div class="fields-grid fields-grid--2 form-signature-fields">
+            <div class="field"><label for="scrPlace">Local</label><input id="scrPlace" name="place" type="text" required></div>
+            <div class="field"><label for="scrDate">Data</label><input id="scrDate" name="date" type="date" required></div>
+          </div>
+          <div id="scrFormMessage" class="inline-message" role="status" aria-live="polite"></div>
+          <button class="button button--generate report-generate" type="submit"><span aria-hidden="true">↓</span> Gerar Autorização SCR</button>
+        </form>
+      </div>
+    </section>
+
+    <section id="tutorial" class="report-section" aria-labelledby="tutorialTitle">
+      <div class="report-section__heading report-section__heading--with-action">
+        <span class="section-number">02</span>
+        <div><span class="report-kicker">GUIA PRÁTICO</span><h2 id="tutorialTitle">O que pode e o que não pode</h2><p>As regras de investimento e de capital de giro não são iguais.</p></div>
+        <a class="report-button report-button--ghost" href="relatorio/TUTORIAL%20FCO%20EMPRESARIAL%201.pdf" target="_blank" rel="noopener">Ver tutorial original ↗</a>
+      </div>
+
+      <div class="rule-alert">
+        <span class="rule-alert__icon" aria-hidden="true">!</span>
+        <div><strong>Não confunda os prazos.</strong><p><b>6 meses</b> se aplica a investimento como contrapartida de recursos próprios. <b>30 dias</b> se aplica ao ressarcimento no capital de giro dissociado.</p></div>
+      </div>
+
+      <div class="rule-comparison">
+        <article class="rule-column">
+          <div class="rule-column__head"><span>INV</span><div><small>REGRA 1</small><h3>Investimento</h3></div><b class="deadline">até 6 meses</b></div>
+          <p class="rule-column__intro">Para itens financiáveis vinculados ao projeto, inclusive gastos já realizados como contrapartida.</p>
+          <div class="rule-list rule-list--yes"><h4><span aria-hidden="true">✓</span> Pode financiar</h4><ul><li>Obras, reformas, ampliações e construções</li><li>Máquinas e equipamentos</li><li>Sistemas fotovoltaicos</li><li>Caminhões e veículos permitidos pela linha</li><li>Softwares e equipamentos de informática</li><li>Móveis, utensílios, instalações e benfeitorias</li><li>Capital de giro associado ao projeto</li></ul></div>
+          <div class="rule-list rule-list--attention"><h4><span aria-hidden="true">i</span> Para reconhecer gasto anterior</h4><ul><li>O item precisa ser financiável e vinculado ao projeto</li><li>Deve estar comprovadamente pago</li><li>Deve ter ocorrido em até 6 meses antes do protocolo ou da entrada da proposta, quando dispensada a Carta-Consulta</li></ul></div>
+        </article>
+
+        <article class="rule-column">
+          <div class="rule-column__head"><span>CG</span><div><small>REGRA 2</small><h3>Giro dissociado</h3></div><b class="deadline">até 30 dias</b></div>
+          <p class="rule-column__intro">Para gastos gerais necessários à administração e à operação do negócio.</p>
+          <div class="rule-list rule-list--yes"><h4><span aria-hidden="true">✓</span> Pode ressarcir ou pagar</h4><ul><li>Folha de pagamento e salários</li><li>Água, energia, internet e telefone</li><li>Aluguel e tributos</li><li>Estoque, matéria-prima e insumos</li><li>Mercadorias para revenda</li><li>Outras despesas operacionais ligadas à atividade</li></ul></div>
+          <div class="rule-list rule-list--no"><h4><span aria-hidden="true">×</span> Não pode usar para</h4><ul><li>Amortizar empréstimos</li><li>Liquidar financiamentos</li><li>Renegociar dívidas</li><li>Operações do Sistema Financeiro Nacional</li><li>Despesas sem vínculo com a atividade empresarial</li></ul></div>
+        </article>
+      </div>
+
+      <div class="guide-grid">
+        <details class="guide-card" open><summary><span>01</span><div><strong>Ressarcimento de despesas</strong><small>O que deve acompanhar cada gasto</small></div></summary><div class="guide-card__body"><p>Apresente documento fiscal legalmente aceito e o comprovante correspondente: PIX, TED, DOC, transferência, débito ou cheque compensado.</p><div class="do-dont"><div><b>✓ Aceito</b><span>Pagamento feito pela conta PJ da própria empresa beneficiária.</span></div><div><b>× Não aceito</b><span>Conta de sócio, funcionário, familiar, terceiro ou outra empresa do grupo.</span></div></div><p><strong>Cheque:</strong> anexar cópia, comprovante e extrato que demonstre a compensação.</p></div></details>
+        <details class="guide-card"><summary><span>02</span><div><strong>Pagamento ao fornecedor</strong><small>Conferência do favorecido</small></div></summary><div class="guide-card__body"><p>Anexe orçamento, proposta comercial, contrato, nota fiscal ou documento equivalente, além dos dados de crédito.</p><p>Informe banco, agência e conta, ou uma chave PIX. O titular da conta ou da chave deve ser o mesmo fornecedor indicado no documento da despesa.</p><div class="document-note"><strong>Divergência:</strong> só prossiga com justificativa formal e documentação comprobatória.</div></div></details>
+        <details class="guide-card"><summary><span>03</span><div><strong>Folha de pagamento</strong><small>Documentos cumulativos</small></div></summary><div class="guide-card__body"><ul><li>Relação com nome, CPF/documento, cargo, salário líquido e mês de referência</li><li>Assinaturas do representante legal e do contador, com registro no CRC</li><li>Guias e comprovantes de pagamento do FGTS e do INSS do mês financiado</li></ul><p>O Comitê de Crédito pode solicitar documentação complementar.</p></div></details>
+      </div>
+    </section>
+
+    <section id="linhas-prazos" class="report-section" aria-labelledby="prazosTitle">
+      <div class="report-section__heading report-section__heading--with-action">
+        <span class="section-number">03</span>
+        <div><span class="report-kicker">CONSULTA RÁPIDA</span><h2 id="prazosTitle">Regras de linha e prazo</h2><p>Valores máximos em meses, conforme o material de referência.</p></div>
+        <a class="report-button report-button--ghost" href="relatorio/linhas_prazos.pdf" target="_blank" rel="noopener">Ver tabela original ↗</a>
+      </div>
+
+      <div class="deadline-summary">
+        <div><small>GIRO DISSOCIADO</small><strong>até 6</strong><span>meses de carência</span></div>
+        <div><small>MAIOR PRAZO PADRÃO</small><strong>até 204</strong><span>meses no total</span></div>
+        <div><small>REGRA DA CARÊNCIA</small><strong>múltiplo de 3</strong><span>meses</span></div>
+      </div>
+
+      <div class="deadline-panel">
+        <div class="deadline-filters">
+          <label>Linha<select id="lineFilter"><option value="all">Todas as linhas</option></select></label>
+          <label>Finalidade<select id="purposeFilter"><option value="all">Todas as finalidades</option></select></label>
+          <label>Porte<select id="sizeFilter"><option value="all">Todos os portes</option><option value="MEI">MEI</option><option value="MPE">MPE</option><option value="MGE">MGE</option><option value="DEMAIS PORTES">Demais portes</option><option value="TODOS">Todos</option></select></label>
+        </div>
+        <div class="table-scroll">
+          <table class="deadline-table">
+            <thead><tr><th>Linha</th><th>Finalidade</th><th>Porte</th><th>Carência</th><th>Prazo total</th></tr></thead>
+            <tbody id="deadlineTableBody"></tbody>
+          </table>
+          <div id="deadlineEmpty" class="deadline-empty" hidden>Nenhuma regra encontrada para os filtros selecionados.</div>
+        </div>
+      </div>
+
+      <div class="deadline-notes">
+        <h3>Observações importantes</h3>
+        <ol>
+          <li>O prazo total já inclui o período de carência.</li>
+          <li>Na Infraestrutura Econômica, o prazo total pode chegar a 20 anos para empreendimentos estruturantes de grande vulto e alta relevância em setores estratégicos, com justificativa no projeto.</li>
+          <li>Para meios de hospedagem, o prazo pode chegar a 20 anos, com até 5 anos de carência, para MPE e MGE.</li>
+          <li>Em Ciência, Tecnologia e Inovação, o prazo total pode chegar a 20 anos para empreendimentos de alta relevância em setores estratégicos, com justificativa no projeto.</li>
+          <li>A carência deve ser múltipla de 3 meses e considerar o tempo das aquisições ou serviços e o início da geração de resultados.</li>
+        </ol>
+        <p><strong>Portes:</strong> MEI = Microempreendedor Individual; MPE = Micro, Pequena e Pequena Média Empresa; MGE = Média e Grande Empresa.</p>
+      </div>
+    </section>
+
+    <section id="compactador" class="report-section" aria-labelledby="compactadorTitle">
+      <div class="report-section__heading">
+        <span class="section-number">04</span>
+        <div><span class="report-kicker">UTILITÁRIO</span><h2 id="compactadorTitle">Compactador de PDF</h2><p>Reduza documentos depois de concluir a análise e o preenchimento do FCO.</p></div>
+      </div>
+      <div class="tools-grid tools-grid--single">
+        <article class="tool-card">
+          <div class="tool-card__head"><span class="tool-card__icon" aria-hidden="true">⇣</span><div><span class="report-kicker">PROCESSAMENTO LOCAL</span><h3>Compactar documento</h3><p>O arquivo é processado diretamente no navegador e não é enviado ao servidor.</p></div></div>
+          <form id="pdfCompressorForm" class="tool-form">
+            <div class="field"><label for="pdfCompressorInput">Arquivo PDF</label><input id="pdfCompressorInput" type="file" accept="application/pdf,.pdf" required><small>Selecione o nível conforme a qualidade necessária para leitura e protocolo.</small></div>
+            <div class="field"><label for="pdfCompressionQuality">Nível de compressão</label><select id="pdfCompressionQuality"><option value="extreme">Extrema - preto e branco, leitura</option><option value="high" selected>Alta - colorido e otimizado</option><option value="medium">Média - boa resolução</option><option value="low">Baixa - próxima do original</option></select></div>
+            <button id="pdfCompressorButton" class="button button--primary tool-submit" type="submit">Compactar PDF</button>
+          </form>
+          <div id="pdfProgress" class="tool-progress" hidden><progress id="pdfProgressBar" value="0" max="100"></progress><span id="pdfProgressText">Preparando arquivo...</span></div>
+          <div id="pdfCompressorResult" class="tool-result" role="status" aria-live="polite"></div>
+        </article>
+      </div>
+    </section>
+
+    <section id="consulta-cnpj" class="report-section" aria-labelledby="consultaCnpjTitle">
+      <div class="report-section__heading">
+        <span class="section-number">05</span>
+        <div><span class="report-kicker">CONSULTA COMPLEMENTAR</span><h2 id="consultaCnpjTitle">Consulta completa de CNPJ</h2><p>Última etapa da página: confira cadastro, atividades e todos os integrantes do quadro societário.</p></div>
+      </div>
+      <div class="tools-grid tools-grid--single">
+        <article class="tool-card">
+          <div class="tool-card__head"><span class="tool-card__icon tool-card__icon--yellow" aria-hidden="true">⌕</span><div><span class="report-kicker">DADOS CADASTRAIS</span><h3>Consultar empresa</h3><p>A consulta usa uma fonte alternativa automaticamente se a fonte principal estiver indisponível.</p></div></div>
+          <form id="companyLookupForm" class="tool-form">
+            <div class="field"><label for="companyLookupDocument">CNPJ</label><input id="companyLookupDocument" type="text" maxlength="18" autocomplete="off" placeholder="00.000.000/0000-00" required><small>Serão exibidos os dados cadastrais e os dirigentes fornecidos pelas APIs.</small></div>
+            <button id="companyLookupButton" class="button button--primary tool-submit" type="submit">Consultar CNPJ</button>
+          </form>
+          <div id="companyLookupMessage" class="tool-result" role="status" aria-live="polite"></div>
+        </article>
+      </div>
+      <div id="companyLookupResult" class="company-lookup-result" hidden></div>
+    </section>
+  </main>
+
+  <footer class="footer"><div class="shell"><span>Central FCO · uso interno</span><span class="footer-credit">Consulta organizada a partir dos materiais da pasta relatorio</span><span>Confirme regras vigentes antes da contratação</span></div></footer>
+</body>
+</html>
