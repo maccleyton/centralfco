@@ -64,13 +64,13 @@
 
   function signatures(people, companyName, heading = '') {
     const actual = people.length ? people : [{ nome: 'Não informado', cpf: 'Não informado' }];
-    return `${heading ? `<h3 class="signature-heading">${escapeHtml(heading)}</h3>` : ''}<div class="signature-grid">${actual.map(person => `
+    return `<section class="signature-block">${heading ? `<h3 class="signature-heading">${escapeHtml(heading)}</h3>` : ''}<div class="signature-grid">${actual.map(person => `
       <section class="signature">
         <div class="signature-line"></div>
         <div>Razão Social: ${escapeHtml(String(companyName ?? '').toLocaleUpperCase('pt-BR'))}</div>
         <div>Nome: ${escapeHtml(String(person.nome ?? '').toLocaleUpperCase('pt-BR'))}</div>
         <div>CPF: ${escapeHtml(person.cpf)}</div>
-      </section>`).join('')}</div>`;
+      </section>`).join('')}</div></section>`;
   }
 
   function authorizationDebit(data, logo) {
@@ -182,6 +182,30 @@
       @page{size:A4;margin:0}*{box-sizing:border-box}body{margin:0;background:#e9ebf2;color:#111;font-family:Calibri,Arial,sans-serif;font-size:11pt}.toolbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;padding:12px 22px;background:#20206f;color:#fff;box-shadow:0 3px 15px #0003}.toolbar button{border:0;border-radius:8px;padding:10px 18px;background:#fff32b;color:#17175f;font:700 14px Calibri,Arial;cursor:pointer}.document{position:relative;width:210mm;min-height:297mm;margin:12mm auto;background:#fff;padding:13mm 18mm 27mm;box-shadow:0 4px 24px #0002;break-after:page;page-break-after:always}.document-header{height:18mm;display:flex;align-items:center;gap:6mm;border-bottom:1.5pt solid #2037a0;margin-bottom:6mm;padding-bottom:2.5mm}.document-header img{width:22mm;height:12mm;object-fit:contain}.document-header span,.document-header strong{display:block}.document-header span{font-size:7.5pt;letter-spacing:.12em;color:#555}.document-header strong{font-size:13pt;margin-top:1mm}.document-body{line-height:1.45}.document-body p{text-align:justify;margin:0 0 5mm}.document-body h2{font-size:12pt;margin:6mm 0 3mm}.document-body ul{margin:0 0 6mm;padding-left:7mm}.document-body li{margin-bottom:3mm}.document-footer{position:absolute;left:18mm;right:18mm;bottom:10mm;padding-top:2.5mm;border-top:.6pt solid #aaa;font-size:7.5pt;line-height:1.25;color:#333}.address-block{margin-bottom:7mm}.local-date{text-align:left!important;margin-top:7mm!important}.signature-heading{font-size:11pt;margin:7mm 0 1mm;break-after:avoid}.signature-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:10mm;row-gap:7mm;break-inside:auto}.signature{font-size:11pt;line-height:1.28;break-inside:avoid}.signature-line{width:100%;height:14mm;border-bottom:1pt solid #111;margin-bottom:2mm}.checks{display:grid;gap:2.5mm;margin:5mm 0 7mm}.checks small{display:block;margin:1mm 0 0 6mm}.proposal-document{padding-top:11mm;padding-bottom:20mm}.proposal-document .document-header{margin-bottom:4mm}.proposal-document .document-body{position:relative;line-height:1.3}.proposal-document .document-body h2{margin:3mm 0 2mm}.proposal-identification{padding-right:58mm;margin-bottom:3mm}.proposal-identification h2{margin-top:0!important}.protocol{position:absolute;z-index:2;top:0;right:0;width:52mm;margin:0;padding:0 1mm;font-size:8.5pt;line-height:1.35;background:#fff}.protocol strong{display:block;font-size:10pt;margin-bottom:2mm}.proposal-data{display:grid;grid-template-columns:36mm minmax(0,1fr);gap:1.2mm 3mm;margin:0 0 3mm}.proposal-data dt{font-weight:700}.proposal-data dd{margin:0}.proposal-document table{margin:2.5mm 0 3mm}.proposal-document th,.proposal-document td{padding:1.5mm 2mm}.proposal-document .local-date{margin-top:3mm!important;margin-bottom:0!important}.proposal-document .signature-heading{margin-top:2mm}.proposal-document .signature-grid{row-gap:4mm}.proposal-document .signature-line{height:10mm}table{width:100%;border-collapse:collapse;margin:4mm 0 5mm;font-size:9.5pt;break-inside:auto}th,td{border:.7pt solid #222;padding:2mm 2.5mm;text-align:left}thead th{background:#e5e5e5}thead tr:first-child th{background:#3333bd;color:#fff;font-size:10pt}th:last-child,td:last-child{width:25%}@media print{body{background:#fff}.toolbar{display:none}.document{margin:0;box-shadow:none}}`;
   }
 
+  function dossierPrintFixCss() {
+    return `
+      *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+      thead th{background:#e5e5e5!important;color:#111!important}
+      thead tr:first-child th{background:#3333bd!important;color:#fff!important}
+      .signature-block{break-inside:avoid;page-break-inside:avoid}
+      .proposal-document{font-size:9pt;padding-top:9mm;padding-bottom:18mm}
+      .proposal-document .document-header{height:16mm;margin-bottom:3mm}
+      .proposal-document .document-body{line-height:1.18}
+      .proposal-document .document-body h2{font-size:10pt;margin:1.8mm 0 1.2mm}
+      .proposal-document .proposal-identification{margin-bottom:1.5mm}
+      .proposal-document .proposal-data{gap:.7mm 3mm;margin-bottom:1.5mm}
+      .proposal-document table{margin:1.4mm 0 1.8mm;font-size:8pt}
+      .proposal-document th,.proposal-document td{padding:.8mm 1.4mm}
+      .proposal-document .local-date{margin-top:1.8mm!important}
+      .proposal-document .signature-heading{margin:1.2mm 0 .5mm;font-size:9pt}
+      .proposal-document .signature-grid{column-gap:8mm;row-gap:1.5mm;break-inside:avoid;page-break-inside:avoid}
+      .proposal-document .signature{font-size:8pt;line-height:1.1}
+      .proposal-document .signature-line{height:6mm;margin-bottom:1mm}
+      .proposal-document .document-footer{font-size:6.5pt}
+      @media print{.document{margin:0;box-shadow:none}.proposal-document{min-height:297mm;height:297mm}.signature-block,.signature-grid,.signature{break-inside:avoid!important;page-break-inside:avoid!important}}
+    `;
+  }
+
   async function logoDataUrl() {
     try {
       const response = await fetch(new URL('logo02.png', window.location.href));
@@ -203,7 +227,7 @@
       authorizationDebit(data, logo), authorizationLgpd(data, logo), successDeclaration(data, logo),
       absenceOperations(data, logo), condemnation(data, logo), regularity(data, logo), proposal(data, logo)
     ].join('');
-    return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Dossiê FCO - ${escapeHtml(data.empresa.razaoSocial)}</title><style>${dossierCss()}</style></head><body><div class="toolbar"><strong>Dossiê FCO · ${escapeHtml(data.empresa.razaoSocial)}</strong><button onclick="window.print()">Imprimir / Salvar em PDF</button></div>${documents}</body></html>`;
+    return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Dossiê FCO - ${escapeHtml(data.empresa.razaoSocial)}</title><style>${dossierCss()}${dossierPrintFixCss()}</style></head><body><div class="toolbar"><strong>Dossiê FCO · ${escapeHtml(data.empresa.razaoSocial)}</strong><button onclick="window.print()">Imprimir / Salvar em PDF</button></div>${documents}</body></html>`;
   }
 
   window.FCOReports = { renderDossier };

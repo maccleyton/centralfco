@@ -131,6 +131,7 @@ guaranteesList.addEventListener('input', event => {
   if (event.target.dataset.field === 'cpf') event.target.value = formatCpf(event.target.value);
   if (event.target.dataset.field === 'cnpj') event.target.value = formatCnpj(event.target.value);
   updateRepeatedState(event, state.garantias);
+  if (['cpf', 'cnpj'].includes(event.target.dataset.field)) refreshGuaranteeDocumentValidations();
 });
 guaranteesList.addEventListener('change', event => {
   updateRepeatedState(event, state.garantias);
@@ -169,6 +170,17 @@ function formatCpf(value) {
     .replace(/\.(\d{3})(\d)/, '.$1-$2');
 }
 
+function validateCpf(value) {
+  const cpf = String(value || '').replace(/\D/g, '');
+  if (cpf.length !== 11 || /^(\d)\1{10}$/.test(cpf)) return false;
+  const digit = length => {
+    const sum = cpf.slice(0, length).split('').reduce((total, number, index) => total + Number(number) * (length + 1 - index), 0);
+    const remainder = (sum * 10) % 11;
+    return remainder === 10 ? 0 : remainder;
+  };
+  return digit(9) === Number(cpf[9]) && digit(10) === Number(cpf[10]);
+}
+
 function formatMoneyInput(value) {
   const digits = String(value || '').replace(/\D/g, '');
   const amount = Number(digits || '0') / 100;
@@ -198,6 +210,45 @@ function validateCnpj(value) {
   const first = digit(base, [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]);
   const second = digit(base + first, [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]);
   return raw.slice(12) === `${first}${second}`;
+}
+
+function normalizedPersonalDocument(value, type) {
+  return type === 'cpf' ? String(value || '').replace(/\D/g, '') : cleanDocument(value);
+}
+
+function guaranteeDocument(guarantee) {
+  if (guarantee.categoria !== 'pessoal') return null;
+  const type = guarantee.pessoaTipo === 'pj' ? 'cnpj' : 'cpf';
+  return { type, value: normalizedPersonalDocument(guarantee[type], type) };
+}
+
+function personalDocumentDuplicate(value, type, ignoredGuaranteeId = '') {
+  const normalized = normalizedPersonalDocument(value, type);
+  if (!normalized) return false;
+  if (type === 'cpf' && state.pessoas.some(person => normalizedPersonalDocument(person.cpf, 'cpf') === normalized)) return true;
+  return state.garantias.some(guarantee => {
+    if (guarantee.id === ignoredGuaranteeId) return false;
+    const document = guaranteeDocument(guarantee);
+    return document?.type === type && document.value === normalized;
+  });
+}
+
+function refreshGuaranteeDocumentValidations() {
+  guaranteesList.querySelectorAll('[data-field="cpf"],[data-field="cnpj"]').forEach(input => {
+    const guarantee = state.garantias.find(item => item.id === input.closest('[data-id]')?.dataset.id);
+    const type = input.dataset.field;
+    const value = input.value.trim();
+    let message = '';
+    if (value && !(type === 'cpf' ? validateCpf(value) : validateCnpj(value))) message = `${type.toUpperCase()} inválido.`;
+    else if (value && personalDocumentDuplicate(value, type, guarantee?.id)) message = `Este ${type.toUpperCase()} já foi adicionado como dirigente, representante ou garantia adicional.`;
+    input.setCustomValidity(message);
+    input.setAttribute('aria-invalid', message ? 'true' : 'false');
+    const status = input.closest('.repeat-card')?.querySelector('.guarantee-validation');
+    if (status) {
+      status.textContent = message;
+      status.className = message ? 'inline-message guarantee-validation is-error' : 'inline-message guarantee-validation';
+    }
+  });
 }
 
 async function enterApplication(event) {
@@ -364,9 +415,10 @@ function capturePerson() {
     representanteLegal: $('#personRepresentative').checked,
   };
   if (!person.nome || !person.cpf) return showMessage(personMessage, 'Informe nome e CPF.', 'error');
+  if (!validateCpf(person.cpf)) return showMessage(personMessage, 'Confira o CPF e os dígitos verificadores.', 'error');
   if (!person.dirigente && !person.representanteLegal) return showMessage(personMessage, 'Marque Dirigente ou Representante legal.', 'error');
-  if (state.pessoas.some(saved => saved.cpf.replace(/\D/g, '') === person.cpf.replace(/\D/g, ''))) {
-    return showMessage(personMessage, 'Este CPF já foi adicionado.', 'error');
+  if (personalDocumentDuplicate(person.cpf, 'cpf')) {
+    return showMessage(personMessage, 'Este CPF já foi adicionado como dirigente, representante ou garantia adicional.', 'error');
   }
   state.pessoas.push(person);
   renderPeople();
@@ -388,6 +440,7 @@ function renderPeople() {
   if (!state.pessoas.length) {
     renderEmpty(peopleList, 'Nenhuma pessoa adicionada.');
     renderAutomaticGuarantees();
+    refreshGuaranteeDocumentValidations();
     return;
   }
   state.pessoas.forEach((person, index) => {
@@ -409,6 +462,7 @@ function renderPeople() {
     peopleList.append(card);
   });
   renderAutomaticGuarantees();
+  refreshGuaranteeDocumentValidations();
 }
 
 function renderAutomaticGuarantees() {
@@ -458,9 +512,11 @@ function renderGuarantees() {
           ${field(guarantee.bemTipo === 'bem_financiado' ? 'Item financiado' : 'Descrição/origem', 'descricao', guarantee.descricao, 'text', 'field--span-2')}
           ${field('Percentual de vínculo', 'percentualVinculo', guarantee.percentualVinculo, 'number')}
         `}
-      </div>`;
+      </div>
+      <div class="inline-message guarantee-validation" role="status" aria-live="polite"></div>`;
     guaranteesList.append(card);
   });
+  refreshGuaranteeDocumentValidations();
 }
 
 function field(label, name, value, type = 'text', extraClass = '') {
@@ -513,12 +569,18 @@ function getTermRule(type, fcoMulher) {
 
 function termRuleErrors(operation) {
   const rule = getTermRule(operation.tipo, operation.fcoMulher);
+  const standardRule = getTermRule(operation.tipo, false);
   const total = Number(operation.prazoTotalMeses || 0);
   const grace = Number(operation.carenciaMeses || 0);
   const errors = [];
   if (grace < 3 || grace % 3 !== 0) errors.push('A carência deve ser um múltiplo de 3, começando em 3 meses.');
-  if (grace > rule.maxGrace) errors.push(`A carência máxima para ${rule.label} é de ${rule.maxGrace} meses.`);
-  if (total > rule.maxTotal) errors.push(`O prazo total máximo para ${rule.label} é de ${rule.maxTotal} meses.`);
+  const requiresSpecialCondition = !operation.fcoMulher && (grace > standardRule.maxGrace || total > standardRule.maxTotal);
+  if (requiresSpecialCondition) {
+    errors.push(`O prazo ou a carência informados exigem a condição especial FCO Mulher. Ative a condição ou respeite os limites de ${standardRule.maxTotal} meses no total e ${standardRule.maxGrace} meses de carência.`);
+  } else {
+    if (grace > rule.maxGrace) errors.push(`A carência máxima para ${rule.label} é de ${rule.maxGrace} meses.`);
+    if (total > rule.maxTotal) errors.push(`O prazo total máximo para ${rule.label} é de ${rule.maxTotal} meses.`);
+  }
   if (total > 0 && total <= grace) errors.push('O prazo total deve ser maior que a carência.');
   if (rule.maxRepayment !== null && total > grace && total - grace > rule.maxRepayment) {
     errors.push(`A amortização não pode superar ${rule.maxRepayment} meses; prazo total menos carência deve ser de até ${rule.maxRepayment}.`);
@@ -541,6 +603,9 @@ function validateTermInputs(showState = false) {
   $('#carencia').step = '3';
   $('#prazoTotal').setCustomValidity(errors.join(' '));
   $('#carencia').setCustomValidity(errors.join(' '));
+  const specialConditionError = !fcoMulher ? errors.find(error => error.includes('exigem a condição especial FCO Mulher')) || '' : '';
+  $('#fcoMulher').setCustomValidity(specialConditionError);
+  $('#fcoMulher').setAttribute('aria-invalid', specialConditionError ? 'true' : 'false');
   const repaymentText = rule.maxRepayment === null ? '' : ` e amortização de até ${rule.maxRepayment} meses`;
   if (showState && errors.length) {
     panel.textContent = errors.join(' ');
@@ -614,6 +679,14 @@ function numberValue(value) {
 
 function validatePayload(payload) {
   const errors = [];
+  const registeredDocuments = new Set();
+  const registerDocument = (value, type) => {
+    const normalized = normalizedPersonalDocument(value, type);
+    if (!normalized) return;
+    const key = `${type}:${normalized}`;
+    if (registeredDocuments.has(key)) errors.push(`O ${type.toUpperCase()} ${value} foi informado mais de uma vez entre dirigentes, representantes e garantias adicionais.`);
+    else registeredDocuments.add(key);
+  };
   if (!payload.acesso?.matricula || !payload.acesso?.nome) errors.push('Identificação do funcionário ausente. Entre novamente.');
   if (!payload.empresa) errors.push('Consulte um CNPJ válido antes de gerar.');
   if (payload.operacao.tipo === 'investimento' && !payload.operacao.linhaCredito) errors.push('Selecione a linha de crédito.');
@@ -632,11 +705,17 @@ function validatePayload(payload) {
   if (!payload.pessoas.some(person => person.representanteLegal)) errors.push('Adicione ao menos um representante legal.');
   payload.pessoas.forEach((person, index) => {
     if (!person.nome.trim() || !person.cpf.trim()) errors.push(`Complete nome e CPF da pessoa ${index + 1}.`);
+    else if (!validateCpf(person.cpf)) errors.push(`Confira o CPF da pessoa ${index + 1} e os dígitos verificadores.`);
+    registerDocument(person.cpf, 'cpf');
   });
   payload.operacao.garantias.forEach((guarantee, index) => {
     if (guarantee.categoria === 'pessoal') {
       const missing = guarantee.pessoaTipo === 'pf' ? !guarantee.nome.trim() || !guarantee.cpf.trim() : !guarantee.razaoSocial.trim() || !guarantee.cnpj.trim();
       if (missing) errors.push(`Complete a garantia pessoal ${index + 1}.`);
+      const type = guarantee.pessoaTipo === 'pf' ? 'cpf' : 'cnpj';
+      const value = guarantee[type];
+      if (value && !(type === 'cpf' ? validateCpf(value) : validateCnpj(value))) errors.push(`Confira o ${type.toUpperCase()} da garantia pessoal ${index + 1} e os dígitos verificadores.`);
+      registerDocument(value, type);
     } else if (!guarantee.descricao.trim() || guarantee.percentualVinculo <= 0 || guarantee.percentualVinculo > 100) {
       errors.push(`Complete a descrição e o percentual da garantia real ${index + 1}.`);
     }

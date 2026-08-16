@@ -270,9 +270,36 @@ function dateInPortuguese(value) {
   return new Intl.DateTimeFormat('pt-BR').format(new Date(year, month - 1, day));
 }
 
+let reportLogoSource = 'logo02.png';
+const reportLogoReady = (async () => {
+  try {
+    const response = await fetch(new URL('logo02.png', window.location.href));
+    if (!response.ok) throw new Error('Logo não encontrada.');
+    const blob = await response.blob();
+    reportLogoSource = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } catch (_) {
+    reportLogoSource = new URL('logo02.png', window.location.href).href;
+  }
+})();
+
+function reportHeader(label) {
+  return `<header class="brand"><img src="${escapeReportHtml(reportLogoSource)}" alt="Banco do Brasil"><span>${escapeReportHtml(label)}</span></header>`;
+}
+
+function standardReportFooter() {
+  return `<footer class="footer">CRBB: 4004-0001 (capitais e regiões metropolitanas) ou 0800 729 0001 (demais localidades).<br>SAC: 0800 729 0722 · Atendimento para Pessoas com Deficiência Auditiva ou de Fala: 0800 729 0088 · Ouvidoria BB: 0800 729 5678.</footer>`;
+}
+
 function reportShell(title, body) {
   return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeReportHtml(title)}</title><style>
-  @page{size:A4;margin:16mm 15mm}*{box-sizing:border-box}body{margin:0;background:#eef0f7;color:#20213a;font-family:Arial,sans-serif;line-height:1.45}.page{width:210mm;min-height:297mm;margin:20px auto;padding:16mm 15mm;background:#fff;box-shadow:0 12px 40px #1d1e3b26}.brand{display:flex;align-items:center;justify-content:space-between;padding-bottom:13px;border-bottom:5px solid #fcfc30}.brand strong{color:#3333bd;font-size:20px}.brand span{color:#626579;font-size:10px;text-transform:uppercase;letter-spacing:.1em}.title{margin:28px 0 20px}.title small{color:#3333bd;font-weight:700;letter-spacing:.1em}.title h1{margin:5px 0 0;font-size:26px;line-height:1.1}.data-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:18px 0}.data{padding:10px 12px;border:1px solid #d9dcea;border-radius:8px}.data.wide{grid-column:1/-1}.data small,.signature small{display:block;color:#707387;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em}.data strong{display:block;margin-top:3px;font-size:12px}.copy{font-size:11px;text-align:justify}.copy h2{margin:22px 0 8px;color:#3333bd;font-size:14px}.copy li{margin-bottom:5px}.tax-table{width:100%;margin:13px 0 20px;border-collapse:collapse;font-size:11px}.tax-table th,.tax-table td{padding:9px;border:1px solid #cfd3e2;text-align:left}.tax-table th{background:#ededff;color:#3333bd}.signature{margin-top:42px;padding-top:30px;border-top:1px solid #777;text-align:center}.signature strong{font-size:12px}.footer{display:flex;justify-content:space-between;margin-top:38px;padding-top:10px;border-top:1px solid #d9dcea;color:#7a7d8d;font-size:8px}.print{position:fixed;right:22px;bottom:22px;padding:12px 18px;border:0;border-radius:8px;background:#3333bd;color:#fff;font-weight:700;cursor:pointer}@media print{body{background:#fff}.page{width:auto;min-height:auto;margin:0;padding:0;box-shadow:none}.print{display:none}}@media(max-width:800px){.page{width:100%;min-height:100vh;margin:0;padding:24px 18px}.data-grid{grid-template-columns:1fr}.data.wide{grid-column:auto}.print{right:12px;bottom:12px}}
+  @page{size:A4;margin:0}*{box-sizing:border-box}body{margin:0;background:#eef0f7;color:#20213a;font-family:Arial,sans-serif;line-height:1.45}.page{position:relative;width:210mm;min-height:297mm;margin:20px auto;padding:13mm 18mm 27mm;background:#fff;box-shadow:0 12px 40px #1d1e3b26}.brand{height:18mm;display:flex;align-items:center;justify-content:space-between;gap:6mm;margin-bottom:6mm;padding-bottom:2.5mm;border-bottom:1.5pt solid #2037a0}.brand img{width:22mm;height:12mm;object-fit:contain}.brand span{color:#555;font-size:7.5pt;text-transform:uppercase;letter-spacing:.12em}.title{margin:18px 0 20px}.title small{color:#3333bd;font-weight:700;letter-spacing:.1em}.title h1{margin:5px 0 0;font-size:26px;line-height:1.1}.data-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:18px 0}.data{padding:10px 12px;border:1px solid #d9dcea;border-radius:8px}.data.wide{grid-column:1/-1}.data small,.signature small{display:block;color:#707387;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em}.data strong{display:block;margin-top:3px;font-size:12px}.copy{font-size:11px;text-align:justify}.copy h2{margin:22px 0 8px;color:#3333bd;font-size:14px}.copy li{margin-bottom:5px}.tax-table{width:100%;margin:13px 0 20px;border-collapse:collapse;font-size:11px}.tax-table th,.tax-table td{padding:9px;border:1px solid #cfd3e2;text-align:left}.tax-table th{background:#ededff;color:#3333bd}.signature{margin-top:42px;padding-top:30px;border-top:1px solid #777;text-align:center}.signature strong{font-size:12px}.footer{position:absolute;left:18mm;right:18mm;bottom:10mm;padding-top:2.5mm;border-top:.6pt solid #aaa;color:#333;font-size:7.5pt;line-height:1.25}.print{position:fixed;right:22px;bottom:22px;padding:12px 18px;border:0;border-radius:8px;background:#3333bd;color:#fff;font-weight:700;cursor:pointer}@media print{body{background:#fff}.page{margin:0;box-shadow:none}.print{display:none}}@media(max-width:800px){.page{width:100%;min-height:100vh;margin:0;padding:24px 18px 100px}.brand{height:auto}.brand img{width:64px;height:40px}.footer{left:18px;right:18px;bottom:20px}.data-grid{grid-template-columns:1fr}.data.wide{grid-column:auto}.print{right:12px;bottom:12px}}
+  .signature{margin-top:18mm;padding-top:4mm;break-inside:avoid;page-break-inside:avoid}
+  @media print{html,body{width:210mm;height:297mm}body{background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}.page{width:210mm;height:297mm;min-height:297mm;max-height:297mm;margin:0;padding:13mm 18mm 27mm;overflow:hidden;box-shadow:none}.brand,.title,.data-grid,.tax-table,.signature{break-inside:avoid;page-break-inside:avoid}.data-grid{grid-template-columns:1fr 1fr}.data.wide{grid-column:1/-1}.tax-table th{background:#ededff!important}.print{display:none}}
   </style></head><body><main class="page">${body}</main><button class="print" onclick="window.print()">Imprimir / salvar PDF</button></body></html>`;
 }
 
@@ -280,7 +307,7 @@ function buildNifReport(data) {
   const secondTaxRow = data.taxCountry2 && data.taxNumber2 ? `<tr><td>${escapeReportHtml(data.taxCountry2)}</td><td>${escapeReportHtml(data.taxNumber2)}</td></tr>` : '';
   const birthData = data.personType === 'pf' ? `<div class="data"><small>Data de nascimento</small><strong>${escapeReportHtml(dateInPortuguese(data.birthDate))}</strong></div><div class="data"><small>País de nascimento</small><strong>${escapeReportHtml(data.birthCountry)}</strong></div>` : '';
   return reportShell('Declaração de Domicílio Fiscal - NIF', `
-    <header class="brand"><strong>Central FCO</strong><span>Declaração cadastral</span></header>
+    ${reportHeader('Declaração cadastral')}
     <section class="title"><small>DOMICÍLIO FISCAL</small><h1>Declaração de Domicílio Fiscal - NIF</h1></section>
     <div class="data-grid"><div class="data wide"><small>${data.personType === 'pj' ? 'Razão social' : 'Nome completo'}</small><strong>${escapeReportHtml(data.name)}</strong></div><div class="data"><small>${data.personType === 'pj' ? 'CNPJ' : 'CPF'}</small><strong>${escapeReportHtml(data.document)}</strong></div>${birthData}<div class="data wide"><small>Endereço da sede/residência no Brasil</small><strong>${escapeReportHtml(data.address)}</strong></div></div>
     <div class="copy"><h2>Residência fiscal declarada</h2><p>DECLARO, para os devidos fins, que possuo domicílio fiscal nos países relacionados abaixo:</p></div>
@@ -288,17 +315,17 @@ function buildNifReport(data) {
     <div class="copy"><h2>Declarações</h2><p>Entendo que as informações fornecidas estão cobertas pelas disposições que regem o relacionamento do titular com o Banco do Brasil e que podem ser compartilhadas com autoridades fiscais, conforme a legislação e os acordos aplicáveis.</p><p>Certifico que sou o titular, ou estou autorizado a assinar em seu nome, e declaro que as informações prestadas são corretas e completas.</p><p>Comprometo-me a informar ao Banco do Brasil, no prazo de 30 dias, qualquer alteração que torne esta declaração incorreta ou incompleta, apresentando uma declaração atualizada.</p></div>
     <div class="data-grid"><div class="data"><small>Local</small><strong>${escapeReportHtml(data.place)}</strong></div><div class="data"><small>Data</small><strong>${escapeReportHtml(dateInPortuguese(data.date))}</strong></div></div>
     <div class="signature"><small>Assinatura</small><strong>${escapeReportHtml(data.signer)}</strong></div>
-    <footer class="footer"><span>NIF no Brasil: CPF para pessoa física e CNPJ para pessoa jurídica.</span><span>Documento gerado pela Central FCO</span></footer>`);
+    ${standardReportFooter()}`);
 }
 
 function buildScrReport(data) {
   return reportShell('Autorização para Consulta ao SCR', `
-    <header class="brand"><strong>Central FCO</strong><span>Autorização cadastral</span></header>
+    ${reportHeader('Autorização cadastral')}
     <section class="title"><small>SISTEMA DE INFORMAÇÕES DE CRÉDITO</small><h1>Autorização para Consulta ao SCR</h1></section>
     <div class="data-grid"><div class="data wide"><small>Nome do cliente / razão social</small><strong>${escapeReportHtml(data.name)}</strong></div><div class="data"><small>${data.personType === 'pj' ? 'CNPJ' : 'CPF'}</small><strong>${escapeReportHtml(data.document)}</strong></div><div class="data"><small>Local e data</small><strong>${escapeReportHtml(data.place)}, ${escapeReportHtml(dateInPortuguese(data.date))}</strong></div></div>
     <div class="copy"><p>Autorizo(amos) o Conglomerado Banco do Brasil S.A. a consultar os débitos e responsabilidades decorrentes de operações com características de crédito e as informações e registros de medidas judiciais que em meu(nosso) nome constem ou venham a constar do Sistema de Informações de Crédito (SCR), gerido pelo Banco Central do Brasil, ou dos sistemas que venham a complementá-lo ou substituí-lo.</p><h2>Estou(amos) ciente(s) de que:</h2><ol type="a"><li>o SCR provê informações ao Banco Central para monitoramento do crédito, fiscalização e intercâmbio de informações entre instituições financeiras;</li><li>posso(emos) acessar os dados registrados em meu(nosso) nome por meio do sistema Registrato do Banco Central;</li><li>pedidos de correção, exclusão ou manifestação de discordância devem ser dirigidos ao Banco do Brasil por requerimento escrito e fundamentado, quando o BB tiver sido responsável pelo envio;</li><li>a consulta de informações no SCR depende de prévia autorização;</li><li>o Conglomerado Banco do Brasil deve enviar ao SCR as informações das operações de crédito definidas pela regulamentação do Banco Central;</li><li>mais informações podem ser obtidas nas páginas do Banco Central e do Banco do Brasil.</li></ol></div>
     <div class="signature"><small>Assinatura do cliente ou representante autorizado</small><strong>${escapeReportHtml(data.name)}</strong></div>
-    <footer class="footer"><span>Central de Atendimento BB: 4004 0001 / 0800 729 0001</span><span>Documento gerado pela Central FCO</span></footer>`);
+    ${standardReportFooter()}`);
 }
 
 function formValues(form) {
@@ -346,11 +373,12 @@ function deliverHtmlReport(html, filename, popup) {
 }
 
 function handleReportSubmit(prefix, builder, filenamePrefix) {
-  return event => {
+  return async event => {
     event.preventDefault();
     const data = formValues(event.currentTarget);
     if (!validateClientForm(prefix, data)) return;
     const popup = window.open('', '_blank');
+    await reportLogoReady;
     const documentNumber = prefix === 'nif' ? data.taxNumber1 : data.document;
     const safeDocument = data.personType === 'pj' ? cleanCnpj(documentNumber) : onlyDigits(documentNumber);
     const filename = `${filenamePrefix}_${safeDocument}.html`;
