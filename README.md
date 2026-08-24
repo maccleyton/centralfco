@@ -16,4 +16,4 @@ A consulta de CNPJ usa a BrasilAPI como fonte principal e a API pública CNPJá 
 
 ## Relatórios e ferramentas
 
-O botão **Declarações** abre os formulários de residência, renda, NIF e SCR. Quando a consulta do CNPJ confirma que a empresa é optante pelo Simples Nacional, a declaração correspondente é incluída automaticamente no dossiê do FCO. O botão **Relatórios** reúne o tutorial do FCO, as regras de linhas e prazos, o compactador local de PDF e a consulta completa de CNPJ, incluindo quadro societário, dirigentes e situação do Simples Nacional.
+O botão **Utilitários** permite escolher e abrir apenas o formulário necessário de residência, renda, NIF ou SCR, reaproveitar dados por CPF durante a sessão e usar o compactador local de PDF. Quando a consulta do CNPJ confirma que a empresa é optante pelo Simples Nacional, a declaração correspondente é incluída automaticamente no dossiê do FCO. O botão **Relatórios** reúne o tutorial do FCO, as regras de linhas e prazos e a consulta completa de CNPJ, incluindo quadro societário, dirigentes e situação do Simples Nacional.

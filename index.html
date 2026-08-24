@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Central local para geração de propostas e declarações FCO.">
   <title>Central FCO Web | Relatórios</title>
-  <link rel="stylesheet" href="styles.css?v=11">
+  <link rel="stylesheet" href="styles.css?v=12">
   <script defer src="cnpj-api.js?v=2"></script>
   <script defer src="agencies.js?v=2"></script>
-  <script defer src="reports.js?v=10"></script>
-  <script defer src="app.js?v=12"></script>
+  <script defer src="reports.js?v=12"></script>
+  <script defer src="app.js?v=14"></script>
 </head>
 <body>
   <main id="loginScreen" class="login-screen">
@@ -62,7 +62,7 @@
         </a>
         <a class="header-link" href="declaracoes.html?from=web">
           <span aria-hidden="true">▧</span>
-          Declarações
+          Utilitários
         </a>
         <div class="topbar__meta">
           <span class="status-dot" aria-hidden="true"></span>
@@ -212,8 +212,8 @@
             <input id="propostaCop" name="propostaCop" type="text" placeholder="Opcional">
           </div>
           <div class="field field--span-2">
-            <label for="finalidade">Finalidade</label>
-            <input id="finalidade" name="finalidade" type="text" placeholder="Finalidade principal da operação" required>
+            <label for="finalidade">Descrição de Finalidade</label>
+            <input id="finalidade" name="finalidade" type="text" placeholder="Descreva a finalidade principal da operação" required>
           </div>
           <fieldset id="investmentModalityGroup" class="field field--span-3 choice-group">
             <legend>Modalidade do empreendimento</legend>
@@ -232,8 +232,8 @@
             <label class="switch"><input id="fcoMulher" name="fcoMulher" type="checkbox"><span aria-hidden="true"></span><em>Ativar</em></label>
           </div>
           <div class="field field--span-3">
-            <label for="descricaoFinalidade">Descrição do empreendimento</label>
-            <textarea id="descricaoFinalidade" name="descricaoFinalidade" rows="4" placeholder="Detalhe a finalidade, os objetivos e a aplicação dos recursos." required></textarea>
+            <label for="descricaoFinalidade">Descrição da Proposta</label>
+            <textarea id="descricaoFinalidade" name="descricaoFinalidade" rows="4" placeholder="Detalhe a proposta, seus objetivos e a aplicação dos recursos." required></textarea>
           </div>
           <div class="field field--span-3">
             <label for="localEmpreendimento">Localização do empreendimento</label>
@@ -275,11 +275,11 @@
           </div>
           <div class="field">
             <label for="agenciaDebito">Agência para débito</label>
-            <input id="agenciaDebito" name="agenciaDebito" type="text" inputmode="numeric" maxlength="5" placeholder="0000" required>
+            <input id="agenciaDebito" name="agenciaDebito" type="text" inputmode="numeric" maxlength="9" pattern="\d{1,7}-\d" placeholder="0000000-0" title="Informe até sete dígitos, hífen e o dígito verificador" required>
           </div>
           <div class="field">
             <label for="contaDebito">Conta para débito</label>
-            <input id="contaDebito" name="contaDebito" type="text" placeholder="00000-0" required>
+            <input id="contaDebito" name="contaDebito" type="text" inputmode="numeric" maxlength="9" pattern="\d{1,7}-\d" placeholder="0000000-0" title="Informe até sete dígitos, hífen e o dígito verificador" required>
           </div>
           <div class="field field--span-4">
             <label for="outrasInformacoes">Outras informações</label>
@@ -306,6 +306,13 @@
               <label class="check"><input id="personDirector" type="checkbox"><span>Dirigente</span></label>
               <label class="check"><input id="personRepresentative" type="checkbox"><span>Representante legal</span></label>
             </fieldset>
+            <fieldset class="field choice-group roles spouse-choice"><legend>Cônjuge</legend>
+              <label class="check"><input id="personHasSpouse" type="checkbox"><span>Adicionar cônjuge com o mesmo endereço</span></label>
+            </fieldset>
+            <div id="spouseFields" class="spouse-fields roles" hidden>
+              <div class="spouse-fields__heading"><strong>Dados do cônjuge</strong><small>O endereço residencial será reaproveitado automaticamente.</small></div>
+              <div class="person-grid"><div class="field field--span-2"><label for="spouseName">Nome completo</label><input id="spouseName" type="text"></div><div class="field field--span-2"><label for="spouseCpf">CPF</label><input id="spouseCpf" type="text" inputmode="numeric" maxlength="14"></div><fieldset class="field choice-group roles"><legend>Papéis do cônjuge</legend><label class="check"><input id="spouseDirector" type="checkbox"><span>Dirigente</span></label><label class="check"><input id="spouseRepresentative" type="checkbox"><span>Representante legal</span></label></fieldset></div>
+            </div>
             <div class="address-title">Endereço residencial</div>
             <div class="field field--span-2"><label for="personStreet">Logradouro</label><input id="personStreet" type="text"></div>
             <div class="field"><label for="personNumber">Número</label><input id="personNumber" type="text"></div>
@@ -323,18 +330,27 @@
       </section>
 
       <section class="form-section" aria-labelledby="garantiasTitle">
-        <div class="section-heading section-heading--action">
+        <div class="section-heading">
           <span class="section-number">04</span>
           <div>
             <h2 id="garantiasTitle">Garantias adicionais</h2>
             <p>Todos os dirigentes são incluídos automaticamente como garantidores fidejussórios. Cadastre abaixo somente garantias adicionais, se houver.</p>
           </div>
-          <button id="btnAddGuarantee" class="button button--secondary" type="button">+ Adicionar garantia adicional</button>
         </div>
         <div class="automatic-guarantees">
           <span class="automatic-guarantees__label">Garantias fidejussórias automáticas</span>
           <div id="automaticGuaranteesList" class="automatic-guarantees__list"></div>
         </div>
+        <div class="guarantee-entry person-entry">
+          <div class="guarantee-grid">
+            <div class="field"><label for="guaranteeCategory">Categoria</label><select id="guaranteeCategory"><option value="real">Real</option><option value="pessoal">Pessoal</option></select></div>
+            <div id="guaranteePersonalFields" class="guarantee-entry__group roles" hidden><div class="guarantee-grid"><div class="field"><label for="guaranteePersonType">Tipo de garantidor</label><select id="guaranteePersonType"><option value="pf">Pessoa física</option><option value="pj">Pessoa jurídica</option></select></div><div id="guaranteeIndividualFields" class="guarantee-entry__group roles"><div class="guarantee-grid"><div class="field field--span-2"><label for="guaranteeName">Nome</label><input id="guaranteeName" type="text"></div><div class="field field--span-2"><label for="guaranteeCpf">CPF</label><input id="guaranteeCpf" type="text" inputmode="numeric" maxlength="14"></div></div></div><div id="guaranteeCompanyFields" class="guarantee-entry__group roles" hidden><div class="guarantee-grid"><div class="field field--span-2"><label for="guaranteeCompanyName">Razão social</label><input id="guaranteeCompanyName" type="text"></div><div class="field field--span-2"><label for="guaranteeCnpj">CNPJ</label><input id="guaranteeCnpj" type="text" maxlength="18"></div></div></div></div></div>
+            <div id="guaranteeRealFields" class="guarantee-entry__group roles"><div class="guarantee-grid"><div class="field"><label for="guaranteeAssetType">Tipo de bem</label><select id="guaranteeAssetType"><option value="bem_financiado">Bem financiado</option><option value="imovel">Imóvel</option><option value="veiculo">Veículo</option><option value="maquinas_equipamentos">Máquinas e equipamentos</option><option value="recebiveis">Recebíveis</option></select></div><div class="field field--span-2"><label id="guaranteeDescriptionLabel" for="guaranteeDescription">Item financiado</label><input id="guaranteeDescription" type="text"></div><div class="field"><label for="guaranteePercentage">Percentual de vínculo</label><input id="guaranteePercentage" type="number" min="0.01" max="100" step="0.01"></div></div></div>
+          </div>
+          <div id="guaranteeMessage" class="inline-message" role="status" aria-live="polite"></div>
+          <button id="btnAddGuarantee" class="button button--primary person-entry__button" type="button">+ Adicionar garantia</button>
+        </div>
+        <div class="subsection-heading"><div><h3>Garantias adicionadas</h3><p>Os registros abaixo já fazem parte da proposta.</p></div></div>
         <div id="guaranteesList" class="repeat-list additional-guarantees"></div>
       </section>
 

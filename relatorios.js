@@ -98,8 +98,8 @@ const byId = id => document.getElementById(id);
 const reportsSource = new URLSearchParams(window.location.search).get('from');
 
 if (reportsSource === 'web') {
-  byId('reportsBackBrand').href = 'index.html';
-  byId('reportsBackLink').href = 'index.html';
+  byId('reportsBackBrand').href = 'web/index.html';
+  byId('reportsBackLink').href = 'web/index.html';
 }
 
 function returnToCentral(event) {
@@ -136,6 +136,10 @@ function formatCpf(value) {
     .replace(/\.(\d{3})(\d)/, '.$1-$2');
 }
 
+function hasFullReportName(value) {
+  return String(value || '').trim().split(/\s+/).filter(part => /\p{L}/u.test(part)).length >= 2;
+}
+
 function formatCnpj(value) {
   const raw = cleanCnpj(value);
   if (!raw) return '';
@@ -156,6 +160,107 @@ function validCpf(value) {
     return remainder === 10 ? 0 : remainder;
   };
   return calculate(9) === Number(cpf[9]) && calculate(10) === Number(cpf[10]);
+}
+
+const utilityHistoryKey = 'centralFcoUtilityHistoryV1';
+
+function readUtilityHistory() {
+  try {
+    return JSON.parse(sessionStorage.getItem(utilityHistoryKey) || '{}');
+  } catch (error) {
+    return {};
+  }
+}
+
+function writeUtilityHistory(historyData) {
+  try {
+    sessionStorage.setItem(utilityHistoryKey, JSON.stringify(historyData));
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
+function saveUtilityHistory(formId, data) {
+  const cpf = onlyDigits(data.personType ? data.document : data.cpf);
+  if (cpf.length !== 11 || !validCpf(cpf)) return;
+  const historyData = readUtilityHistory();
+  const current = historyData[cpf] || { profile: {}, forms: {} };
+  const profile = {
+    name: data.name,
+    document: formatCpf(cpf),
+    cpf: formatCpf(cpf),
+    address: data.address,
+    place: data.place,
+    uf: data.uf,
+    birthDate: data.birthDate,
+    birthCountry: data.birthCountry,
+    profession: data.profession,
+    occupation: data.occupation,
+    monthlyIncome: data.monthlyIncome,
+    signer: data.signer || data.name
+  };
+  Object.entries(profile).forEach(([key, value]) => {
+    if (String(value || '').trim()) current.profile[key] = value;
+  });
+  current.forms[formId] = { ...data, personType: data.personType || 'pf' };
+  current.updatedAt = new Date().toISOString();
+  historyData[cpf] = current;
+  writeUtilityHistory(historyData);
+}
+
+function fillUtilityFromHistory(formId, trigger) {
+  const form = byId(formId);
+  const historyBox = trigger.closest('.history-reuse');
+  const input = historyBox.querySelector('[data-history-cpf]');
+  const message = historyBox.querySelector('[data-history-message]');
+  const cpf = onlyDigits(input.value);
+  message.className = '';
+  if (!validCpf(cpf)) {
+    message.textContent = 'Confira o CPF informado.';
+    message.classList.add('is-error');
+    input.focus();
+    return;
+  }
+  const entry = readUtilityHistory()[cpf];
+  if (!entry) {
+    message.textContent = 'Nenhum dado encontrado para este CPF nesta sessão.';
+    message.classList.add('is-error');
+    return;
+  }
+  const prefix = formId.replace('Form', '');
+  if (prefix === 'nif' || prefix === 'scr') {
+    byId(`${prefix}PersonType`).value = 'pf';
+    syncPersonType(prefix, false);
+    formState[prefix] = null;
+  }
+  const values = { ...entry.profile, ...(entry.forms[formId] || {}) };
+  values.cpf = formatCpf(cpf);
+  values.document = formatCpf(cpf);
+  values.personType = 'pf';
+  form.querySelectorAll('[name]').forEach(field => {
+    if (field.name === 'date' || values[field.name] === undefined || values[field.name] === null) return;
+    if (field.type === 'checkbox') field.checked = Boolean(values[field.name]);
+    else field.value = values[field.name];
+  });
+  if (formId === 'nifForm') {
+    byId('nifTaxCountry1').value = 'Brasil';
+    byId('nifTaxNumber1').value = formatCpf(cpf);
+    if (!byId('nifSigner').value) byId('nifSigner').value = values.name || '';
+  }
+  message.textContent = 'Dados reaproveitados. Confira antes de gerar o documento.';
+  message.classList.add('is-success');
+}
+
+function openUtilityPanel(panelId, shouldScroll = true) {
+  const panel = byId(panelId);
+  if (!panel) return;
+  document.querySelectorAll('.utility-panel').forEach(item => { item.hidden = item !== panel; });
+  document.querySelectorAll('[data-open-utility]').forEach(control => {
+    control.classList.toggle('is-active', control.dataset.openUtility === panelId);
+    if (control.tagName === 'BUTTON') control.setAttribute('aria-pressed', control.dataset.openUtility === panelId ? 'true' : 'false');
+  });
+  if (shouldScroll) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function validCnpj(value) {
@@ -426,6 +531,11 @@ function validateClientForm(prefix, data) {
     setFormMessage(`${prefix}FormMessage`, 'Preencha todos os campos obrigatórios.', 'error');
     return false;
   }
+  if (data.personType === 'pf' && !hasFullReportName(data.name)) {
+    setFormMessage(`${prefix}FormMessage`, 'Informe o nome e pelo menos um sobrenome.', 'error');
+    byId(`${prefix}Name`).focus();
+    return false;
+  }
   if (data.personType === 'pf' && !validCpf(data.document)) {
     setFormMessage(`${prefix}FormMessage`, 'Confira o CPF e os dígitos verificadores.', 'error');
     byId(`${prefix}Document`).focus();
@@ -469,6 +579,7 @@ function handleReportSubmit(prefix, builder, filenamePrefix) {
     const documentNumber = prefix === 'nif' ? data.taxNumber1 : data.document;
     const safeDocument = data.personType === 'pj' ? cleanCnpj(documentNumber) : onlyDigits(documentNumber);
     const filename = `${filenamePrefix}_${safeDocument}.html`;
+    if (data.personType === 'pf') saveUtilityHistory(`${prefix}Form`, data);
     deliverHtmlReport(builder(data), filename, popup);
     setFormMessage(`${prefix}FormMessage`, 'Documento gerado. A versão para impressão foi aberta e o HTML foi baixado.', 'success');
   };
@@ -489,8 +600,14 @@ function handleSimpleReportSubmit(formId, messageId, builder, filenamePrefix) {
       form.querySelector('[name="cpf"]').focus();
       return;
     }
+    if (!hasFullReportName(data.name)) {
+      setFormMessage(messageId, 'Informe o nome e pelo menos um sobrenome.', 'error');
+      form.querySelector('[name="name"]').focus();
+      return;
+    }
     const popup = window.open('', '_blank');
     await reportLogoReady;
+    saveUtilityHistory(formId, data);
     deliverHtmlReport(builder(data), `${filenamePrefix}_${onlyDigits(data.cpf)}.html`, popup);
     setFormMessage(messageId, 'Documento gerado. A versão para impressão foi aberta e o HTML foi baixado.', 'success');
   };
@@ -519,6 +636,17 @@ byId('scrDate').value = today;
 byId('residenceDate').value = today;
 byId('incomeDate').value = today;
 ['residenceCpf', 'incomeCpf'].forEach(id => byId(id).addEventListener('input', event => { event.target.value = formatCpf(event.target.value); }));
+document.querySelectorAll('[data-history-cpf]').forEach(input => input.addEventListener('input', event => {
+  event.target.value = formatCpf(event.target.value);
+  const message = event.target.closest('.history-reuse').querySelector('[data-history-message]');
+  message.textContent = '';
+  message.className = '';
+}));
+document.querySelectorAll('[data-reuse-history]').forEach(button => button.addEventListener('click', () => fillUtilityFromHistory(button.dataset.reuseHistory, button)));
+document.querySelectorAll('[data-open-utility]').forEach(control => control.addEventListener('click', event => {
+  event.preventDefault();
+  openUtilityPanel(control.dataset.openUtility);
+}));
 byId('nifForm').addEventListener('submit', handleReportSubmit('nif', buildNifReport, 'Declaracao_Domicilio_Fiscal_NIF'));
 byId('scrForm').addEventListener('submit', handleReportSubmit('scr', buildScrReport, 'Autorizacao_Consulta_SCR'));
 byId('residenceForm').addEventListener('submit', handleSimpleReportSubmit('residenceForm', 'residenceFormMessage', buildResidenceReport, 'Autodeclaracao_Residencia'));

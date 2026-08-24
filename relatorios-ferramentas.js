@@ -244,11 +244,17 @@ async function consultFullCompany(event) {
   }
 }
 
-toolElement('pdfCompressorForm').addEventListener('submit', compressPdf);
-toolElement('companyLookupForm').addEventListener('submit', consultFullCompany);
-toolElement('companyLookupDocument').addEventListener('input', event => {
-  event.target.value = formatToolCnpj(event.target.value);
-  toolElement('companyLookupMessage').textContent = '';
-  toolElement('companyLookupMessage').className = 'tool-result';
-  toolElement('companyLookupResult').hidden = true;
-});
+const pdfCompressorForm = toolElement('pdfCompressorForm');
+if (pdfCompressorForm) pdfCompressorForm.addEventListener('submit', compressPdf);
+
+const companyLookupForm = toolElement('companyLookupForm');
+const companyLookupDocument = toolElement('companyLookupDocument');
+if (companyLookupForm && companyLookupDocument) {
+  companyLookupForm.addEventListener('submit', consultFullCompany);
+  companyLookupDocument.addEventListener('input', event => {
+    event.target.value = formatToolCnpj(event.target.value);
+    toolElement('companyLookupMessage').textContent = '';
+    toolElement('companyLookupMessage').className = 'tool-result';
+    toolElement('companyLookupResult').hidden = true;
+  });
+}

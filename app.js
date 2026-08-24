@@ -26,6 +26,7 @@ const automaticGuaranteesList = $('#automaticGuaranteesList');
 const formMessage = $('#formMessage');
 const btnGenerate = $('#btnGenerate');
 const personMessage = $('#personMessage');
+const guaranteeMessage = $('#guaranteeMessage');
 const loginMessage = $('#loginMessage');
 const lowercaseNameWords = new Set(['da', 'do', 'das', 'dos', 'de', 'com']);
 const sessionKey = 'centralFcoSessionV1';
@@ -35,6 +36,19 @@ function formatPersonName(value) {
     if (lowercaseNameWords.has(word)) return word;
     return word.replace(/(^|[-'’])\p{L}/gu, match => match.toLocaleUpperCase('pt-BR'));
   }).join(' ');
+}
+
+function hasFullName(value) {
+  return formatPersonName(value).split(/\s+/).filter(part => /\p{L}/u.test(part)).length >= 2;
+}
+
+function formatBankReference(value) {
+  const digits = String(value || '').replace(/\D/g, '').slice(0, 8);
+  return digits.length < 2 ? digits : `${digits.slice(0, -1)}-${digits.slice(-1)}`;
+}
+
+function validBankReference(value) {
+  return /^\d{1,7}-\d$/.test(String(value || '').trim());
 }
 
 function setAuthenticatedView(authenticated) {
@@ -79,6 +93,8 @@ document.addEventListener('DOMContentLoaded', () => {
   $$('.money-input').forEach(input => { input.value = formatMoneyInput(input.value); });
   renderPeople();
   renderGuarantees();
+  syncSpouseFields();
+  syncGuaranteeEntry();
   syncConditionalFields();
   loadAgencies();
   restoreSession();
@@ -90,6 +106,7 @@ $('#employeeRegistration').addEventListener('input', event => {
   event.target.value = event.target.value.toUpperCase().replace(/[^F0-9]/g, '').slice(0, 8);
   clearMessage(loginMessage);
 });
+$('#employeeName').addEventListener('input', () => clearMessage(loginMessage));
 
 cnpjInput.addEventListener('input', event => {
   event.target.value = formatCnpj(event.target.value);
@@ -122,7 +139,11 @@ $('#manualCompanyLegalType').addEventListener('change', event => {
   if (isOther) $('#manualCompanyOtherType').focus();
 });
 $('#btnAddPerson').addEventListener('click', capturePerson);
-$('#btnAddGuarantee').addEventListener('click', addGuarantee);
+$('#btnAddGuarantee').addEventListener('click', captureGuarantee);
+$('#personHasSpouse').addEventListener('change', syncSpouseFields);
+$('#guaranteeCategory').addEventListener('change', syncGuaranteeEntry);
+$('#guaranteePersonType').addEventListener('change', syncGuaranteeEntry);
+$('#guaranteeAssetType').addEventListener('change', syncGuaranteeEntry);
 $('#tipoOperacao').addEventListener('change', syncConditionalFields);
 $('#fcoMulher').addEventListener('change', syncTermRules);
 $('#prazoTotal').addEventListener('input', () => validateTermInputs(true));
@@ -133,7 +154,14 @@ $$('.money-input:not([readonly])').forEach(input => input.addEventListener('inpu
   calculateOwnResources();
 }));
 $('#personCpf').addEventListener('input', event => { event.target.value = formatCpf(event.target.value); clearMessage(personMessage); });
+$('#spouseCpf').addEventListener('input', event => { event.target.value = formatCpf(event.target.value); clearMessage(personMessage); });
 $('#personCep').addEventListener('input', event => { event.target.value = formatCep(event.target.value); clearMessage(personMessage); });
+['agenciaDebito', 'contaDebito'].forEach(identifier => $(`#${identifier}`).addEventListener('input', event => {
+  event.target.value = formatBankReference(event.target.value);
+  clearMessage(formMessage);
+}));
+$('#guaranteeCpf').addEventListener('input', event => { event.target.value = formatCpf(event.target.value); clearMessage(guaranteeMessage); });
+$('#guaranteeCnpj').addEventListener('input', event => { event.target.value = formatCnpj(event.target.value); clearMessage(guaranteeMessage); });
 $('#giroAssociado').addEventListener('change', syncConditionalFields);
 $('#situacaoFundos').addEventListener('change', syncConditionalFields);
 form.addEventListener('submit', generateReports);
@@ -144,16 +172,6 @@ peopleList.addEventListener('click', event => {
   removeEntry(state.pessoas, button.closest('[data-id]').dataset.id, renderPeople);
 });
 
-guaranteesList.addEventListener('input', event => {
-  if (event.target.dataset.field === 'cpf') event.target.value = formatCpf(event.target.value);
-  if (event.target.dataset.field === 'cnpj') event.target.value = formatCnpj(event.target.value);
-  updateRepeatedState(event, state.garantias);
-  if (['cpf', 'cnpj'].includes(event.target.dataset.field)) refreshGuaranteeDocumentValidations();
-});
-guaranteesList.addEventListener('change', event => {
-  updateRepeatedState(event, state.garantias);
-  if (['categoria', 'pessoaTipo', 'bemTipo'].includes(event.target.dataset.field)) renderGuarantees();
-});
 guaranteesList.addEventListener('click', event => {
   const button = event.target.closest('[data-action="remove-guarantee"]');
   if (!button) return;
@@ -276,7 +294,7 @@ async function enterApplication(event) {
   const prefixo = $('#loginAgency').value;
   if (!prefixo) return showMessage(loginMessage, 'Selecione uma agência.', 'error');
   if (!/^F\d{7}$/.test(matricula)) return showMessage(loginMessage, 'Informe a matrícula no formato F seguido de sete números.', 'error');
-  if (nome.length < 3) return showMessage(loginMessage, 'Informe o nome do funcionário.', 'error');
+  if (!hasFullName(nome)) return showMessage(loginMessage, 'Informe o nome e pelo menos um sobrenome do funcionário.', 'error');
 
   setButtonLoading($('#btnLogin'), true, 'Consultando agência...');
   await consultAgency(prefixo);
@@ -494,6 +512,7 @@ function renderAgency() {
 
 function capturePerson() {
   clearMessage(personMessage);
+  const hasSpouse = $('#personHasSpouse').checked;
   const person = {
     id: id(), nome: formatPersonName($('#personName').value), cpf: $('#personCpf').value.trim(),
     nacionalidade: $('#personNationality').value.trim(), estadoCivil: $('#personCivilStatus').value,
@@ -504,15 +523,33 @@ function capturePerson() {
     representanteLegal: $('#personRepresentative').checked,
   };
   if (!person.nome || !person.cpf) return showMessage(personMessage, 'Informe nome e CPF.', 'error');
+  if (!hasFullName(person.nome)) return showMessage(personMessage, 'Informe o nome e pelo menos um sobrenome.', 'error');
   if (!validateCpf(person.cpf)) return showMessage(personMessage, 'Confira o CPF e os dígitos verificadores.', 'error');
   if (!person.dirigente && !person.representanteLegal) return showMessage(personMessage, 'Marque Dirigente ou Representante legal.', 'error');
   if (personalDocumentDuplicate(person.cpf, 'cpf')) {
     return showMessage(personMessage, 'Este CPF já foi adicionado como dirigente, representante ou garantia adicional.', 'error');
   }
-  state.pessoas.push(person);
+  let spouse = null;
+  if (hasSpouse) {
+    spouse = {
+      id: id(), conjugeDe: person.id, nome: formatPersonName($('#spouseName').value), cpf: $('#spouseCpf').value.trim(),
+      nacionalidade: person.nacionalidade, estadoCivil: 'Casado(a)',
+      logradouro: person.logradouro, numero: person.numero, complemento: person.complemento,
+      bairro: person.bairro, municipio: person.municipio, uf: person.uf, cep: person.cep,
+      dirigente: $('#spouseDirector').checked, representanteLegal: $('#spouseRepresentative').checked
+    };
+    if (!spouse.nome || !spouse.cpf) return showMessage(personMessage, 'Informe nome e CPF do cônjuge.', 'error');
+    if (!hasFullName(spouse.nome)) return showMessage(personMessage, 'Informe o nome e pelo menos um sobrenome do cônjuge.', 'error');
+    if (!validateCpf(spouse.cpf)) return showMessage(personMessage, 'Confira o CPF do cônjuge e os dígitos verificadores.', 'error');
+    if (!spouse.dirigente && !spouse.representanteLegal) return showMessage(personMessage, 'Marque Dirigente ou Representante legal para o cônjuge.', 'error');
+    if (normalizedPersonalDocument(spouse.cpf, 'cpf') === normalizedPersonalDocument(person.cpf, 'cpf') || personalDocumentDuplicate(spouse.cpf, 'cpf')) {
+      return showMessage(personMessage, 'O CPF do cônjuge já foi informado como dirigente, representante ou garantia adicional.', 'error');
+    }
+  }
+  state.pessoas.push(person, ...(spouse ? [spouse] : []));
   renderPeople();
   clearPersonEntry();
-  showMessage(personMessage, 'Pessoa adicionada à proposta.', 'success');
+  showMessage(personMessage, spouse ? 'Pessoa e cônjuge adicionados à proposta com o mesmo endereço.' : 'Pessoa adicionada à proposta.', 'success');
 }
 
 function clearPersonEntry() {
@@ -521,7 +558,34 @@ function clearPersonEntry() {
   $('#personNationality').value = 'Brasileira';
   $('#personDirector').checked = false;
   $('#personRepresentative').checked = false;
+  $('#personHasSpouse').checked = false;
+  $('#spouseName').value = '';
+  $('#spouseCpf').value = '';
+  $('#spouseDirector').checked = false;
+  $('#spouseRepresentative').checked = false;
+  $('#personCivilStatus').disabled = false;
+  $('#personCivilStatus').value = '';
+  delete $('#personCivilStatus').dataset.previousValue;
+  $('#spouseFields').hidden = true;
   $('#personName').focus();
+}
+
+function syncSpouseFields() {
+  const hasSpouse = $('#personHasSpouse').checked;
+  const civilStatus = $('#personCivilStatus');
+  $('#spouseFields').hidden = !hasSpouse;
+  if (hasSpouse) {
+    if (!civilStatus.disabled) civilStatus.dataset.previousValue = civilStatus.value;
+    civilStatus.value = 'Casado(a)';
+    civilStatus.disabled = true;
+    $('#spouseName').focus();
+  } else {
+    civilStatus.disabled = false;
+    if (civilStatus.dataset.previousValue !== undefined) {
+      civilStatus.value = civilStatus.dataset.previousValue;
+      delete civilStatus.dataset.previousValue;
+    }
+  }
 }
 
 function renderPeople() {
@@ -565,12 +629,57 @@ function renderAutomaticGuarantees() {
   `).join('');
 }
 
-function addGuarantee() {
-  state.garantias.push({
-    id: id(), categoria: 'real', pessoaTipo: 'pf', nome: '', cpf: '', razaoSocial: '', cnpj: '',
-    bemTipo: 'bem_financiado', descricao: '', percentualVinculo: ''
-  });
+function syncGuaranteeEntry() {
+  const personal = $('#guaranteeCategory').value === 'pessoal';
+  const company = $('#guaranteePersonType').value === 'pj';
+  $('#guaranteePersonalFields').hidden = !personal;
+  $('#guaranteeRealFields').hidden = personal;
+  $('#guaranteeIndividualFields').hidden = !personal || company;
+  $('#guaranteeCompanyFields').hidden = !personal || !company;
+  $('#guaranteeDescriptionLabel').textContent = $('#guaranteeAssetType').value === 'bem_financiado' ? 'Item financiado' : 'Descrição/origem';
+  clearMessage(guaranteeMessage);
+}
+
+function captureGuarantee() {
+  clearMessage(guaranteeMessage);
+  const category = $('#guaranteeCategory').value;
+  const guarantee = {
+    id: id(), categoria: category, pessoaTipo: $('#guaranteePersonType').value,
+    nome: formatPersonName($('#guaranteeName').value), cpf: $('#guaranteeCpf').value.trim(),
+    razaoSocial: $('#guaranteeCompanyName').value.trim(), cnpj: $('#guaranteeCnpj').value.trim(),
+    bemTipo: $('#guaranteeAssetType').value, descricao: $('#guaranteeDescription').value.trim(),
+    percentualVinculo: numberValue($('#guaranteePercentage').value)
+  };
+  if (category === 'pessoal') {
+    const type = guarantee.pessoaTipo === 'pj' ? 'cnpj' : 'cpf';
+    const name = guarantee.pessoaTipo === 'pj' ? guarantee.razaoSocial : guarantee.nome;
+    const document = guarantee[type];
+    if (!name || !document) return showMessage(guaranteeMessage, 'Informe o nome e o documento do garantidor.', 'error');
+    if (guarantee.pessoaTipo === 'pf' && !hasFullName(guarantee.nome)) {
+      return showMessage(guaranteeMessage, 'Informe o nome e pelo menos um sobrenome do garantidor.', 'error');
+    }
+    if (!(type === 'cpf' ? validateCpf(document) : validateCnpj(document))) {
+      return showMessage(guaranteeMessage, `Confira o ${type.toUpperCase()} e os dígitos verificadores.`, 'error');
+    }
+    if (personalDocumentDuplicate(document, type)) {
+      return showMessage(guaranteeMessage, `Este ${type.toUpperCase()} já foi adicionado como dirigente, representante ou garantia adicional.`, 'error');
+    }
+  } else if (!guarantee.descricao || guarantee.percentualVinculo <= 0 || guarantee.percentualVinculo > 100) {
+    return showMessage(guaranteeMessage, 'Informe a descrição e um percentual de vínculo entre 0,01% e 100%.', 'error');
+  }
+  state.garantias.push(guarantee);
   renderGuarantees();
+  clearGuaranteeEntry();
+  showMessage(guaranteeMessage, 'Garantia adicionada à proposta.', 'success');
+}
+
+function clearGuaranteeEntry() {
+  $('#guaranteeCategory').value = 'real';
+  $('#guaranteePersonType').value = 'pf';
+  ['guaranteeName', 'guaranteeCpf', 'guaranteeCompanyName', 'guaranteeCnpj', 'guaranteeDescription', 'guaranteePercentage']
+    .forEach(identifier => { $`#${identifier}`.value = ''; });
+  $('#guaranteeAssetType').value = 'bem_financiado';
+  syncGuaranteeEntry();
 }
 
 function renderGuarantees() {
@@ -582,30 +691,26 @@ function renderGuarantees() {
     card.dataset.id = guarantee.id;
     const personal = guarantee.categoria === 'pessoal';
     const individual = guarantee.pessoaTipo === 'pf';
+    const assetLabels = { bem_financiado: 'Bem financiado', imovel: 'Imóvel', veiculo: 'Veículo', maquinas_equipamentos: 'Máquinas e equipamentos', recebiveis: 'Recebíveis' };
     card.innerHTML = `
       <div class="guarantee-head">
         <span class="guarantee-head__number">${String(index + 1).padStart(2, '0')}</span>
         <h3>Garantia adicional ${personal ? 'pessoal' : 'real'}</h3>
         <button class="icon-button" data-action="remove-guarantee" type="button" aria-label="Remover garantia">×</button>
       </div>
-      <div class="guarantee-grid">
-        ${selectField('Categoria', 'categoria', guarantee.categoria, [['pessoal', 'Pessoal'], ['real', 'Real']])}
+      <div class="person-summary">
         ${personal ? `
-          ${selectField('Tipo de garantidor', 'pessoaTipo', guarantee.pessoaTipo, [['pf', 'Pessoa física'], ['pj', 'Pessoa jurídica']])}
-          ${individual ? field('Nome', 'nome', guarantee.nome, 'text') + field('CPF', 'cpf', guarantee.cpf, 'text') : field('Razão social', 'razaoSocial', guarantee.razaoSocial, 'text') + field('CNPJ', 'cnpj', guarantee.cnpj, 'text')}
+          <span><strong>Garantidor</strong>${escapeHtml(individual ? guarantee.nome : guarantee.razaoSocial)}</span>
+          <span><strong>${individual ? 'CPF' : 'CNPJ'}</strong>${escapeHtml(individual ? guarantee.cpf : guarantee.cnpj)}</span>
+          <span><strong>Tipo</strong>${individual ? 'Pessoa física' : 'Pessoa jurídica'}</span>
         ` : `
-          ${selectField('Tipo de bem', 'bemTipo', guarantee.bemTipo, [
-            ['bem_financiado', 'Bem financiado'], ['imovel', 'Imóvel'], ['veiculo', 'Veículo'],
-            ['maquinas_equipamentos', 'Máquinas e equipamentos'], ['recebiveis', 'Recebíveis']
-          ])}
-          ${field(guarantee.bemTipo === 'bem_financiado' ? 'Item financiado' : 'Descrição/origem', 'descricao', guarantee.descricao, 'text', 'field--span-2')}
-          ${field('Percentual de vínculo', 'percentualVinculo', guarantee.percentualVinculo, 'number')}
+          <span><strong>Tipo de bem</strong>${escapeHtml(assetLabels[guarantee.bemTipo] || guarantee.bemTipo)}</span>
+          <span class="person-summary__wide"><strong>Descrição</strong>${escapeHtml(guarantee.descricao)}</span>
+          <span><strong>Percentual de vínculo</strong>${escapeHtml(formatMoneyValue(guarantee.percentualVinculo))}%</span>
         `}
-      </div>
-      <div class="inline-message guarantee-validation" role="status" aria-live="polite"></div>`;
+      </div>`;
     guaranteesList.append(card);
   });
-  refreshGuaranteeDocumentValidations();
 }
 
 function field(label, name, value, type = 'text', extraClass = '') {
@@ -779,21 +884,22 @@ function validatePayload(payload) {
   if (!payload.acesso?.matricula || !payload.acesso?.nome) errors.push('Identificação do funcionário ausente. Entre novamente.');
   if (!payload.empresa) errors.push('Consulte um CNPJ válido antes de gerar.');
   if (payload.operacao.tipo === 'investimento' && !payload.operacao.linhaCredito) errors.push('Selecione a linha de crédito.');
-  if (!payload.operacao.finalidade.trim()) errors.push('Informe a finalidade da operação.');
-  if (!payload.operacao.descricao.trim()) errors.push('Descreva o empreendimento.');
+  if (!payload.operacao.finalidade.trim()) errors.push('Informe a descrição de finalidade.');
+  if (!payload.operacao.descricao.trim()) errors.push('Informe a descrição da proposta.');
   if (payload.operacao.valorOrcamento <= 0) errors.push('Informe o valor do orçamento.');
   if (payload.operacao.valorFinanciado <= 0) errors.push('Informe o valor a financiar.');
   if (payload.operacao.giroAssociado && payload.operacao.valorGiroAssociado <= 0) errors.push('Informe o valor do giro associado.');
   if (payload.operacao.valorFinanciado > payload.operacao.valorOrcamento) errors.push('O valor a financiar não pode superar o valor do orçamento.');
   if (payload.operacao.prazoTotalMeses <= 0) errors.push('Informe o prazo total.');
   errors.push(...termRuleErrors(payload.operacao));
-  if (!payload.operacao.agenciaDebito.trim()) errors.push('Informe a agência para débito.');
-  if (!payload.operacao.contaDebito.trim()) errors.push('Informe a conta para débito.');
+  if (!validBankReference(payload.operacao.agenciaDebito)) errors.push('Informe a agência para débito com até sete dígitos, hífen e dígito verificador.');
+  if (!validBankReference(payload.operacao.contaDebito)) errors.push('Informe a conta para débito com até sete dígitos, hífen e dígito verificador.');
   if (!payload.agencia?.prefixo || !payload.agencia?.endereco) errors.push('Selecione uma agência responsável com endereço consultado.');
   if (!payload.pessoas.some(person => person.dirigente)) errors.push('Adicione ao menos um dirigente.');
   if (!payload.pessoas.some(person => person.representanteLegal)) errors.push('Adicione ao menos um representante legal.');
   payload.pessoas.forEach((person, index) => {
     if (!person.nome.trim() || !person.cpf.trim()) errors.push(`Complete nome e CPF da pessoa ${index + 1}.`);
+    else if (!hasFullName(person.nome)) errors.push(`Informe nome e sobrenome da pessoa ${index + 1}.`);
     else if (!validateCpf(person.cpf)) errors.push(`Confira o CPF da pessoa ${index + 1} e os dígitos verificadores.`);
     registerDocument(person.cpf, 'cpf');
   });
@@ -803,6 +909,7 @@ function validatePayload(payload) {
       if (missing) errors.push(`Complete a garantia pessoal ${index + 1}.`);
       const type = guarantee.pessoaTipo === 'pf' ? 'cpf' : 'cnpj';
       const value = guarantee[type];
+      if (guarantee.pessoaTipo === 'pf' && guarantee.nome && !hasFullName(guarantee.nome)) errors.push(`Informe nome e sobrenome da garantia pessoal ${index + 1}.`);
       if (value && !(type === 'cpf' ? validateCpf(value) : validateCnpj(value))) errors.push(`Confira o ${type.toUpperCase()} da garantia pessoal ${index + 1} e os dígitos verificadores.`);
       registerDocument(value, type);
     } else if (!guarantee.descricao.trim() || guarantee.percentualVinculo <= 0 || guarantee.percentualVinculo > 100) {

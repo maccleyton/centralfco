@@ -7,8 +7,6 @@
   <title>Central FCO | Relatórios e orientações</title>
   <link rel="stylesheet" href="styles.css?v=7">
   <link rel="stylesheet" href="relatorios.css?v=6">
-  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script defer src="cnpj-api.js?v=2"></script>
   <script defer src="relatorios.js?v=8"></script>
   <script defer src="relatorios-ferramentas.js?v=3"></script>
@@ -35,8 +33,7 @@
       <nav class="reports-hero__nav" aria-label="Atalhos desta página">
         <a href="#tutorial"><strong>01</strong><span>Tutorial FCO</span></a>
         <a href="#linhas-prazos"><strong>02</strong><span>Linhas e prazos</span></a>
-        <a href="#compactador"><strong>03</strong><span>Compactador</span></a>
-        <a href="#consulta-cnpj"><strong>04</strong><span>Consulta CNPJ</span></a>
+        <a href="#consulta-cnpj"><strong>03</strong><span>Consulta CNPJ</span></a>
       </nav>
     </section>
 
@@ -116,28 +113,9 @@
       </div>
     </section>
 
-    <section id="compactador" class="report-section" aria-labelledby="compactadorTitle">
-      <div class="report-section__heading">
-        <span class="section-number">03</span>
-        <div><span class="report-kicker">UTILITÁRIO</span><h2 id="compactadorTitle">Compactador de PDF</h2><p>Reduza documentos depois de concluir a análise e o preenchimento do FCO.</p></div>
-      </div>
-      <div class="tools-grid tools-grid--single">
-        <article class="tool-card">
-          <div class="tool-card__head"><span class="tool-card__icon" aria-hidden="true">⇣</span><div><span class="report-kicker">PROCESSAMENTO LOCAL</span><h3>Compactar documento</h3><p>O arquivo é processado diretamente no navegador e não é enviado ao servidor.</p></div></div>
-          <form id="pdfCompressorForm" class="tool-form">
-            <div class="field"><label for="pdfCompressorInput">Arquivo PDF</label><input id="pdfCompressorInput" type="file" accept="application/pdf,.pdf" required><small>Selecione o nível conforme a qualidade necessária para leitura e protocolo.</small></div>
-            <div class="field"><label for="pdfCompressionQuality">Nível de compressão</label><select id="pdfCompressionQuality"><option value="extreme">Extrema - preto e branco, leitura</option><option value="high" selected>Alta - colorido e otimizado</option><option value="medium">Média - boa resolução</option><option value="low">Baixa - próxima do original</option></select></div>
-            <button id="pdfCompressorButton" class="button button--primary tool-submit" type="submit">Compactar PDF</button>
-          </form>
-          <div id="pdfProgress" class="tool-progress" hidden><progress id="pdfProgressBar" value="0" max="100"></progress><span id="pdfProgressText">Preparando arquivo...</span></div>
-          <div id="pdfCompressorResult" class="tool-result" role="status" aria-live="polite"></div>
-        </article>
-      </div>
-    </section>
-
     <section id="consulta-cnpj" class="report-section" aria-labelledby="consultaCnpjTitle">
       <div class="report-section__heading">
-        <span class="section-number">04</span>
+        <span class="section-number">03</span>
         <div><span class="report-kicker">CONSULTA COMPLEMENTAR</span><h2 id="consultaCnpjTitle">Consulta completa de CNPJ</h2><p>Última etapa da página: confira cadastro, atividades e todos os integrantes do quadro societário.</p></div>
       </div>
       <div class="tools-grid tools-grid--single">
