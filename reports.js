@@ -5,9 +5,57 @@
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
   })[character]);
 
-  const money = value => Number(value || 0).toLocaleString('pt-BR', {
+  const moneyOnly = value => Number(value || 0).toLocaleString('pt-BR', {
     style: 'currency', currency: 'BRL', minimumFractionDigits: 2
   });
+
+  const extensoAteDezenove = "zero|um|dois|tres|quatro|cinco|seis|sete|oito|nove".split("|");
+
+  extensoAteDezenove.push(..."dez|onze|doze|treze|quatorze|quinze".split("|"));
+
+  extensoAteDezenove.push(..."dezesseis|dezessete|dezoito|dezenove".split("|"));
+
+  const extensoDezenas = "||vinte|trinta|quarenta|cinquenta|sessenta|setenta|oitenta|noventa".split("|");
+  const extensoCentenas = "|cento|duzentos|trezentos|quatrocentos".split("|");
+  extensoCentenas.push(..."quinhentos|seiscentos|setecentos|oitocentos|novecentos".split("|"));
+
+  function extensoAteMil(value) {
+    if (value === 100) return "cem";
+    const partes = [];
+    const centena = Math.floor(value / 100);
+    const resto = value % 100;
+    if (centena) partes.push(extensoCentenas[centena]);
+    if (resto) partes.push(resto < 20 ? extensoAteDezenove[resto] : extensoDezenas[Math.floor(resto / 10)] + (resto % 10 ? " e " + extensoAteDezenove[resto % 10] : ""));
+    return partes.join(" e ");
+  }
+
+  function inteiroPorExtenso(value) {
+    let numero = Math.floor(Math.abs(value));
+    if (!numero) return "zero";
+    const escalas = [[1000000000000, "trilh\u00e3o", "trilh\u00f5es"], [1000000000, "bilh\u00e3o", "bilh\u00f5es"], [1000000, "milh\u00e3o", "milh\u00f5es"], [1000, "mil", "mil"]];
+    const partes = [];
+    escalas.forEach(([divisor, singular, plural]) => {
+      const quantidade = Math.floor(numero / divisor);
+      if (!quantidade) return;
+      partes.push((divisor === 1000 && quantidade === 1 ? "" : inteiroPorExtenso(quantidade) + " ") + (quantidade === 1 ? singular : plural));
+      numero %= divisor;
+    });
+    if (numero) partes.push(extensoAteMil(numero));
+    return partes.join(" e ");
+  }
+
+  extensoAteDezenove[3] = "tr\u00eas";
+
+  function valorPorExtenso(value) {
+    const centavosTotais = Math.round(Math.abs(Number(value || 0)) * 100);
+    const reais = Math.floor(centavosTotais / 100);
+    const centavos = centavosTotais % 100;
+    let resultado = inteiroPorExtenso(reais) + (reais === 1 ? " real" : " reais");
+    if (centavos) resultado += " e " + inteiroPorExtenso(centavos) + (centavos === 1 ? " centavo" : " centavos");
+    return resultado;
+  }
+
+  const money = value => moneyOnly(value) + " (" + valorPorExtenso(value) + ")";
 
   const dateLong = value => {
     const date = value ? new Date(`${value}T12:00:00`) : new Date();
@@ -149,6 +197,18 @@
     return documentPage('DECLARAÇÃO DE REGULARIDADE JUNTO À CVM E AOS FUNDOS', logo, body);
   }
 
+  function simplesDeclaration(data, logo) {
+    const company = data.empresa;
+    const address = company.endereco || {};
+    const body = `
+      <h2>Empresa Optante pelo Simples Nacional</h2>
+      <p><strong>${escapeHtml(company.razaoSocial)}</strong>, com sede na <strong>${escapeHtml(company.enderecoCompleto)}</strong>, inscrita no CNPJ sob o nº <strong>${escapeHtml(company.cnpjFormatado)}</strong>, para fins de redução de alíquota, nas operações de crédito que tenham como mutuário pessoa jurídica optante pelo Regime Especial Unificado de Arrecadação de Tributos e Contribuições devidos pelas Microempresas e Empresas de Pequeno Porte - Simples Nacional, prevista no art. 7º, VI, do Decreto nº 6.306, de 14 de dezembro de 2007, declara que:</p>
+      <ol type="a"><li>se enquadra como pessoa jurídica optante pelo Simples Nacional de que trata a Lei Complementar nº 123, de 14.12.2006; e</li><li>o(a) signatário(a) é representante legal desta entidade, assumindo o compromisso de informar a essa instituição financeira, imediatamente, eventual desenquadramento da presente situação, e está ciente de que a falsidade na prestação destas informações o(a) sujeitará, juntamente com as demais pessoas que a ela concorrerem, às penalidades previstas na legislação criminal e tributária, relativas à falsidade ideológica (art. 299 do Código Penal) e ao crime contra a ordem tributária (art. 1º da Lei nº 8.137, de dezembro de 1990).</li></ol>
+      <p class="local-date">${escapeHtml(address.municipio)}-${escapeHtml(address.uf)}, ${escapeHtml(dateLong(data.emissao.data))}.</p>
+      ${signatures(peopleBy(data, 'dirigente'), company.razaoSocial, 'Dirigente(s)')}`;
+    return documentPage('DECLARAÇÃO DE OPTANTE PELO SIMPLES NACIONAL', logo, body);
+  }
+
   function guaranteeTables(data) {
     const directors = peopleBy(data, 'dirigente').map(person => [properName(person.nome), person.cpf]);
     const personal = data.operacao.garantias.filter(item => item.categoria === 'pessoal').map(item => item.pessoaTipo === 'pj' ? [item.razaoSocial, item.cnpj] : [properName(item.nome), item.cpf]);
@@ -223,9 +283,11 @@
 
   async function renderDossier(data) {
     const logo = await logoDataUrl();
+    const optionalSimples = data.empresa.simplesOptante === true ? [simplesDeclaration(data, logo)] : [];
     const documents = [
       authorizationDebit(data, logo), authorizationLgpd(data, logo), successDeclaration(data, logo),
-      absenceOperations(data, logo), condemnation(data, logo), regularity(data, logo), proposal(data, logo)
+      absenceOperations(data, logo), condemnation(data, logo), regularity(data, logo),
+      ...optionalSimples, proposal(data, logo)
     ].join('');
     return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Dossiê FCO - ${escapeHtml(data.empresa.razaoSocial)}</title><style>${dossierCss()}${dossierPrintFixCss()}</style></head><body><div class="toolbar"><strong>Dossiê FCO · ${escapeHtml(data.empresa.razaoSocial)}</strong><button onclick="window.print()">Imprimir / Salvar em PDF</button></div>${documents}</body></html>`;
   }

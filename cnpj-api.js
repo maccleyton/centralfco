@@ -15,6 +15,9 @@
     const members = Array.isArray(company.members) ? company.members : [];
     const phones = Array.isArray(data.phones) ? data.phones : [];
     const emails = Array.isArray(data.emails) ? data.emails : [];
+    const simples = company.simples && typeof company.simples === 'object' ? company.simples : {};
+    const simplesHistory = Array.isArray(simples.history) ? simples.history : [];
+    const latestSimplesPeriod = simplesHistory.at(-1) || {};
 
     return {
       cnpj: data.taxId || '',
@@ -48,6 +51,10 @@
         cnpj_cpf_do_socio: member.person?.taxId || '',
         data_entrada_sociedade: member.since || ''
       })),
+      opcao_pelo_simples: typeof simples.optant === 'boolean' ? simples.optant : null,
+      data_opcao_pelo_simples: simples.since || '',
+      data_exclusao_do_simples: latestSimplesPeriod.until || '',
+      simples_historico: simplesHistory,
       fonte_consulta: 'CNPJá'
     };
   }
@@ -60,19 +67,22 @@
     return data;
   }
 
-  async function request(cnpj) {
+  function providersFor(cnpj, endpoint = 'cnpj') {
     const encoded = encodeURIComponent(cnpj);
     const providers = [];
     if (/^https?:$/.test(global.location?.protocol || '')) {
-      providers.push({ name: 'servidor local', url: `/api/cnpj/${encoded}`, normalize: data => data });
+      providers.push({ name: 'servidor local', url: `/api/${endpoint}/${encoded}`, normalize: data => data });
     }
     providers.push(
       { name: 'BrasilAPI', url: `https://brasilapi.com.br/api/cnpj/v1/${encoded}`, normalize: data => ({ ...data, fonte_consulta: data.fonte_consulta || 'BrasilAPI' }) },
       { name: 'CNPJá', url: `https://open.cnpja.com/office/${encoded}`, normalize: normalizeCnpja }
     );
+    return providers;
+  }
 
+  async function request(cnpj) {
     let lastError = null;
-    for (const provider of providers) {
+    for (const provider of providersFor(cnpj)) {
       try {
         const response = await fetch(provider.url, { headers: JSON_HEADERS });
         const data = await readJson(response);
@@ -84,5 +94,22 @@
     throw new Error(lastError?.message || 'Não foi possível consultar o CNPJ nas fontes disponíveis.');
   }
 
-  global.CnpjApi = Object.freeze({ request, normalizeCnpja });
+  async function requestSimples(cnpj) {
+    let firstSuccessful = null;
+    let lastError = null;
+    for (const provider of providersFor(cnpj, 'simples')) {
+      try {
+        const response = await fetch(provider.url, { headers: JSON_HEADERS });
+        const data = provider.normalize(await readJson(response));
+        firstSuccessful ||= data;
+        if (typeof data.opcao_pelo_simples === 'boolean') return data;
+      } catch (error) {
+        lastError = error;
+      }
+    }
+    if (firstSuccessful) return firstSuccessful;
+    throw new Error(lastError?.message || 'Não foi possível verificar a opção pelo Simples Nacional.');
+  }
+
+  global.CnpjApi = Object.freeze({ request, requestSimples, normalizeCnpja });
 })(window);

@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Central local para geração de propostas e declarações FCO.">
   <title>Central FCO Web | Relatórios</title>
-  <link rel="stylesheet" href="styles.css?v=10">
-  <script defer src="cnpj-api.js?v=1"></script>
+  <link rel="stylesheet" href="styles.css?v=11">
+  <script defer src="cnpj-api.js?v=2"></script>
   <script defer src="agencies.js?v=2"></script>
-  <script defer src="reports.js?v=8"></script>
-  <script defer src="app.js?v=8"></script>
+  <script defer src="reports.js?v=10"></script>
+  <script defer src="app.js?v=12"></script>
 </head>
 <body>
   <main id="loginScreen" class="login-screen">
@@ -60,6 +60,10 @@
           <span aria-hidden="true">▤</span>
           Relatórios
         </a>
+        <a class="header-link" href="declaracoes.html?from=web">
+          <span aria-hidden="true">▧</span>
+          Declarações
+        </a>
         <div class="topbar__meta">
           <span class="status-dot" aria-hidden="true"></span>
           <span id="sessionEmployee">Processamento local</span>
@@ -91,7 +95,7 @@
           <span class="section-number">01</span>
           <div>
             <h2 id="empresaTitle">Empresa</h2>
-            <p>O CNPJ é o único dado cadastral digitado manualmente.</p>
+            <p>Consulte o CNPJ automaticamente ou use o preenchimento manual caso o acesso à API não esteja disponível.</p>
           </div>
         </div>
 
@@ -109,11 +113,57 @@
 
         <div id="companyMessage" class="inline-message" role="status" aria-live="polite"></div>
 
+        <section id="manualCompanyPrompt" class="manual-company-prompt" role="alert" aria-labelledby="manualCompanyPromptTitle" hidden>
+          <h3 id="manualCompanyPromptTitle">⚠️ Não foi possível consultar os dados.</h3>
+          <p><strong>Possível causa:</strong><br>Perfil sem o papel: <strong>BLOGS (GMWG04A)</strong>.</p>
+          <p>Caso o acesso tenha sido liberado hoje, a disponibilização ocorre normalmente em D+1.</p>
+          <p><strong>Deseja preencher os dados manualmente?</strong></p>
+          <div class="manual-company-actions">
+            <button id="btnManualCompanyYes" class="button button--primary button--small" type="button">SIM</button>
+            <button id="btnManualCompanyNo" class="button button--secondary button--small" type="button">NÃO</button>
+          </div>
+        </section>
+
+        <section id="manualCompanyForm" class="manual-company-form" aria-labelledby="manualCompanyTitle" hidden>
+          <div class="subsection-heading">
+            <div><h3 id="manualCompanyTitle">Preenchimento manual da empresa</h3><p>Informe os dados exatamente como constam no cadastro da pessoa jurídica.</p></div>
+          </div>
+          <div class="fields-grid fields-grid--2">
+            <div class="field field--span-2"><label for="manualCompanyName">Razão social</label><input id="manualCompanyName" type="text" maxlength="180" autocomplete="organization"></div>
+            <div class="field">
+              <label for="manualCompanyLegalType">Tipo de sociedade</label>
+              <select id="manualCompanyLegalType">
+                <option value="">Selecione</option>
+                <option>Sociedade Empresária Limitada</option>
+                <option>Empresário Individual</option>
+                <option>Sociedade Anônima Aberta</option>
+                <option>Sociedade Anônima Fechada</option>
+                <option>Sociedade Simples Limitada</option>
+                <option>Sociedade Simples Pura</option>
+                <option>Sociedade Cooperativa</option>
+                <option>Associação Privada</option>
+                <option>Fundação Privada</option>
+                <option>Empresa Individual de Responsabilidade Limitada</option>
+                <option>Município</option>
+                <option>Órgão Público</option>
+                <option value="Outro">Outro tipo de sociedade</option>
+              </select>
+            </div>
+            <div id="manualCompanyOtherTypeField" class="field" hidden><label for="manualCompanyOtherType">Informe o tipo de sociedade</label><input id="manualCompanyOtherType" type="text" maxlength="120"></div>
+            <div class="field field--span-2"><label for="manualCompanyAddress">Endereço completo</label><textarea id="manualCompanyAddress" rows="3" maxlength="350" placeholder="Logradouro, número, complemento, bairro, município-UF e CEP"></textarea></div>
+          </div>
+          <div id="manualCompanyMessage" class="inline-message" role="status" aria-live="polite"></div>
+          <div class="manual-company-actions">
+            <button id="btnSaveManualCompany" class="button button--primary" type="button">Salvar dados manuais</button>
+            <button id="btnCancelManualCompany" class="button button--secondary" type="button">Cancelar</button>
+          </div>
+        </section>
+
         <div id="companyCard" class="company-card" hidden>
           <div class="company-card__head">
             <div class="company-avatar" aria-hidden="true">PJ</div>
             <div>
-              <span>Dados encontrados</span>
+              <span id="companySourceLabel">Dados encontrados</span>
               <h3 id="companyName">—</h3>
             </div>
             <span id="companyStatus" class="badge badge--success">—</span>
@@ -123,6 +173,7 @@
             <div><dt>Nome fantasia</dt><dd id="companyTradeName">—</dd></div>
             <div><dt>Natureza jurídica</dt><dd id="companyLegalType">—</dd></div>
             <div><dt>Tipo</dt><dd id="companyBranchType">—</dd></div>
+            <div class="company-grid__wide"><dt>Simples Nacional</dt><dd id="companySimples">—</dd></div>
             <div class="company-grid__wide"><dt>Endereço</dt><dd id="companyAddress">—</dd></div>
           </dl>
         </div>

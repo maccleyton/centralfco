@@ -145,7 +145,7 @@ function validToolCnpj(value) {
 }
 
 async function requestFullCompany(cnpj) {
-  return window.CnpjApi.request(cnpj);
+  return window.CnpjApi.requestSimples(cnpj);
 }
 
 function formatCompanyDate(value) {
@@ -191,6 +191,9 @@ function renderCompanyResult(data, consultedCnpj) {
     return `<tr><td><strong>${toolEscape(name)}</strong>${representative}</td><td>${toolEscape(role)}</td><td>${toolEscape(documentNumber)}</td><td>${toolEscape(joined)}</td></tr>`;
   }).join('');
   const phones = [data.ddd_telefone_1, data.ddd_telefone_2].filter(Boolean).join(' · ');
+  const simplesStatus = data.opcao_pelo_simples === true ? 'Sim' : data.opcao_pelo_simples === false ? 'Não' : 'Não foi possível confirmar';
+  const simplesDateLabel = data.opcao_pelo_simples === true ? 'Data da opção pelo Simples' : data.opcao_pelo_simples === false ? 'Última exclusão do Simples' : 'Data da situação do Simples';
+  const simplesDate = data.opcao_pelo_simples === true ? formatCompanyDate(data.data_opcao_pelo_simples) : data.opcao_pelo_simples === false ? formatCompanyDate(data.data_exclusao_do_simples) : 'Não informada';
 
   result.innerHTML = `
     <div class="company-result__head"><div><span class="report-kicker">${toolEscape(formatToolCnpj(consultedCnpj))}</span><h3>${toolEscape(data.razao_social || data.nome || 'Empresa consultada')}</h3><p>${toolEscape(data.nome_fantasia || data.fantasia || 'Nome fantasia não informado')}</p></div><span class="company-status${active ? '' : ' is-inactive'}">${toolEscape(status)}</span></div>
@@ -201,6 +204,8 @@ function renderCompanyResult(data, consultedCnpj) {
       ${companyDataItem('Abertura', formatCompanyDate(data.data_inicio_atividade || data.data_abertura))}
       ${companyDataItem('Matriz/filial', data.descricao_identificador_matriz_filial || data.tipo)}
       ${companyDataItem('Fonte da consulta', data.fonte_consulta || 'BrasilAPI')}
+      ${companyDataItem('Optante pelo Simples Nacional', simplesStatus)}
+      ${companyDataItem(simplesDateLabel, simplesDate)}
       ${companyDataItem('Contato', [phones, data.email].filter(Boolean).join(' · '), true)}
       ${companyDataItem('Endereço', companyAddress(data), true)}
     </div>
@@ -229,7 +234,8 @@ async function consultFullCompany(event) {
     const data = await requestFullCompany(cnpj);
     input.value = formatToolCnpj(cnpj);
     renderCompanyResult(data, cnpj);
-    showToolResult(message, `Consulta concluída via ${data.fonte_consulta || 'BrasilAPI'}. Os dados cadastrais e dirigentes estão listados abaixo.`);
+    const simplesText = data.opcao_pelo_simples === true ? 'A empresa é optante pelo Simples Nacional.' : data.opcao_pelo_simples === false ? 'A empresa não é optante pelo Simples Nacional.' : 'A opção pelo Simples Nacional não pôde ser confirmada.';
+    showToolResult(message, `Consulta concluída via ${data.fonte_consulta || 'BrasilAPI'}. ${simplesText}`);
   } catch (error) {
     showToolResult(message, error.message || 'Não foi possível consultar este CNPJ.', 'error');
   } finally {

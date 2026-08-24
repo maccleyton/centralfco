@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Declarações e autorizações da Central FCO.">
+  <title>Central FCO | Declarações</title>
+  <link rel="stylesheet" href="styles.css?v=10">
+  <link rel="stylesheet" href="relatorios.css?v=6">
+  <script defer src="cnpj-api.js?v=2"></script>
+  <script defer src="relatorios.js?v=8"></script>
+</head>
+<body class="reports-body">
+  <header class="topbar">
+    <div class="topbar__accent" aria-hidden="true"></div>
+    <div class="shell topbar__content">
+      <a id="reportsBackBrand" class="brand" href="index.html" aria-label="Voltar à Central FCO">
+        <span class="brand__symbol" aria-hidden="true"><img src="logo02.png" alt=""></span>
+        <span><strong>Central FCO</strong><small>Declarações e autorizações</small></span>
+      </a>
+      <a id="reportsBackLink" class="header-link" href="index.html"><span aria-hidden="true">←</span> Voltar à Central</a>
+    </div>
+  </header>
+
+  <main class="shell reports-page">
+    <section class="reports-hero">
+      <div>
+        <span class="eyebrow">DOCUMENTOS COMPLEMENTARES</span>
+        <h1>Declarações prontas <br>para preencher e imprimir.</h1>
+        <p>Gere os documentos complementares do atendimento no mesmo padrão visual da Central FCO.</p>
+      </div>
+      <nav class="reports-hero__nav" aria-label="Atalhos desta página">
+        <a href="#residenceForm"><strong>01</strong><span>Residência</span></a>
+        <a href="#incomeForm"><strong>02</strong><span>Renda</span></a>
+        <a href="#nifForm"><strong>03</strong><span>Domicílio fiscal - NIF</span></a>
+        <a href="#scrForm"><strong>04</strong><span>Autorização SCR</span></a>
+      </nav>
+    </section>
+    <section id="declaracoes" class="report-section" aria-labelledby="declaracoesTitle">
+      <div class="report-section__heading">
+        <span class="section-number">01</span>
+        <div><span class="report-kicker">DOCUMENTOS</span><h2 id="declaracoesTitle">Declarações disponíveis</h2><p>Preencha os dados e gere cada declaração em HTML, pronta para conferência, assinatura e impressão.</p></div>
+      </div>
+      <div class="document-grid">
+        <article class="document-card">
+          <div class="document-card__icon document-card__icon--yellow" aria-hidden="true">RES</div>
+          <div class="document-card__content">
+            <span class="document-card__type">COMPROVAÇÃO DE ENDEREÇO</span>
+            <h3>Autodeclaração de Residência</h3>
+            <p>Use quando o cliente não possuir comprovante de residência em seu próprio nome.</p>
+            <div class="document-note"><strong>Preencher:</strong> nome, CPF, endereço completo, município, UF e data.</div>
+          </div>
+          <div class="document-card__actions">
+            <a class="report-button report-button--primary" href="#residenceForm">Preencher declaração <span aria-hidden="true">↓</span></a>
+          </div>
+        </article>
+
+        <article class="document-card">
+          <div class="document-card__icon" aria-hidden="true">R$</div>
+          <div class="document-card__content">
+            <span class="document-card__type">COMPROVAÇÃO DE RENDA</span>
+            <h3>Autodeclaração de Renda</h3>
+            <p>Registre a atividade exercida e a renda bruta mensal média dos últimos três meses.</p>
+            <div class="document-note"><strong>Preencher:</strong> identificação, profissão, ocupação, endereço e renda mensal.</div>
+          </div>
+          <div class="document-card__actions">
+            <a class="report-button report-button--primary" href="#incomeForm">Preencher declaração <span aria-hidden="true">↓</span></a>
+          </div>
+        </article>
+        <article class="document-card">
+          <div class="document-card__icon document-card__icon--yellow" aria-hidden="true">NIF</div>
+          <div class="document-card__content">
+            <span class="document-card__type">DOMICÍLIO FISCAL</span>
+            <h3>Declaração de Domicílio Fiscal - NIF</h3>
+            <p>Use para declarar a residência fiscal do titular e os respectivos números de identificação fiscal.</p>
+            <div class="document-note"><strong>No Brasil:</strong> o NIF corresponde ao CPF, para pessoa física, ou ao CNPJ, para pessoa jurídica.</div>
+          </div>
+          <div class="document-card__actions">
+            <a class="report-button report-button--primary" href="#nifForm">Preencher formulário <span aria-hidden="true">↓</span></a>
+            <a class="report-button report-button--ghost" href="relatorio/nif.pdf" target="_blank" rel="noopener">Ver modelo PDF ↗</a>
+          </div>
+        </article>
+
+        <article class="document-card">
+          <div class="document-card__icon" aria-hidden="true">SCR</div>
+          <div class="document-card__content">
+            <span class="document-card__type">AUTORIZAÇÃO</span>
+            <h3>Autorização para Consulta ao SCR</h3>
+            <p>Formaliza a autorização prévia do cliente para consulta ao Sistema de Informações de Crédito do Banco Central.</p>
+            <div class="document-note"><strong>Preencher:</strong> local e data, nome do cliente, CPF ou CNPJ e assinatura.</div>
+          </div>
+          <div class="document-card__actions">
+            <a class="report-button report-button--primary" href="#scrForm">Preencher formulário <span aria-hidden="true">↓</span></a>
+            <a class="report-button report-button--ghost" href="relatorio/scr.pdf" target="_blank" rel="noopener">Ver modelo PDF ↗</a>
+          </div>
+        </article>
+      </div>
+
+      <div class="form-builders">
+        <form id="residenceForm" class="report-form-card" novalidate>
+          <div class="report-form-card__head">
+            <div class="report-form-card__badge report-form-card__badge--yellow">RES</div>
+            <div><span class="report-kicker">GERAÇÃO EM HTML</span><h3>Autodeclaração de Residência</h3><p>Informe os dados conforme o modelo da pasta novasdeclaracoes.</p></div>
+          </div>
+          <div class="fields-grid fields-grid--3">
+            <div class="field field--span-2"><label for="residenceName">Nome completo</label><input id="residenceName" name="name" type="text" autocomplete="name" required></div>
+            <div class="field"><label for="residenceCpf">CPF</label><input id="residenceCpf" name="cpf" type="text" inputmode="numeric" maxlength="14" placeholder="000.000.000-00" required></div>
+            <div class="field field--span-3"><label for="residenceAddress">Endereço completo</label><input id="residenceAddress" name="address" type="text" autocomplete="street-address" required></div>
+            <div class="field"><label for="residencePlace">Município</label><input id="residencePlace" name="place" type="text" required></div>
+            <div class="field"><label for="residenceUf">UF</label><input id="residenceUf" name="uf" type="text" maxlength="2" value="MS" required></div>
+            <div class="field"><label for="residenceDate">Data</label><input id="residenceDate" name="date" type="date" required></div>
+          </div>
+          <div id="residenceFormMessage" class="inline-message" role="status" aria-live="polite"></div>
+          <button class="button button--generate report-generate" type="submit"><span aria-hidden="true">↓</span> Gerar Declaração de Residência</button>
+        </form>
+
+        <form id="incomeForm" class="report-form-card" novalidate>
+          <div class="report-form-card__head">
+            <div class="report-form-card__badge">R$</div>
+            <div><span class="report-kicker">GERAÇÃO EM HTML</span><h3>Autodeclaração de Renda</h3><p>Informe a ocupação e a renda bruta mensal dos últimos três meses.</p></div>
+          </div>
+          <div class="fields-grid fields-grid--3">
+            <div class="field field--span-2"><label for="incomeName">Nome completo</label><input id="incomeName" name="name" type="text" autocomplete="name" required></div>
+            <div class="field"><label for="incomeCpf">CPF</label><input id="incomeCpf" name="cpf" type="text" inputmode="numeric" maxlength="14" placeholder="000.000.000-00" required></div>
+            <div class="field"><label for="incomeProfession">Profissão ou atividade</label><input id="incomeProfession" name="profession" type="text" required></div>
+            <div class="field"><label for="incomeOccupation">Ocupação exercida</label><input id="incomeOccupation" name="occupation" type="text" required></div>
+            <div class="field"><label for="incomeMonthlyIncome">Renda bruta mensal</label><div class="input-prefix"><span>R$</span><input id="incomeMonthlyIncome" name="monthlyIncome" type="number" min="0.01" step="0.01" required></div></div>
+            <div class="field field--span-3"><label for="incomeAddress">Endereço completo</label><input id="incomeAddress" name="address" type="text" autocomplete="street-address" required></div>
+            <div class="field"><label for="incomePlace">Município</label><input id="incomePlace" name="place" type="text" required></div>
+            <div class="field"><label for="incomeUf">UF</label><input id="incomeUf" name="uf" type="text" maxlength="2" value="MS" required></div>
+            <div class="field"><label for="incomeDate">Data</label><input id="incomeDate" name="date" type="date" required></div>
+          </div>
+          <div id="incomeFormMessage" class="inline-message" role="status" aria-live="polite"></div>
+          <button class="button button--generate report-generate" type="submit"><span aria-hidden="true">↓</span> Gerar Declaração de Renda</button>
+        </form>
+
+        <form id="nifForm" class="report-form-card" novalidate>
+          <div class="report-form-card__head">
+            <div class="report-form-card__badge report-form-card__badge--yellow">NIF</div>
+            <div><span class="report-kicker">GERAÇÃO EM HTML</span><h3>Declaração de Domicílio Fiscal</h3><p>Informe os dados do titular. Para empresa, consulte o CNPJ para completar o cadastro automaticamente.</p></div>
+          </div>
+
+          <div class="fields-grid fields-grid--3">
+            <div class="field">
+              <label for="nifPersonType">Tipo de titular</label>
+              <select id="nifPersonType" name="personType"><option value="pf">Pessoa física</option><option value="pj">Pessoa jurídica</option></select>
+            </div>
+            <div class="field field--span-2">
+              <label id="nifDocumentLabel" for="nifDocument">CPF</label>
+              <div class="document-lookup"><input id="nifDocument" name="document" type="text" inputmode="numeric" maxlength="18" autocomplete="off" placeholder="000.000.000-00" required><button id="nifLookup" class="button button--primary" type="button" hidden>Consultar CNPJ</button></div>
+              <small id="nifDocumentHint">O CPF será usado como NIF brasileiro.</small>
+            </div>
+            <div class="field field--span-2">
+              <label id="nifNameLabel" for="nifName">Nome completo</label>
+              <input id="nifName" name="name" type="text" autocomplete="name" required>
+            </div>
+            <div id="nifBirthField" class="field">
+              <label for="nifBirthDate">Data de nascimento</label>
+              <input id="nifBirthDate" name="birthDate" type="date" required>
+            </div>
+            <div id="nifBirthCountryField" class="field">
+              <label for="nifBirthCountry">País de nascimento</label>
+              <input id="nifBirthCountry" name="birthCountry" type="text" value="Brasil" required>
+            </div>
+            <div class="field field--span-2">
+              <label for="nifAddress">Endereço da sede ou residência no Brasil</label>
+              <input id="nifAddress" name="address" type="text" autocomplete="street-address" required>
+            </div>
+          </div>
+
+          <div id="nifLookupMessage" class="inline-message" role="status" aria-live="polite"></div>
+
+          <div class="form-subsection">
+            <div><span class="report-kicker">RESIDÊNCIA FISCAL</span><h4>Países e números de identificação</h4></div>
+            <p>O primeiro registro é preenchido com o CPF ou CNPJ. Use o segundo caso exista outro domicílio fiscal.</p>
+          </div>
+          <div class="fields-grid fields-grid--2 fiscal-grid">
+            <div class="field"><label for="nifTaxCountry1">País/domicílio fiscal</label><input id="nifTaxCountry1" name="taxCountry1" type="text" value="Brasil" required></div>
+            <div class="field"><label for="nifTaxNumber1">NIF (CPF ou CNPJ no Brasil)</label><input id="nifTaxNumber1" name="taxNumber1" type="text" required></div>
+            <div class="field"><label for="nifTaxCountry2">Outro país/domicílio fiscal</label><input id="nifTaxCountry2" name="taxCountry2" type="text" placeholder="Opcional"></div>
+            <div class="field"><label for="nifTaxNumber2">Outro NIF</label><input id="nifTaxNumber2" name="taxNumber2" type="text" placeholder="Opcional"></div>
+          </div>
+          <div class="fields-grid fields-grid--3 form-signature-fields">
+            <div class="field"><label for="nifPlace">Local</label><input id="nifPlace" name="place" type="text" required></div>
+            <div class="field"><label for="nifDate">Data</label><input id="nifDate" name="date" type="date" required></div>
+            <div id="nifSignerField" class="field"><label for="nifSigner">Nome do signatário</label><input id="nifSigner" name="signer" type="text" required></div>
+          </div>
+          <div id="nifFormMessage" class="inline-message" role="status" aria-live="polite"></div>
+          <button class="button button--generate report-generate" type="submit"><span aria-hidden="true">↓</span> Gerar Declaração NIF</button>
+        </form>
+
+        <form id="scrForm" class="report-form-card" novalidate>
+          <div class="report-form-card__head">
+            <div class="report-form-card__badge">SCR</div>
+            <div><span class="report-kicker">GERAÇÃO EM HTML</span><h3>Autorização para Consulta ao SCR</h3><p>Identifique o cliente, confira os dados e gere o documento para assinatura.</p></div>
+          </div>
+          <div class="fields-grid fields-grid--3">
+            <div class="field">
+              <label for="scrPersonType">Tipo de cliente</label>
+              <select id="scrPersonType" name="personType"><option value="pf">Pessoa física</option><option value="pj">Pessoa jurídica</option></select>
+            </div>
+            <div class="field field--span-2">
+              <label id="scrDocumentLabel" for="scrDocument">CPF</label>
+              <div class="document-lookup"><input id="scrDocument" name="document" type="text" inputmode="numeric" maxlength="18" autocomplete="off" placeholder="000.000.000-00" required><button id="scrLookup" class="button button--primary" type="button" hidden>Consultar CNPJ</button></div>
+              <small>Para CNPJ, a razão social será carregada pela consulta.</small>
+            </div>
+            <div class="field field--span-3">
+              <label id="scrNameLabel" for="scrName">Nome completo</label>
+              <input id="scrName" name="name" type="text" required>
+            </div>
+          </div>
+          <div id="scrLookupMessage" class="inline-message" role="status" aria-live="polite"></div>
+          <div class="fields-grid fields-grid--2 form-signature-fields">
+            <div class="field"><label for="scrPlace">Local</label><input id="scrPlace" name="place" type="text" required></div>
+            <div class="field"><label for="scrDate">Data</label><input id="scrDate" name="date" type="date" required></div>
+          </div>
+          <div id="scrFormMessage" class="inline-message" role="status" aria-live="polite"></div>
+          <button class="button button--generate report-generate" type="submit"><span aria-hidden="true">↓</span> Gerar Autorização SCR</button>
+        </form>
+
+      </div>
+    </section>
+
+
+  </main>
+  <footer class="footer"><div class="shell"><span>Central FCO · uso interno</span><span class="footer-credit">Declarações e autorizações complementares</span><span>Confira os dados antes da assinatura</span></div></footer>
+</body>
+</html>

@@ -18,6 +18,8 @@ const cnpjInput = $('#cnpj');
 const btnConsultar = $('#btnConsultar');
 const companyMessage = $('#companyMessage');
 const companyCard = $('#companyCard');
+const manualCompanyPrompt = $('#manualCompanyPrompt');
+const manualCompanyForm = $('#manualCompanyForm');
 const peopleList = $('#peopleList');
 const guaranteesList = $('#guaranteesList');
 const automaticGuaranteesList = $('#automaticGuaranteesList');
@@ -96,6 +98,7 @@ cnpjInput.addEventListener('input', event => {
     companyCard.hidden = true;
   }
   clearMessage(companyMessage);
+  resetManualCompanyFlow();
 });
 cnpjInput.addEventListener('keydown', event => {
   if (event.key === 'Enter') {
@@ -104,6 +107,20 @@ cnpjInput.addEventListener('keydown', event => {
   }
 });
 btnConsultar.addEventListener('click', consultCompany);
+$('#btnManualCompanyYes').addEventListener('click', () => {
+  manualCompanyPrompt.hidden = true;
+  manualCompanyForm.hidden = false;
+  $('#manualCompanyName').focus();
+});
+$('#btnManualCompanyNo').addEventListener('click', resetManualCompanyFlow);
+$('#btnCancelManualCompany').addEventListener('click', resetManualCompanyFlow);
+$('#btnSaveManualCompany').addEventListener('click', saveManualCompany);
+$('#manualCompanyLegalType').addEventListener('change', event => {
+  const isOther = event.target.value === 'Outro';
+  $('#manualCompanyOtherTypeField').hidden = !isOther;
+  $('#manualCompanyOtherType').value = isOther ? $('#manualCompanyOtherType').value : '';
+  if (isOther) $('#manualCompanyOtherType').focus();
+});
 $('#btnAddPerson').addEventListener('click', capturePerson);
 $('#btnAddGuarantee').addEventListener('click', addGuarantee);
 $('#tipoOperacao').addEventListener('change', syncConditionalFields);
@@ -289,6 +306,7 @@ async function consultCompany() {
   clearMessage(companyMessage);
   companyCard.hidden = true;
   state.empresa = null;
+  resetManualCompanyFlow();
 
   if (!validateCnpj(cnpj)) {
     showMessage(companyMessage, 'Confira o CNPJ e os dígitos verificadores.', 'error');
@@ -297,7 +315,7 @@ async function consultCompany() {
 
   setButtonLoading(btnConsultar, true, 'Consultando...');
   try {
-    const data = await window.CnpjApi.request(cnpj);
+    const data = await window.CnpjApi.requestSimples(cnpj);
 
     const typeStreet = data.descricao_tipo_de_logradouro || data.descricao_tipo_logradouro || '';
     const street = [typeStreet, data.logradouro].filter(Boolean).join(' ').trim();
@@ -310,6 +328,10 @@ async function consultCompany() {
       tipoEstabelecimento: data.descricao_identificador_matriz_filial || data.tipo || '',
       porte: data.porte || data.descricao_porte || '',
       situacao: data.descricao_situacao_cadastral || data.situacao || data.situacao_cadastral || '',
+      simplesOptante: data.opcao_pelo_simples,
+      simplesDataOpcao: data.data_opcao_pelo_simples || '',
+      simplesDataExclusao: data.data_exclusao_do_simples || '',
+      simplesFonte: data.fonte_consulta || '',
       endereco: {
         logradouro: street,
         numero: data.numero || 'S/N',
@@ -323,12 +345,65 @@ async function consultCompany() {
     state.empresa.enderecoCompleto = joinAddress(state.empresa.endereco);
     renderCompany();
     if (!$('#localEmpreendimento').value) $('#localEmpreendimento').value = state.empresa.enderecoCompleto;
-    showMessage(companyMessage, 'Dados cadastrais carregados. Confira o resumo antes de continuar.', 'success');
+    showMessage(companyMessage, '✅ Dados obtidos automaticamente', 'success');
   } catch (error) {
-    showMessage(companyMessage, error.message || 'Não foi possível consultar o CNPJ.', 'error');
+    clearMessage(companyMessage);
+    manualCompanyPrompt.hidden = false;
   } finally {
     setButtonLoading(btnConsultar, false, 'Consultar CNPJ');
   }
+}
+
+function resetManualCompanyFlow() {
+  manualCompanyPrompt.hidden = true;
+  manualCompanyForm.hidden = true;
+  clearMessage($('#manualCompanyMessage'));
+  $('#manualCompanyName').value = '';
+  $('#manualCompanyLegalType').value = '';
+  $('#manualCompanyOtherType').value = '';
+  $('#manualCompanyOtherTypeField').hidden = true;
+  $('#manualCompanyAddress').value = '';
+}
+
+function saveManualCompany() {
+  const cnpj = cleanDocument(cnpjInput.value);
+  const name = $('#manualCompanyName').value.trim();
+  const selectedType = $('#manualCompanyLegalType').value;
+  const legalType = selectedType === 'Outro' ? $('#manualCompanyOtherType').value.trim() : selectedType;
+  const address = $('#manualCompanyAddress').value.trim();
+  const message = $('#manualCompanyMessage');
+  clearMessage(message);
+  if (!validateCnpj(cnpj)) {
+    showMessage(message, 'Confira o CNPJ e os dígitos verificadores.', 'error');
+    cnpjInput.focus();
+    return;
+  }
+  if (!name || !legalType || !address) {
+    showMessage(message, 'Preencha a razão social, o tipo de sociedade e o endereço completo.', 'error');
+    return;
+  }
+  state.empresa = {
+    cnpj,
+    cnpjFormatado: formatCnpj(cnpj),
+    razaoSocial: name,
+    nomeFantasia: '',
+    naturezaJuridica: legalType,
+    tipoEstabelecimento: 'Informado manualmente',
+    porte: '',
+    situacao: 'Cadastro manual',
+    simplesOptante: null,
+    simplesDataOpcao: '',
+    simplesDataExclusao: '',
+    simplesFonte: '',
+    preenchimentoManual: true,
+    enderecoCompleto: address,
+    endereco: { logradouro: address, numero: '', complemento: '', bairro: '', cep: '', municipio: '', uf: '' }
+  };
+  renderCompany();
+  if (!$('#localEmpreendimento').value) $('#localEmpreendimento').value = address;
+  manualCompanyPrompt.hidden = true;
+  manualCompanyForm.hidden = true;
+  showMessage(companyMessage, '✅ Dados preenchidos manualmente', 'success');
 }
 
 function formatCep(value) {
@@ -345,15 +420,29 @@ function joinAddress(address) {
   return [first, second, city, address.cep && `CEP ${address.cep}`].filter(Boolean).join(', ');
 }
 
+function formatApiDate(value) {
+  if (!value) return '';
+  const match = String(value).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return match ? `${match[3]}/${match[2]}/${match[1]}` : String(value);
+}
+
 function renderCompany() {
   const company = state.empresa;
+  $('#companySourceLabel').textContent = company.preenchimentoManual ? 'Dados informados manualmente' : 'Dados encontrados';
   $('#companyName').textContent = company.razaoSocial || 'Não informado';
   $('#companyCnpj').textContent = company.cnpjFormatado;
   $('#companyTradeName').textContent = company.nomeFantasia || 'Não informado';
   $('#companyLegalType').textContent = company.naturezaJuridica || 'Não informado';
   $('#companyBranchType').textContent = company.tipoEstabelecimento || 'Não informado';
+  const source = company.simplesFonte ? ` · fonte: ${company.simplesFonte}` : '';
+  $('#companySimples').textContent = company.simplesOptante === true
+    ? `Optante${company.simplesDataOpcao ? ` desde ${formatApiDate(company.simplesDataOpcao)}` : ''}${source}`
+    : company.simplesOptante === false
+      ? `Não optante${company.simplesDataExclusao ? ` · exclusão em ${formatApiDate(company.simplesDataExclusao)}` : ''}${source}`
+      : `Não foi possível confirmar${source}`;
   $('#companyAddress').textContent = company.enderecoCompleto || 'Não informado';
   $('#companyStatus').textContent = company.situacao || 'Consultado';
+  $('#companyStatus').className = company.preenchimentoManual ? 'badge' : 'badge badge--success';
   companyCard.hidden = false;
 }
 
@@ -563,7 +652,7 @@ function getTermRule(type, fcoMulher) {
       : { maxTotal: 24, maxGrace: 3, maxRepayment: null, label: 'Capital de Giro' };
   }
   return fcoMulher
-    ? { maxTotal: 168, maxGrace: 48, maxRepayment: 120, label: 'Investimento · FCO Mulher' }
+    ? { maxTotal: 168, maxGrace: 48, maxRepayment: 144, label: 'Investimento · FCO Mulher' }
     : { maxTotal: 144, maxGrace: 24, maxRepayment: 120, label: 'Investimento' };
 }
 
@@ -736,27 +825,20 @@ async function generateReports(event) {
   }
 
   const preview = window.open('', '_blank');
-  if (preview) preview.document.write('<!doctype html><title>Gerando dossiê...</title><p style="font:16px Calibri,Arial;padding:30px">Gerando documentos...</p>');
+  if (!preview) {
+    showMessage(formMessage, 'Autorize a abertura de pop-ups para visualizar e imprimir o dossiê.', 'error');
+    return;
+  }
+  preview.document.write('<!doctype html><title>Gerando dossiê...</title><p style="font:16px Calibri,Arial;padding:30px">Gerando documentos...</p>');
   setButtonLoading(btnGenerate, true, 'Gerando documentos...');
   try {
     const dossier = await window.FCOReports.renderDossier(payload);
-    if (preview) {
-      preview.document.open();
-      preview.document.write(dossier);
-      preview.document.close();
-    }
-    const blob = new Blob([dossier], { type: 'text/html;charset=utf-8' });
-    const link = document.createElement('a');
-    const safeName = (state.empresa.razaoSocial || 'empresa').replace(/[^a-z0-9]+/gi, '_').replace(/^_|_$/g, '');
-    link.href = URL.createObjectURL(blob);
-    link.download = `Relatorios_FCO_${safeName}_${state.empresa.cnpj}.html`;
-    document.body.append(link);
-    link.click();
-    link.remove();
-    setTimeout(() => URL.revokeObjectURL(link.href), 1500);
-    showMessage(formMessage, preview ? 'Relatórios gerados. A versão para impressão foi aberta e uma cópia HTML foi baixada.' : 'Relatórios gerados e baixados em HTML. Autorize pop-ups para abrir a versão de impressão.', 'success');
+    preview.document.open();
+    preview.document.write(dossier);
+    preview.document.close();
+    showMessage(formMessage, 'Dossiê aberto em uma aba temporária para impressão. Nenhum arquivo HTML foi salvo no computador.', 'success');
   } catch (error) {
-    if (preview) preview.close();
+    preview.close();
     showMessage(formMessage, error.message || 'Falha ao gerar os relatórios.', 'error');
   } finally {
     setButtonLoading(btnGenerate, false, 'Gerar Relatórios');

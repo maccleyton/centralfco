@@ -87,12 +87,13 @@ function renderTable() {
   document.querySelector('.deadline-table').hidden = rules.length === 0;
 }
 
-addOptions(lineFilter, [...new Set(deadlineRules.map(rule => rule[0]))]);
-addOptions(purposeFilter, [...new Set(deadlineRules.map(rule => rule[1]))]);
-[lineFilter, purposeFilter, sizeFilter].forEach(filter => filter.addEventListener('change', renderTable));
-renderTable();
+if (lineFilter && purposeFilter && sizeFilter && tableBody && emptyState) {
+  addOptions(lineFilter, [...new Set(deadlineRules.map(rule => rule[0]))]);
+  addOptions(purposeFilter, [...new Set(deadlineRules.map(rule => rule[1]))]);
+  [lineFilter, purposeFilter, sizeFilter].forEach(filter => filter.addEventListener('change', renderTable));
+  renderTable();
+}
 
-const formState = { nif: null, scr: null };
 const byId = id => document.getElementById(id);
 const reportsSource = new URLSearchParams(window.location.search).get('from');
 
@@ -112,6 +113,9 @@ function returnToCentral(event) {
 
 byId('reportsBackBrand').addEventListener('click', returnToCentral);
 byId('reportsBackLink').addEventListener('click', returnToCentral);
+
+if (byId('nifForm')) {
+const formState = { nif: null, scr: null };
 
 function escapeReportHtml(value) {
   return String(value ?? '').replace(/[&<>'"]/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[character]);
@@ -264,10 +268,69 @@ async function lookupCompanyForForm(prefix) {
   }
 }
 
+const moneyOnly = value => Number(value || 0).toLocaleString('pt-BR', {
+  style: 'currency', currency: 'BRL', minimumFractionDigits: 2
+});
+
+const extensoAteDezenove = "zero|um|dois|tres|quatro|cinco|seis|sete|oito|nove".split("|");
+
+extensoAteDezenove.push(..."dez|onze|doze|treze|quatorze|quinze".split("|"));
+
+extensoAteDezenove.push(..."dezesseis|dezessete|dezoito|dezenove".split("|"));
+
+const extensoDezenas = "||vinte|trinta|quarenta|cinquenta|sessenta|setenta|oitenta|noventa".split("|");
+const extensoCentenas = "|cento|duzentos|trezentos|quatrocentos".split("|");
+extensoCentenas.push(..."quinhentos|seiscentos|setecentos|oitocentos|novecentos".split("|"));
+
+function extensoAteMil(value) {
+  if (value === 100) return "cem";
+  const partes = [];
+  const centena = Math.floor(value / 100);
+  const resto = value % 100;
+  if (centena) partes.push(extensoCentenas[centena]);
+  if (resto) partes.push(resto < 20 ? extensoAteDezenove[resto] : extensoDezenas[Math.floor(resto / 10)] + (resto % 10 ? " e " + extensoAteDezenove[resto % 10] : ""));
+  return partes.join(" e ");
+}
+
+function inteiroPorExtenso(value) {
+  let numero = Math.floor(Math.abs(value));
+  if (!numero) return "zero";
+  const escalas = [[1000000000000, "trilh\u00e3o", "trilh\u00f5es"], [1000000000, "bilh\u00e3o", "bilh\u00f5es"], [1000000, "milh\u00e3o", "milh\u00f5es"], [1000, "mil", "mil"]];
+  const partes = [];
+  escalas.forEach(([divisor, singular, plural]) => {
+    const quantidade = Math.floor(numero / divisor);
+    if (!quantidade) return;
+    partes.push((divisor === 1000 && quantidade === 1 ? "" : inteiroPorExtenso(quantidade) + " ") + (quantidade === 1 ? singular : plural));
+    numero %= divisor;
+  });
+  if (numero) partes.push(extensoAteMil(numero));
+  return partes.join(" e ");
+}
+
+extensoAteDezenove[3] = "tr\u00eas";
+
+function valorPorExtenso(value) {
+  const centavosTotais = Math.round(Math.abs(Number(value || 0)) * 100);
+  const reais = Math.floor(centavosTotais / 100);
+  const centavos = centavosTotais % 100;
+  let resultado = inteiroPorExtenso(reais) + (reais === 1 ? " real" : " reais");
+  if (centavos) resultado += " e " + inteiroPorExtenso(centavos) + (centavos === 1 ? " centavo" : " centavos");
+  return resultado;
+}
+
+const money = value => moneyOnly(value) + " (" + valorPorExtenso(value) + ")";
+
+
 function dateInPortuguese(value) {
   if (!value) return '';
   const [year, month, day] = value.split('-').map(Number);
   return new Intl.DateTimeFormat('pt-BR').format(new Date(year, month - 1, day));
+}
+
+function dateLongInPortuguese(value) {
+  if (!value) return '';
+  const [year, month, day] = value.split('-').map(Number);
+  return new Intl.DateTimeFormat('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(year, month - 1, day));
 }
 
 let reportLogoSource = 'logo02.png';
@@ -300,6 +363,7 @@ function reportShell(title, body) {
   @page{size:A4;margin:0}*{box-sizing:border-box}body{margin:0;background:#eef0f7;color:#20213a;font-family:Arial,sans-serif;line-height:1.45}.page{position:relative;width:210mm;min-height:297mm;margin:20px auto;padding:13mm 18mm 27mm;background:#fff;box-shadow:0 12px 40px #1d1e3b26}.brand{height:18mm;display:flex;align-items:center;justify-content:space-between;gap:6mm;margin-bottom:6mm;padding-bottom:2.5mm;border-bottom:1.5pt solid #2037a0}.brand img{width:22mm;height:12mm;object-fit:contain}.brand span{color:#555;font-size:7.5pt;text-transform:uppercase;letter-spacing:.12em}.title{margin:18px 0 20px}.title small{color:#3333bd;font-weight:700;letter-spacing:.1em}.title h1{margin:5px 0 0;font-size:26px;line-height:1.1}.data-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:18px 0}.data{padding:10px 12px;border:1px solid #d9dcea;border-radius:8px}.data.wide{grid-column:1/-1}.data small,.signature small{display:block;color:#707387;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em}.data strong{display:block;margin-top:3px;font-size:12px}.copy{font-size:11px;text-align:justify}.copy h2{margin:22px 0 8px;color:#3333bd;font-size:14px}.copy li{margin-bottom:5px}.tax-table{width:100%;margin:13px 0 20px;border-collapse:collapse;font-size:11px}.tax-table th,.tax-table td{padding:9px;border:1px solid #cfd3e2;text-align:left}.tax-table th{background:#ededff;color:#3333bd}.signature{margin-top:42px;padding-top:30px;border-top:1px solid #777;text-align:center}.signature strong{font-size:12px}.footer{position:absolute;left:18mm;right:18mm;bottom:10mm;padding-top:2.5mm;border-top:.6pt solid #aaa;color:#333;font-size:7.5pt;line-height:1.25}.print{position:fixed;right:22px;bottom:22px;padding:12px 18px;border:0;border-radius:8px;background:#3333bd;color:#fff;font-weight:700;cursor:pointer}@media print{body{background:#fff}.page{margin:0;box-shadow:none}.print{display:none}}@media(max-width:800px){.page{width:100%;min-height:100vh;margin:0;padding:24px 18px 100px}.brand{height:auto}.brand img{width:64px;height:40px}.footer{left:18px;right:18px;bottom:20px}.data-grid{grid-template-columns:1fr}.data.wide{grid-column:auto}.print{right:12px;bottom:12px}}
   .signature{margin-top:18mm;padding-top:4mm;break-inside:avoid;page-break-inside:avoid}
   @media print{html,body{width:210mm;height:297mm}body{background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}.page{width:210mm;height:297mm;min-height:297mm;max-height:297mm;margin:0;padding:13mm 18mm 27mm;overflow:hidden;box-shadow:none}.brand,.title,.data-grid,.tax-table,.signature{break-inside:avoid;page-break-inside:avoid}.data-grid{grid-template-columns:1fr 1fr}.data.wide{grid-column:1/-1}.tax-table th{background:#ededff!important}.print{display:none}}
+  .statement-copy{margin-top:5mm}.statement-copy p{margin:0 0 4mm}.legal-quote{margin:5mm 0;padding:4mm 5mm;border-left:3px solid #3333bd;background:#f4f5ff;font-size:10px;text-align:justify}.place-date{margin:8mm 0 0;font-size:11px}.statement-copy+.place-date{break-after:avoid;page-break-after:avoid}
   </style></head><body><main class="page">${body}</main><button class="print" onclick="window.print()">Imprimir / salvar PDF</button></body></html>`;
 }
 
@@ -325,6 +389,29 @@ function buildScrReport(data) {
     <div class="data-grid"><div class="data wide"><small>Nome do cliente / razão social</small><strong>${escapeReportHtml(data.name)}</strong></div><div class="data"><small>${data.personType === 'pj' ? 'CNPJ' : 'CPF'}</small><strong>${escapeReportHtml(data.document)}</strong></div><div class="data"><small>Local e data</small><strong>${escapeReportHtml(data.place)}, ${escapeReportHtml(dateInPortuguese(data.date))}</strong></div></div>
     <div class="copy"><p>Autorizo(amos) o Conglomerado Banco do Brasil S.A. a consultar os débitos e responsabilidades decorrentes de operações com características de crédito e as informações e registros de medidas judiciais que em meu(nosso) nome constem ou venham a constar do Sistema de Informações de Crédito (SCR), gerido pelo Banco Central do Brasil, ou dos sistemas que venham a complementá-lo ou substituí-lo.</p><h2>Estou(amos) ciente(s) de que:</h2><ol type="a"><li>o SCR provê informações ao Banco Central para monitoramento do crédito, fiscalização e intercâmbio de informações entre instituições financeiras;</li><li>posso(emos) acessar os dados registrados em meu(nosso) nome por meio do sistema Registrato do Banco Central;</li><li>pedidos de correção, exclusão ou manifestação de discordância devem ser dirigidos ao Banco do Brasil por requerimento escrito e fundamentado, quando o BB tiver sido responsável pelo envio;</li><li>a consulta de informações no SCR depende de prévia autorização;</li><li>o Conglomerado Banco do Brasil deve enviar ao SCR as informações das operações de crédito definidas pela regulamentação do Banco Central;</li><li>mais informações podem ser obtidas nas páginas do Banco Central e do Banco do Brasil.</li></ol></div>
     <div class="signature"><small>Assinatura do cliente ou representante autorizado</small><strong>${escapeReportHtml(data.name)}</strong></div>
+    ${standardReportFooter()}`);
+}
+
+function buildResidenceReport(data) {
+  return reportShell('Autodeclaração de Residência', `
+    ${reportHeader('Declaração cadastral')}
+    <section class="title"><small>COMPROVAÇÃO DE ENDEREÇO</small><h1>Autodeclaração de Residência</h1></section>
+    <div class="data-grid"><div class="data wide"><small>Nome completo</small><strong>${escapeReportHtml(data.name)}</strong></div><div class="data"><small>CPF</small><strong>${escapeReportHtml(data.cpf)}</strong></div><div class="data wide"><small>Endereço completo</small><strong>${escapeReportHtml(data.address)}</strong></div></div>
+    <div class="copy statement-copy"><p>Eu, <strong>${escapeReportHtml(data.name)}</strong>, portador(a) do CPF sob o nº <strong>${escapeReportHtml(data.cpf)}</strong>. Na falta de documentos para comprovação de residência em meu próprio nome, <strong>DECLARO</strong>, para os devidos fins e sob as penas da Lei, ser residente e domiciliado(a) no seguinte endereço: <strong>${escapeReportHtml(data.address)}</strong>.</p><p>Declaro ainda estar ciente de que a falsidade da presente declaração pode implicar na sanção penal prevista no Art. 299 do Código Penal, conforme transcrição abaixo:</p><div class="legal-quote">“Art. 299 - Omitir, em documento público ou particular, declaração que nele devia constar, ou nele inserir ou fazer inserir declaração falsa ou diversa da que devia ser escrita, com o fim de prejudicar direito, criar obrigação ou alterar a verdade sobre fato juridicamente relevante.<br><br>Pena: reclusão, de um a cinco anos, e multa, se o documento é público, e reclusão de um a três anos, e multa, de quinhentos mil réis a cinco contos de réis, se o documento é particular.”</div></div>
+    <p class="place-date">${escapeReportHtml(data.place)}-${escapeReportHtml(data.uf)}, ${escapeReportHtml(dateLongInPortuguese(data.date))}</p>
+    <div class="signature"><small>Assinatura</small><strong>${escapeReportHtml(data.name)}</strong></div>
+    ${standardReportFooter()}`);
+}
+
+function buildIncomeReport(data) {
+  const monthlyIncome = Number(data.monthlyIncome || 0);
+  return reportShell('Autodeclaração de Renda', `
+    ${reportHeader('Declaração cadastral')}
+    <section class="title"><small>COMPROVAÇÃO DE RENDA</small><h1>Autodeclaração de Renda</h1></section>
+    <div class="data-grid"><div class="data wide"><small>Nome completo</small><strong>${escapeReportHtml(data.name)}</strong></div><div class="data"><small>CPF</small><strong>${escapeReportHtml(data.cpf)}</strong></div><div class="data"><small>Profissão ou atividade</small><strong>${escapeReportHtml(data.profession)}</strong></div><div class="data wide"><small>Endereço completo</small><strong>${escapeReportHtml(data.address)}</strong></div><div class="data"><small>Ocupação</small><strong>${escapeReportHtml(data.occupation)}</strong></div><div class="data"><small>Renda bruta mensal</small><strong>${escapeReportHtml(money(monthlyIncome))}</strong></div></div>
+    <div class="copy statement-copy"><p>Eu, <strong>${escapeReportHtml(data.name)}</strong>, profissão <strong>${escapeReportHtml(data.profession)}</strong>, portador(a) do CPF sob o nº <strong>${escapeReportHtml(data.cpf)}</strong>, residente e domiciliado(a) na <strong>${escapeReportHtml(data.address)}</strong>, declaro para os devidos fins e sob as penas da lei:</p><p>Que exerço a atividade de <strong>${escapeReportHtml(data.occupation)}</strong>.</p><p>Que a minha renda bruta mensal nos últimos três meses é de <strong>${escapeReportHtml(money(monthlyIncome))}</strong>.</p><p>Declaro ainda estar ciente de que a prestação de informações falsas neste documento me sujeitará às penalidades previstas no artigo 299 do Código Penal Brasileiro (crime de falsidade ideológica), além de outras sanções administrativas ou legais cabíveis.</p></div>
+    <p class="place-date">${escapeReportHtml(data.place)}-${escapeReportHtml(data.uf)}, ${escapeReportHtml(dateLongInPortuguese(data.date))}</p>
+    <div class="signature"><small>Assinatura</small><strong>${escapeReportHtml(data.name)}</strong></div>
     ${standardReportFooter()}`);
 }
 
@@ -387,6 +474,28 @@ function handleReportSubmit(prefix, builder, filenamePrefix) {
   };
 }
 
+function handleSimpleReportSubmit(formId, messageId, builder, filenamePrefix) {
+  return async event => {
+    event.preventDefault();
+    const form = byId(formId);
+    const data = formValues(form);
+    if (!form.checkValidity()) {
+      form.reportValidity();
+      setFormMessage(messageId, 'Preencha todos os campos obrigatórios.', 'error');
+      return;
+    }
+    if (!validCpf(data.cpf)) {
+      setFormMessage(messageId, 'Confira o CPF e os dígitos verificadores.', 'error');
+      form.querySelector('[name="cpf"]').focus();
+      return;
+    }
+    const popup = window.open('', '_blank');
+    await reportLogoReady;
+    deliverHtmlReport(builder(data), `${filenamePrefix}_${onlyDigits(data.cpf)}.html`, popup);
+    setFormMessage(messageId, 'Documento gerado. A versão para impressão foi aberta e o HTML foi baixado.', 'success');
+  };
+}
+
 ['nif', 'scr'].forEach(prefix => {
   byId(`${prefix}PersonType`).addEventListener('change', () => syncPersonType(prefix));
   byId(`${prefix}Lookup`).addEventListener('click', () => lookupCompanyForForm(prefix));
@@ -407,5 +516,11 @@ byId('nifName').addEventListener('input', event => {
 const today = new Date().toISOString().slice(0, 10);
 byId('nifDate').value = today;
 byId('scrDate').value = today;
+byId('residenceDate').value = today;
+byId('incomeDate').value = today;
+['residenceCpf', 'incomeCpf'].forEach(id => byId(id).addEventListener('input', event => { event.target.value = formatCpf(event.target.value); }));
 byId('nifForm').addEventListener('submit', handleReportSubmit('nif', buildNifReport, 'Declaracao_Domicilio_Fiscal_NIF'));
 byId('scrForm').addEventListener('submit', handleReportSubmit('scr', buildScrReport, 'Autorizacao_Consulta_SCR'));
+byId('residenceForm').addEventListener('submit', handleSimpleReportSubmit('residenceForm', 'residenceFormMessage', buildResidenceReport, 'Autodeclaracao_Residencia'));
+byId('incomeForm').addEventListener('submit', handleSimpleReportSubmit('incomeForm', 'incomeFormMessage', buildIncomeReport, 'Autodeclaracao_Renda'));
+}
