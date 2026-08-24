@@ -42,13 +42,14 @@ function hasFullName(value) {
   return formatPersonName(value).split(/\s+/).filter(part => /\p{L}/u.test(part)).length >= 2;
 }
 
-function formatBankReference(value) {
-  const digits = String(value || '').replace(/\D/g, '').slice(0, 8);
+function formatBankReference(value, baseDigits = 7) {
+  const digits = String(value || '').replace(/\D/g, '').slice(0, baseDigits + 1);
   return digits.length < 2 ? digits : `${digits.slice(0, -1)}-${digits.slice(-1)}`;
 }
 
-function validBankReference(value) {
-  return /^\d{1,7}-\d$/.test(String(value || '').trim());
+function validBankReference(value, exactBaseDigits = null) {
+  const pattern = exactBaseDigits === null ? /^\d{1,7}-\d$/ : new RegExp(`^\\d{${exactBaseDigits}}-\\d$`);
+  return pattern.test(String(value || '').trim());
 }
 
 function setAuthenticatedView(authenticated) {
@@ -156,8 +157,8 @@ $$('.money-input:not([readonly])').forEach(input => input.addEventListener('inpu
 $('#personCpf').addEventListener('input', event => { event.target.value = formatCpf(event.target.value); clearMessage(personMessage); });
 $('#spouseCpf').addEventListener('input', event => { event.target.value = formatCpf(event.target.value); clearMessage(personMessage); });
 $('#personCep').addEventListener('input', event => { event.target.value = formatCep(event.target.value); clearMessage(personMessage); });
-['agenciaDebito', 'contaDebito'].forEach(identifier => $(`#${identifier}`).addEventListener('input', event => {
-  event.target.value = formatBankReference(event.target.value);
+Object.entries({ agenciaDebito: 4, contaDebito: 7 }).forEach(([identifier, baseDigits]) => $(`#${identifier}`).addEventListener('input', event => {
+  event.target.value = formatBankReference(event.target.value, baseDigits);
   clearMessage(formMessage);
 }));
 $('#guaranteeCpf').addEventListener('input', event => { event.target.value = formatCpf(event.target.value); clearMessage(guaranteeMessage); });
@@ -892,7 +893,7 @@ function validatePayload(payload) {
   if (payload.operacao.valorFinanciado > payload.operacao.valorOrcamento) errors.push('O valor a financiar não pode superar o valor do orçamento.');
   if (payload.operacao.prazoTotalMeses <= 0) errors.push('Informe o prazo total.');
   errors.push(...termRuleErrors(payload.operacao));
-  if (!validBankReference(payload.operacao.agenciaDebito)) errors.push('Informe a agência para débito com até sete dígitos, hífen e dígito verificador.');
+  if (!validBankReference(payload.operacao.agenciaDebito, 4)) errors.push('Informe a agência para débito no formato XXXX-X.');
   if (!validBankReference(payload.operacao.contaDebito)) errors.push('Informe a conta para débito com até sete dígitos, hífen e dígito verificador.');
   if (!payload.agencia?.prefixo || !payload.agencia?.endereco) errors.push('Selecione uma agência responsável com endereço consultado.');
   if (!payload.pessoas.some(person => person.dirigente)) errors.push('Adicione ao menos um dirigente.');

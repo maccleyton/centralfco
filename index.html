@@ -9,7 +9,7 @@
   <script defer src="cnpj-api.js?v=2"></script>
   <script defer src="agencies.js?v=2"></script>
   <script defer src="reports.js?v=12"></script>
-  <script defer src="app.js?v=14"></script>
+  <script defer src="app.js?v=15"></script>
 </head>
 <body>
   <main id="loginScreen" class="login-screen">
@@ -275,7 +275,7 @@
           </div>
           <div class="field">
             <label for="agenciaDebito">Agência para débito</label>
-            <input id="agenciaDebito" name="agenciaDebito" type="text" inputmode="numeric" maxlength="9" pattern="\d{1,7}-\d" placeholder="0000000-0" title="Informe até sete dígitos, hífen e o dígito verificador" required>
+            <input id="agenciaDebito" name="agenciaDebito" type="text" inputmode="numeric" maxlength="6" pattern="\d{4}-\d" placeholder="0000-0" title="Informe quatro dígitos, hífen e o dígito verificador" required>
           </div>
           <div class="field">
             <label for="contaDebito">Conta para débito</label>
