@@ -217,6 +217,13 @@
     return `<h2>3. Garantia(s) proposta(s)</h2><table><thead><tr><th colspan="2">Garantias Fidejussórias</th></tr><tr><th>Nome ou Razão Social</th><th>CPF/CNPJ</th></tr></thead><tbody>${rows([...directors, ...personal])}</tbody></table><table><thead><tr><th colspan="2">Garantias Reais</th></tr><tr><th>Tipo de Garantia</th><th>Percentual (%)</th></tr></thead><tbody>${rows(real)}</tbody></table>`;
   }
 
+  function proposalOtherInformation() {
+    return {
+      firstPage: '<section class="proposal-other-info"><h2>4. Outras informações</h2><p>Para fins da Lei 13709, de 14 de agosto de 2018 (Lei Geral de Proteção de Dados Pessoais) me(nos) declaro(amos) ciente(s) de que o Banco do Brasil S.A., na qualidade de agente financeiro das operações rurais e empresariais com recursos provenientes do Fundo Constitucional de Financiamento do Centro-Oeste (FCO), poderá fornecer à União (ministérios e/ou secretarias), à Superintendência do Desenvolvimento do Centro-Oeste (SUDECO), ao Conselho Deliberativo do Desenvolvimento do Centro-Oeste (CONDEL/SUDECO), ao Banco Central do Brasil e demais órgãos de controle, dados pessoais necessários à execução e ao aprimoramento de políticas públicas correspondentes, bem como à fiscalização da correta aplicação dos recursos do Fundo Constitucional de Financiamento do Centro Oeste (FCO).</p></section>',
+      continuation: '<section class="proposal-other-info proposal-other-info--continuation"><p>Além disso, considerando a Lei Complementar 105, de 10 de janeiro de 2001, declaro-me(nos) ciente(s) que operações contratadas com recursos do Fundo Constitucional de Financiamento do Centro Oeste (FCO) envolvem a utilização de recursos públicos, não amparados pelo sigilo bancário, e autorizo o Banco do Brasil, na qualidade de agente financeiro, a fornecer à União (ministérios e/ou secretarias), Banco Central, Secretaria Federal de Controle Interno – SFCI da Controladoria Geral da União, à Controladoria Geral da União (CGU), ao Tribunal de Contas da União (TCU), ao Ministério Público Federal e à Secretaria do Tesouro Nacional (STN), Superintendência do Desenvolvimento do Centro Oeste (SUDECO), ao Conselho de Desenvolvimento do Centro-Oeste (Condel/Sudeco) e às secretarias do governo dos Estados que integram a área de atuação da Sudeco, informações relativas à presente proposta de operação de crédito, inclusive, mas não se limitando, com a finalidade de aprimoramento e execução de políticas públicas, fiscalização, registro, controle e apuração de eventuais irregularidades. Manifesto(amos) minha(nossa) ciência que a aprovação da presente proposta depende de análise de crédito do Banco do Brasil, bem como enquadramento nas regras do Fundo Constitucional de Financiamento do Centro-Oeste (FCO).</p></section>'
+    };
+  }
+
   function protocol(data) {
     return `<aside class="protocol"><strong>PROTOCOLO</strong><div>Recebido por: ${escapeHtml(data.acesso.matricula)}</div><div>${escapeHtml(data.acesso.nome)}</div><div>Data de Recebimento: ${dateShort(data.emissao.data)}</div><div>Agência: ${escapeHtml(data.agencia.prefixo)} - ${escapeHtml(data.agencia.nome)}</div></aside>`;
   }
@@ -229,12 +236,14 @@
     const purpose = investment
       ? `${checked(modalities.has('implantacao'))} Implantação &nbsp; ${checked(modalities.has('ampliacao'))} Ampliação &nbsp; ${checked(modalities.has('modernizacao'))} Modernização &nbsp; ${checked(modalities.has('reforma'))} Reforma`
       : `${checked(purposes.has('estoques'))} aquisição de insumos e/ou matéria-prima &nbsp; ${checked(purposes.has('gastos_gerais'))} gastos gerais relativos à administração`;
-    const body = `${protocol(data)}
+    const otherInformation = proposalOtherInformation();
+    const firstPageBody = `${protocol(data)}
       <section class="proposal-identification"><h2>1. Identificação</h2><dl class="proposal-data"><dt>Razão Social:</dt><dd>${escapeHtml(data.empresa.razaoSocial)}</dd><dt>CNPJ:</dt><dd>${escapeHtml(data.empresa.cnpjFormatado)}</dd></dl></section>
-      <h2>2. Proposta</h2><dl class="proposal-data"><dt>Proposta COP:</dt><dd>${escapeHtml(operation.propostaCop || 'Não informada')}</dd><dt>Linha de crédito:</dt><dd>${escapeHtml(operation.linhaCredito)}</dd><dt>Condição especial:</dt><dd>${operation.fcoMulher ? 'FCO Mulher' : 'Não se aplica'}</dd><dt>Finalidade:</dt><dd>${purpose}</dd><dt>Descrição de Finalidade:</dt><dd>${escapeHtml(operation.finalidade)}</dd><dt>Descrição da Proposta:</dt><dd>${escapeHtml(operation.descricao)}</dd><dt>Valor do orçamento:</dt><dd>${money(operation.valorOrcamento)}</dd>${investment ? `<dt>Giro associado:</dt><dd>${checked(operation.giroAssociado)} Sim &nbsp; ${checked(!operation.giroAssociado)} Não</dd><dt>Valor do giro:</dt><dd>${operation.giroAssociado ? money(operation.valorGiroAssociado) : 'Não se aplica'}</dd>` : ''}<dt>Valor a financiar:</dt><dd>${money(operation.valorFinanciado)}</dd><dt>Recursos próprios:</dt><dd>${money(operation.recursosProprios)}</dd><dt>Prazo:</dt><dd>${escapeHtml(operation.prazoTotalMeses)} meses (sendo ${escapeHtml(operation.carenciaMeses)} meses de carência e ${escapeHtml(Math.max(0, Number(operation.prazoTotalMeses) - Number(operation.carenciaMeses)))} meses de reposição)</dd>${investment ? `<dt>Localização:</dt><dd>${escapeHtml(operation.localEmpreendimento || data.empresa.enderecoCompleto)}</dd>` : ''}</dl>
-      ${guaranteeTables(data)}<p class="local-date">${localDate(data)}</p>${signatures(peopleBy(data, 'dirigente'), data.empresa.razaoSocial, 'Dirigentes')}`;
+      <h2>2. Proposta</h2><dl class="proposal-data"><dt>Proposta COP:</dt><dd>${escapeHtml(operation.propostaCop || 'Não informada')}</dd><dt>Linha de crédito:</dt><dd>${escapeHtml(operation.linhaCredito)}</dd><dt>Condição especial:</dt><dd>${operation.fcoMulher ? 'FCO Mulher' : 'Não se aplica'}</dd><dt>Finalidade:</dt><dd>${escapeHtml(operation.finalidade)}<div class="proposal-purpose-options">${purpose}</div></dd><dt>Descrição:</dt><dd>${escapeHtml(operation.descricao)}</dd><dt>Valor do orçamento:</dt><dd>${money(operation.valorOrcamento)}</dd>${investment ? `<dt>Giro associado:</dt><dd>${checked(operation.giroAssociado)} Sim &nbsp; ${checked(!operation.giroAssociado)} Não</dd><dt>Valor do giro:</dt><dd>${operation.giroAssociado ? money(operation.valorGiroAssociado) : 'Não se aplica'}</dd>` : ''}<dt>Valor a financiar:</dt><dd>${money(operation.valorFinanciado)}</dd><dt>Recursos próprios:</dt><dd>${money(operation.recursosProprios)}</dd><dt>Prazo:</dt><dd>${escapeHtml(operation.prazoTotalMeses)} meses (sendo ${escapeHtml(operation.carenciaMeses)} meses de carência e ${escapeHtml(Math.max(0, Number(operation.prazoTotalMeses) - Number(operation.carenciaMeses)))} meses de reposição)</dd>${investment ? `<dt>Localização:</dt><dd>${escapeHtml(operation.localEmpreendimento || data.empresa.enderecoCompleto)}</dd>` : ''}</dl>
+      ${guaranteeTables(data)}${otherInformation.firstPage}`;
+    const secondPageBody = `${otherInformation.continuation}<p class="local-date">${localDate(data)}</p>${signatures(peopleBy(data, 'dirigente'), data.empresa.razaoSocial, 'Dirigentes')}`;
     const title = investment ? 'PROPOSTA DE FINANCIAMENTO – FCO INVESTIMENTO' : 'PROPOSTA DE FINANCIAMENTO – FCO CAPITAL DE GIRO DISSOCIADO';
-    return documentPage(title, logo, body, 'proposal-document');
+    return `${documentPage(title, logo, firstPageBody, 'proposal-document proposal-document--first')}${documentPage(title, logo, secondPageBody, 'proposal-document proposal-document--continuation')}`;
   }
 
   function dossierCss() {
@@ -249,7 +258,10 @@
       thead tr:first-child th{background:#3333bd!important;color:#fff!important}
       .signature-block{break-inside:avoid;page-break-inside:avoid}
       .proposal-document .signature-line{height:20mm}
-      @media print{.document{margin:0;box-shadow:none}.signature-block,.signature-grid,.signature{break-inside:avoid!important;page-break-inside:avoid!important}}
+      .proposal-purpose-options{margin-top:1.5mm}
+      .proposal-other-info{break-inside:auto;page-break-inside:auto}
+      .proposal-other-info p{margin-bottom:3mm;font-size:9.5pt;line-height:1.28;text-align:justify}
+      @media print{.document{margin:0;box-shadow:none}.proposal-document{height:295mm;min-height:295mm;max-height:295mm;overflow:hidden;break-after:auto!important;page-break-after:auto!important}.proposal-document--continuation{break-before:page!important;page-break-before:always!important}.signature-block,.signature-grid,.signature{break-inside:avoid!important;page-break-inside:avoid!important}}
     `;
   }
 

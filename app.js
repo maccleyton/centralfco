@@ -885,8 +885,8 @@ function validatePayload(payload) {
   if (!payload.acesso?.matricula || !payload.acesso?.nome) errors.push('Identificação do funcionário ausente. Entre novamente.');
   if (!payload.empresa) errors.push('Consulte um CNPJ válido antes de gerar.');
   if (payload.operacao.tipo === 'investimento' && !payload.operacao.linhaCredito) errors.push('Selecione a linha de crédito.');
-  if (!payload.operacao.finalidade.trim()) errors.push('Informe a descrição de finalidade.');
-  if (!payload.operacao.descricao.trim()) errors.push('Informe a descrição da proposta.');
+  if (!payload.operacao.finalidade.trim()) errors.push('Informe a finalidade.');
+  if (!payload.operacao.descricao.trim()) errors.push('Informe a descrição.');
   if (payload.operacao.valorOrcamento <= 0) errors.push('Informe o valor do orçamento.');
   if (payload.operacao.valorFinanciado <= 0) errors.push('Informe o valor a financiar.');
   if (payload.operacao.giroAssociado && payload.operacao.valorGiroAssociado <= 0) errors.push('Informe o valor do giro associado.');
