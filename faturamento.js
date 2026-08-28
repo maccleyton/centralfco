@@ -138,24 +138,33 @@ function historicalMonths() {
 function splitMoney(total, weights) {
   const totalCents = Math.round(total * 100);
   const weightTotal = weights.reduce((sum, value) => sum + value, 0);
+  if (weightTotal <= 0) return weights.map(() => 0);
   const values = weights.map(weight => Math.floor(totalCents * weight / weightTotal));
   let remainder = totalCents - values.reduce((sum, value) => sum + value, 0);
-  for (let index = 0; remainder > 0; index = (index + 1) % values.length, remainder -= 1) values[index] += 1;
+  const activeIndexes = weights.map((weight, index) => weight > 0 ? index : -1).filter(index => index >= 0);
+  for (let cursor = 0; remainder > 0; cursor = (cursor + 1) % activeIndexes.length, remainder -= 1) {
+    values[activeIndexes[cursor]] += 1;
+  }
   return values.map(value => value / 100);
 }
 
 function applySalesSplit(months) {
   const cashPercent = Number(billingById('billingCashPercent').value);
   return months.map(month => {
+    if (month.inactive) return { ...month, cash: 0, term: 0 };
     const cash = Math.round(month.total * cashPercent) / 100;
     return { ...month, cash, term: Math.round((month.total - cash) * 100) / 100 };
   });
 }
 
+function billingMonthAmount(month, field) {
+  return month.inactive ? '–' : billingCurrency.format(month[field]);
+}
+
 function renderBillingDistribution() {
   if (!billingUpdateState?.months?.length) return;
   const months = billingUpdateState.months;
-  billingById('billingMonthsTable').innerHTML = months.map(month => `<tr><td>${billingEscape(month.label)}</td><td>${billingCurrency.format(month.cash)}</td><td>${billingCurrency.format(month.term)}</td><td>${billingCurrency.format(month.total)}</td></tr>`).join('');
+  billingById('billingMonthsTable').innerHTML = months.map(month => `<tr${month.inactive ? ' class="billing-month-inactive"' : ''}><td>${billingEscape(month.label)}</td><td>${billingMonthAmount(month, 'cash')}</td><td>${billingMonthAmount(month, 'term')}</td><td>${billingMonthAmount(month, 'total')}</td></tr>`).join('');
   const cashTotal = months.reduce((sum, month) => sum + month.cash, 0);
   const termTotal = months.reduce((sum, month) => sum + month.term, 0);
   billingById('billingCashTotal').textContent = billingCurrency.format(cashTotal);
@@ -184,7 +193,7 @@ function randomizeBillingMonths() {
   const startIndex = 12 - activeMonthsCount;
   const weights = months.map((_, index) => index >= startIndex ? 0.7 + Math.random() * 0.6 : 0);
   const totals = splitMoney(billingUpdateState.updated, weights);
-  billingUpdateState.months = applySalesSplit(months.map((month, index) => ({ ...month, total: totals[index] })));
+  billingUpdateState.months = applySalesSplit(months.map((month, index) => ({ ...month, total: totals[index], inactive: index < startIndex })));
   renderBillingDistribution();
 }
 
@@ -405,12 +414,26 @@ function reportHtml(data, logo) {
   const termPercent = 100 - cashPercent;
   const cashTotal = data.months.reduce((sum, month) => sum + month.cash, 0);
   const termTotal = data.months.reduce((sum, month) => sum + month.term, 0);
-  const monthRows = data.months.map(month => `<tr><td>${billingEscape(month.label)}</td><td>${billingCurrency.format(month.cash)}</td><td>${billingCurrency.format(month.term)}</td><td>${billingCurrency.format(month.total)}</td></tr>`).join('');
+  const monthRows = data.months.map(month => `<tr${month.inactive ? ' class="inactive"' : ''}><td>${billingEscape(month.label)}</td><td>${billingMonthAmount(month, 'cash')}</td><td>${billingMonthAmount(month, 'term')}</td><td>${billingMonthAmount(month, 'total')}</td></tr>`).join('');
   const placeAndDate = `${billingPlace()}, ${longBrDate()}`;
   return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Relação de Faturamento - ${billingEscape(data.company)}</title><style>
   ${billingReportFontCss()}
   @page{size:A4;margin:0}*{box-sizing:border-box}body{margin:0;background:#eef0f6;color:#17182d;font:11px Arial,sans-serif}.sheet{width:210mm;min-height:297mm;margin:16px auto;padding:13mm 16mm 27mm;background:#fff;position:relative;box-shadow:0 14px 40px #0002}.header{display:flex;align-items:center;justify-content:space-between;padding-bottom:10px;border-bottom:2px solid #3333bd}.header img{width:42px}.header span{font-size:9px;letter-spacing:.12em;color:#55586c}.kicker{margin:18px 0 4px;color:#3333bd;font-size:9px;font-weight:800;letter-spacing:.12em}.title{margin:0 0 10px;font-size:22px}.company{display:grid;grid-template-columns:2fr 1fr 1.35fr;gap:7px}.box{padding:9px 11px;border:1px solid #d6daea;border-radius:8px}.box small,.summary small{display:block;margin-bottom:3px;color:#64677b;font-size:7px;font-weight:800;letter-spacing:.09em;text-transform:uppercase}.box strong{font-size:10px}.summary-grid{display:grid;grid-template-columns:1fr;gap:7px;margin-top:10px}.summary{padding:9px;border-radius:8px;background:#f3f4fb}.summary strong{font-size:10px}.section-title{margin:15px 0 7px;color:#3333bd;font-size:12px}table{width:100%;border-collapse:collapse;font-size:10px}th{background:#e8e9ff;color:#24249a;text-align:right}th:first-child,td:first-child{text-align:left}th,td{padding:6px 8px;border:1px solid #cfd3e3;text-align:right}tbody tr:nth-child(even){background:#fafbff}tfoot th{border-top:2px solid #3333bd}.split-summary{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin-top:9px}.tax{margin-top:9px;padding:8px 10px;border-left:3px solid #fcfc30;background:#fffde5}.tax strong{color:#24249a}.note{margin-top:9px;padding:8px 10px;border-radius:6px;background:#f5f6fb;font-size:7px;line-height:1.35}.place-date{margin-top:12px;font-size:9px}.signature{width:68%;margin:34px auto 0;text-align:center}.signature__line{border-top:1px solid #17182d;padding-top:5px}.signature strong,.signature span{display:block}.signature span{margin-top:2px;font-size:8px}.footer{position:absolute;left:18mm;right:18mm;bottom:10mm;padding-top:2.5mm;border-top:.6pt solid #aaa;color:#333;font-size:7.5pt;line-height:1.25}.print{position:fixed;right:24px;bottom:24px;padding:13px 18px;border:0;border-radius:9px;background:#3333bd;color:#fff;font-weight:700;cursor:pointer}@media print{body{background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}.sheet{width:210mm;min-height:297mm;margin:0;padding:13mm 16mm 27mm;box-shadow:none;position:relative}.print{display:none}}
-  </style></head><body><main class="sheet"><header class="header"><img src="${logo}" alt="Banco do Brasil"><span>RELAÇÃO DE FATURAMENTO</span></header><div class="kicker">PESSOA JURÍDICA</div><h1 class="title">Relação de Faturamento - Últimos 12 meses</h1><p style="margin:0 0 14px;font-size:10px;line-height:1.4">Declaramos, para os devidos fins, que o faturamento da empresa identificada abaixo, conforme registros fiscais regularmente apresentados, corresponde aos valores demonstrados a seguir.</p><section class="company"><div class="box"><small>Razão social</small><strong>${billingEscape(data.company)}</strong></div><div class="box"><small>CNPJ</small><strong>${billingEscape(data.cnpj)}</strong></div><div class="box"><small>Regime tributário</small><strong>${billingEscape(data.simpleLabel)}</strong></div></section><section class="summary-grid"><div class="summary"><small>Faturamento atual</small><strong>${billingCurrency.format(data.updated)} (${numberToWordsBr(data.updated)})</strong></div></section><h2 class="section-title">Detalhamento do faturamento</h2><table><thead><tr><th>Mês/ano</th><th>À vista - R$</th><th>À prazo - R$</th><th>Total - R$</th></tr></thead><tbody>${monthRows}</tbody><tfoot><tr><th>Total</th><th>${billingCurrency.format(cashTotal)}</th><th>${billingCurrency.format(termTotal)}</th><th>${billingCurrency.format(data.updated)}</th></tr></tfoot></table><section class="split-summary"><div class="box"><small>Vendas à vista</small><strong>${cashPercent}%</strong></div><div class="box"><small>Vendas à prazo</small><strong>${termPercent}%</strong></div></section><p class="place-date">${billingEscape(placeAndDate)}</p><section class="signature"><div class="signature__line"><strong>${billingEscape(data.company)}</strong><span>${billingEscape(data.cnpj)}</span></div><p style="margin-top:14px;font-size:8px;color:#64677b">Obs.: Dispensada a assinatura do contador para faturamento até R$ 4.800.000,00.</p></section><footer class="footer">CRBB: 4004-0001 (capitais e regiões metropolitanas) ou 0800 729 0001 (demais localidades).<br>SAC: 0800 729 0722 · Atendimento para Pessoas com Deficiência Auditiva ou de Fala: 0800 729 0088 · Ouvidoria BB: 0800 729 5678.</footer></main><button class="print" onclick="window.print()">Imprimir / salvar PDF</button></body></html>`;
+  tbody tr.inactive td:not(:first-child){color:#686b7c;font-weight:700}
+  table{table-layout:fixed}.billing-col-month{width:27%}.billing-col-value{width:24.333%}
+  .summary-value,.summary-words{display:block}.summary-words{margin-top:2px;font-family:"BB Textos",Arial,sans-serif;font-weight:500}
+  .split-summary{grid-template-columns:27% repeat(3,24.333%);gap:0;margin-top:9px}.split-summary .cash-box{grid-column:2;border-radius:8px 0 0 8px}.split-summary .term-box{grid-column:3;border-left:0;border-radius:0 8px 8px 0}
+  </style></head><body><main class="sheet">
+  <header class="header"><img src="${logo}" alt="Banco do Brasil"><span>RELAÇÃO DE FATURAMENTO</span></header>
+  <div class="kicker">PESSOA JURÍDICA</div><h1 class="title">Relação de Faturamento - Últimos 12 meses</h1>
+  <p style="margin:0 0 14px;font-size:10px;line-height:1.4">Declaramos, para os devidos fins, que o faturamento da empresa identificada abaixo, conforme registros fiscais regularmente apresentados, corresponde aos valores demonstrados a seguir.</p>
+  <section class="company"><div class="box"><small>Razão social</small><strong>${billingEscape(data.company)}</strong></div><div class="box"><small>CNPJ</small><strong>${billingEscape(data.cnpj)}</strong></div><div class="box"><small>Regime tributário</small><strong>${billingEscape(data.simpleLabel)}</strong></div></section>
+  <section class="summary-grid"><div class="summary"><small>Faturamento atual</small><strong><span class="summary-value">${billingCurrency.format(data.updated)}</span><span class="summary-words">${numberToWordsBr(data.updated)}</span></strong></div></section>
+  <h2 class="section-title">Detalhamento do faturamento</h2>
+  <table><colgroup><col class="billing-col-month"><col class="billing-col-value"><col class="billing-col-value"><col class="billing-col-value"></colgroup><thead><tr><th>Mês/ano</th><th>À vista - R$</th><th>À prazo - R$</th><th>Total - R$</th></tr></thead><tbody>${monthRows}</tbody><tfoot><tr><th>Total</th><th>${billingCurrency.format(cashTotal)}</th><th>${billingCurrency.format(termTotal)}</th><th>${billingCurrency.format(data.updated)}</th></tr></tfoot></table>
+  <section class="split-summary"><div class="box cash-box"><small>Vendas à vista</small><strong>${cashPercent}%</strong></div><div class="box term-box"><small>Vendas à prazo</small><strong>${termPercent}%</strong></div></section>
+  <p class="place-date">${billingEscape(placeAndDate)}</p><section class="signature"><div class="signature__line"><strong>${billingEscape(data.company)}</strong><span>${billingEscape(data.cnpj)}</span></div><p style="margin-top:14px;font-size:8px;color:#64677b">Obs.: Dispensada a assinatura do contador para faturamento até R$ 4.800.000,00.</p></section>
+  <footer class="footer">CRBB: 4004-0001 (capitais e regiões metropolitanas) ou 0800 729 0001 (demais localidades).<br>SAC: 0800 729 0722 · Atendimento para Pessoas com Deficiência Auditiva ou de Fala: 0800 729 0088 · Ouvidoria BB: 0800 729 5678.</footer></main><button class="print" onclick="window.print()">Imprimir / salvar PDF</button></body></html>`;
 }
 
 function saveBillingHistory(data) {

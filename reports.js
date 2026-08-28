@@ -115,8 +115,8 @@
     return `<section class="signature-block">${heading ? `<h3 class="signature-heading">${escapeHtml(heading)}</h3>` : ''}<div class="signature-grid">${actual.map(person => `
       <section class="signature">
         <div class="signature-line"></div>
-        <div>Razão Social: ${escapeHtml(String(companyName ?? '').toLocaleUpperCase('pt-BR'))}</div>
-        <div>Nome: ${escapeHtml(String(person.nome ?? '').toLocaleUpperCase('pt-BR'))}</div>
+        <div>${escapeHtml(String(companyName ?? '').toLocaleUpperCase('pt-BR'))}</div>
+        <div>${escapeHtml(String(person.nome ?? '').toLocaleUpperCase('pt-BR'))}</div>
         <div>CPF: ${escapeHtml(person.cpf)}</div>
       </section>`).join('')}</div></section>`;
   }

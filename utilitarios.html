@@ -5,13 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Ferramentas de apoio da Central Empresas.">
   <title>Central Empresas | Utilitários</title>
-  <link rel="stylesheet" href="styles.css?v=16">
-  <link rel="stylesheet" href="relatorios.css?v=9">
+  <link rel="stylesheet" href="styles.css?v=17">
+  <link rel="stylesheet" href="relatorios.css?v=13">
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script defer src="agencies.js?v=3"></script>
   <script defer src="cnpj-api.js?v=2"></script>
   <script defer src="relatorios-ferramentas.js?v=4"></script>
-  <script defer src="faturamento.js?v=8"></script>
+  <script defer src="faturamento.js?v=10"></script>
+  <script defer src="correios-logo-data.js?v=1"></script>
+  <script defer src="correios.js?v=5"></script>
+  <script defer src="footer.js?v=1"></script>
 </head>
 <body class="reports-body">
   <header class="topbar">
@@ -31,6 +35,7 @@
       <nav class="reports-hero__nav" aria-label="Atalhos desta página">
         <a href="#pdfCompressorPanel" data-open-tool="pdfCompressorPanel"><strong>01</strong><span>Compactador de PDF</span></a>
         <a href="#billingPanel" data-open-tool="billingPanel"><strong>02</strong><span>Gerador de Faturamento</span></a>
+        <a href="#correiosPanel" data-open-tool="correiosPanel"><strong>03</strong><span>AR e Etiqueta</span></a>
       </nav>
     </section>
 
@@ -46,6 +51,11 @@
           <div class="document-card__icon" aria-hidden="true">IPCA</div>
           <div class="document-card__content"><span class="document-card__type">ATUALIZAÇÃO MONETÁRIA</span><h3>Gerador de Faturamento</h3><p>Atualize o faturamento anual pelo IPCA oficial e distribua o valor automaticamente entre os 12 meses.</p><div class="document-note"><strong>Fonte:</strong> série 433 do Sistema Gerenciador de Séries Temporais do Banco Central.</div></div>
           <div class="document-card__actions"><button class="report-button report-button--primary" type="button" data-open-tool="billingPanel">Abrir gerador <span aria-hidden="true">↓</span></button></div>
+        </article>
+        <article class="document-card document-card--wide">
+          <div class="document-card__icon document-card__icon--yellow" aria-hidden="true">AR</div>
+          <div class="document-card__content"><span class="document-card__type">CORRESPONDÊNCIA</span><h3>AR e Etiqueta dos Correios</h3><p>Consulte o destinatário pelo CNPJ e gere o aviso de recebimento e a etiqueta com os dados da agência remetente.</p><div class="document-note"><strong>Preenchimento automático:</strong> remetente pela agência da sessão e destinatário pela consulta cadastral.</div></div>
+          <div class="document-card__actions"><button class="report-button report-button--primary" type="button" data-open-tool="correiosPanel">Abrir gerador <span aria-hidden="true">↓</span></button></div>
         </article>
       </div>
 
@@ -107,9 +117,35 @@
           <div id="billingResult" class="billing-result" hidden></div>
           <section class="billing-history"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;"><h4 style="margin:0;">Histórico desta estação</h4><button id="billingClearHistory" type="button" class="report-button report-button--ghost" style="padding:4px 8px; font-size:11px; font-weight:700;">Limpar histórico</button></div><div id="billingHistoryList" class="billing-history-list"><p>Nenhuma atualização gerada.</p></div></section>
         </section>
+
+        <section id="correiosPanel" class="report-form-card utility-panel" hidden>
+          <div class="report-form-card__head"><div class="report-form-card__badge report-form-card__badge--yellow">AR</div><div><span class="report-kicker">CORRESPONDÊNCIA</span><h3>Gerar AR e Etiqueta dos Correios</h3><p>Informe somente o CNPJ. Os demais dados serão carregados automaticamente.</p></div></div>
+          <div class="postal-parties">
+            <article class="postal-party-card">
+              <span class="report-kicker">REMETENTE</span>
+              <h4>Banco do Brasil S.A.</h4>
+              <div id="postalSenderPreview" class="postal-address-preview">Carregando a agência selecionada...</div>
+            </article>
+            <article class="postal-party-card postal-party-card--recipient">
+              <span class="report-kicker">DESTINATÁRIO</span>
+              <form id="postalLookupForm" class="postal-lookup-form" novalidate>
+                <div class="field"><label for="postalCnpj">CNPJ</label><div class="document-lookup"><input id="postalCnpj" inputmode="numeric" maxlength="18" autocomplete="off" placeholder="00.000.000/0000-00" required><button id="postalLookup" class="button button--primary" type="submit">Consultar</button></div></div>
+              </form>
+              <div id="postalLookupMessage" class="inline-message" role="status" aria-live="polite"></div>
+              <div id="postalRecipientPreview" class="postal-address-preview" hidden></div>
+            </article>
+          </div>
+          <label class="postal-neighbor-option" for="postalNeighborAuthorization">
+            <input id="postalNeighborAuthorization" type="checkbox">
+            <span><strong>Autorizar entrega no vizinho</strong><small>Quando marcado, a autorização será impressa na etiqueta.</small></span>
+          </label>
+          <div class="postal-generate-note"><strong>Código de registro:</strong> a área correspondente permanecerá livre para aplicação da etiqueta oficial dos Correios no momento da postagem.</div>
+          <div id="postalGenerateMessage" class="inline-message" role="status" aria-live="polite"></div>
+          <button id="postalGenerate" class="button button--generate report-generate" type="button" disabled><span aria-hidden="true">↗</span> Gerar AR e Etiqueta</button>
+        </section>
       </div>
     </section>
   </main>
-  <footer class="footer"><div class="shell"><span>Central Empresas · uso interno</span><span class="footer-credit">Utilitários</span><span>Confira os dados antes de emitir</span></div></footer>
+  <footer class="footer"><div class="shell"><span data-footer-agency>Central Empresas · Agência 1031</span><span class="footer-credit">Desenvolvido por Cleyton Duda Macedo - F2125360</span><span>Uso interno</span></div></footer>
 </body>
 </html>
