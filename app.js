@@ -963,26 +963,21 @@ async function generateReports(event) {
     return;
   }
 
+  const preview = window.open('', '_blank');
+  if (!preview) {
+    showMessage(formMessage, 'Autorize a abertura de pop-ups para visualizar e imprimir o dossiê.', 'error');
+    return;
+  }
+  preview.document.write('<!doctype html><title>Gerando dossiê...</title><p style="font:16px Calibri,Arial;padding:30px">Gerando documentos...</p>');
   setButtonLoading(btnGenerate, true, 'Gerando documentos...');
   try {
-    const response = await fetch('/api/gerar-relatorios', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
-    });
-    if (!response.ok) {
-      const data = await response.json().catch(() => ({}));
-      throw new Error(data.message || 'Não foi possível gerar os relatórios.');
-    }
-    const blob = await response.blob();
-    const link = document.createElement('a');
-    const safeName = (state.empresa.razaoSocial || 'empresa').replace(/[^a-z0-9]+/gi, '_').replace(/^_|_$/g, '');
-    link.href = URL.createObjectURL(blob);
-    link.download = `Relatorios_FCO_${safeName}_${state.empresa.cnpj}.zip`;
-    document.body.append(link);
-    link.click();
-    link.remove();
-    setTimeout(() => URL.revokeObjectURL(link.href), 1500);
-    showMessage(formMessage, 'Relatórios gerados. O download do arquivo ZIP foi iniciado.', 'success');
+    const dossier = await window.FCOReports.renderDossier(payload);
+    preview.document.open();
+    preview.document.write(dossier);
+    preview.document.close();
+    showMessage(formMessage, 'Dossiê aberto em uma aba temporária para impressão. Nenhum arquivo HTML foi salvo no computador.', 'success');
   } catch (error) {
+    preview.close();
     showMessage(formMessage, error.message || 'Falha ao gerar os relatórios.', 'error');
   } finally {
     setButtonLoading(btnGenerate, false, 'Gerar Relatórios');
