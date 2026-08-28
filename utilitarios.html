@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Ferramentas de apoio da Central Empresas.">
+  <title>Central Empresas | Utilitários</title>
+  <link rel="stylesheet" href="styles.css?v=13">
+  <link rel="stylesheet" href="relatorios.css?v=8">
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script defer src="cnpj-api.js?v=2"></script>
+  <script defer src="relatorios-ferramentas.js?v=4"></script>
+  <script defer src="faturamento.js?v=5"></script>
+</head>
+<body class="reports-body">
+  <header class="topbar">
+    <div class="topbar__accent" aria-hidden="true"></div>
+    <div class="shell topbar__content">
+      <a id="utilitiesBackBrand" class="brand" href="index.html" aria-label="Voltar ao Hub Empresas">
+        <span class="brand__symbol" aria-hidden="true"><img src="logo02.png" alt=""></span>
+        <span><strong>Central Empresas</strong><small>Utilitários</small></span>
+      </a>
+      <a id="utilitiesBackLink" class="header-link" href="index.html"><span aria-hidden="true">←</span> Voltar ao Hub</a>
+    </div>
+  </header>
+
+  <main class="shell reports-page">
+    <section class="reports-hero">
+      <div><span class="eyebrow">FERRAMENTAS DE APOIO</span><h1>Recursos para agilizar <br>o atendimento.</h1><p>Compacte documentos e atualize faturamentos com índice oficial em um ambiente organizado.</p></div>
+      <nav class="reports-hero__nav" aria-label="Atalhos desta página">
+        <a href="#pdfCompressorPanel" data-open-tool="pdfCompressorPanel"><strong>01</strong><span>Compactador de PDF</span></a>
+        <a href="#billingPanel" data-open-tool="billingPanel"><strong>02</strong><span>Gerador de Faturamento</span></a>
+      </nav>
+    </section>
+
+    <section class="report-section" aria-labelledby="utilitiesTitle">
+      <div class="report-section__heading"><span class="section-number">01</span><div><span class="report-kicker">UTILITÁRIOS</span><h2 id="utilitiesTitle">Selecione uma ferramenta</h2><p>Os dados são processados no navegador; somente a consulta do índice acessa a API oficial do Banco Central.</p></div></div>
+      <div class="document-grid">
+        <article class="document-card">
+          <div class="document-card__icon document-card__icon--yellow" aria-hidden="true">PDF</div>
+          <div class="document-card__content"><span class="document-card__type">PROCESSAMENTO LOCAL</span><h3>Compactador de PDF</h3><p>Reduza o tamanho de documentos sem enviá-los a um servidor.</p><div class="document-note"><strong>Privacidade:</strong> o arquivo permanece no computador durante o processamento.</div></div>
+          <div class="document-card__actions"><button class="report-button report-button--primary" type="button" data-open-tool="pdfCompressorPanel">Abrir compactador <span aria-hidden="true">↓</span></button></div>
+        </article>
+        <article class="document-card">
+          <div class="document-card__icon" aria-hidden="true">IPCA</div>
+          <div class="document-card__content"><span class="document-card__type">ATUALIZAÇÃO MONETÁRIA</span><h3>Gerador de Faturamento</h3><p>Atualize o faturamento anual pelo IPCA oficial e distribua o valor automaticamente entre os 12 meses.</p><div class="document-note"><strong>Fonte:</strong> série 433 do Sistema Gerenciador de Séries Temporais do Banco Central.</div></div>
+          <div class="document-card__actions"><button class="report-button report-button--primary" type="button" data-open-tool="billingPanel">Abrir gerador <span aria-hidden="true">↓</span></button></div>
+        </article>
+      </div>
+
+      <div class="form-builders">
+        <section id="pdfCompressorPanel" class="report-form-card utility-panel" hidden>
+          <div class="report-form-card__head"><div class="report-form-card__badge report-form-card__badge--yellow">PDF</div><div><span class="report-kicker">PROCESSAMENTO LOCAL</span><h3>Compactador de PDF</h3><p>Escolha o arquivo e o nível de compressão. Nada é enviado para um servidor.</p></div></div>
+          <article class="tool-card">
+            <form id="pdfCompressorForm" class="tool-form">
+              <div class="field"><label for="pdfCompressorInput">Arquivo PDF</label><input id="pdfCompressorInput" type="file" accept="application/pdf,.pdf" required><small>Selecione o nível conforme a qualidade necessária para leitura e protocolo.</small></div>
+              <div class="field"><label for="pdfCompressionQuality">Nível de compressão</label><select id="pdfCompressionQuality"><option value="extreme">Extrema - preto e branco, leitura</option><option value="high" selected>Alta - colorido e otimizado</option><option value="medium">Média - boa resolução</option><option value="low">Baixa - próxima do original</option></select></div>
+              <button id="pdfCompressorButton" class="button button--primary tool-submit" type="submit">Compactar PDF</button>
+            </form>
+            <div id="pdfProgress" class="tool-progress" hidden><progress id="pdfProgressBar" value="0" max="100"></progress><span id="pdfProgressText">Preparando arquivo...</span></div>
+            <div id="pdfCompressorResult" class="tool-result" role="status" aria-live="polite"></div>
+          </article>
+        </section>
+
+        <section id="billingPanel" class="report-form-card utility-panel" hidden>
+          <div class="report-form-card__head"><div class="report-form-card__badge">R$</div><div><span class="report-kicker">ÍNDICE OFICIAL</span><h3>Gerador de Faturamento</h3><p>Atualize o último faturamento, configure as vendas e gere a relação dos 12 meses.</p></div></div>
+          <form id="billingForm" novalidate>
+            <div class="fields-grid fields-grid--3">
+              <div class="field"><label for="billingCnpj">CNPJ</label><div class="document-lookup"><input id="billingCnpj" inputmode="numeric" maxlength="18" placeholder="00.000.000/0000-00" required><button id="billingLookup" class="button button--primary" type="button">Consultar</button></div><div id="billingLookupMessage" class="inline-message" role="status" aria-live="polite"></div></div>
+              <div class="field field--span-2"><label for="billingCompany">Razão social</label><input id="billingCompany" readonly required></div>
+            </div>
+
+            <section class="billing-update-panel" aria-labelledby="billingUpdateTitle">
+              <div class="billing-panel-heading"><div><span>ATUALIZAÇÃO</span><h4 id="billingUpdateTitle">Atualizar o faturamento informado</h4></div><p>O IPCA será aplicado somente até a última competência fechada e publicada.</p></div>
+              <div class="billing-update-grid">
+                <div class="field"><label for="billingAnnual">Valor do último faturamento</label><div class="input-prefix"><span>R$</span><input id="billingAnnual" inputmode="decimal" placeholder="0,00" required></div></div>
+                <div class="field"><label for="billingReference">Referência do último faturamento</label><input id="billingReference" type="month" required></div>
+                <div class="field"><label for="billingIndex">Índice para atualização</label><select id="billingIndex"><option value="433">IPCA (SGS 433)</option><option value="191">IPA-DI (SGS 191)</option><option value="192">INCC-DI (SGS 192)</option><option value="188">INPC (SGS 188)</option><option value="189">IGP-M (SGS 189)</option><option value="4389">CDI (SGS 4389)</option><option value="4390">SELIC (SGS 4390)</option></select></div>
+                <button id="billingUpdate" class="button button--primary billing-update-button" type="button">Atualizar</button>
+                <div style="grid-column: 1 / -1; display: flex; align-items: center; gap: 6px; justify-content: flex-start; margin-top: 4px;">
+                  <input type="checkbox" id="billingFirstTime" style="width: auto; margin: 0; cursor: pointer;">
+                  <label for="billingFirstTime" style="margin: 0; cursor: pointer; text-transform: none; font-weight: normal; letter-spacing: normal; font-size: 11px; color: #55586c;">Primeiro Faturamento / Sem faturamento anterior</label>
+                </div>
+              </div>
+              <div id="billingUpdateMessage" class="inline-message" role="status" aria-live="polite"></div>
+            </section>
+
+            <section class="billing-configuration" aria-labelledby="billingConfigurationTitle">
+              <div class="billing-panel-heading"><div><span>CONFIGURAÇÃO</span><h4 id="billingConfigurationTitle">Divisão das vendas</h4></div><p>Os percentuais sempre totalizam 100%.</p></div>
+              <div class="billing-split">
+                <div class="billing-split__values"><strong id="billingCashLabel">À vista: 50%</strong><strong id="billingTermLabel">À prazo: 50%</strong></div>
+                <input id="billingCashPercent" type="range" min="0" max="100" value="50" step="1" aria-label="Percentual de vendas à vista">
+                <div class="billing-split__bar" aria-hidden="true"><span id="billingCashBar"></span><span id="billingTermBar"></span></div>
+              </div>
+              <button id="billingRandom" class="report-button report-button--ghost" type="button" disabled><span aria-hidden="true">⤨</span> Distribuir novamente</button>
+            </section>
+
+            <section id="billingDistribution" class="billing-distribution" hidden aria-labelledby="billingDistributionTitle">
+              <div class="billing-months-head"><div><h4 id="billingDistributionTitle">Faturamento distribuído - 12 meses</h4><p>Valores gerados automaticamente a partir do faturamento atualizado.</p></div><div class="billing-totals"><small>Valor atualizado</small><strong id="billingUpdatedTotal">R$ 0,00</strong></div></div>
+              <div class="billing-table-wrap"><table class="billing-table"><thead><tr><th>Mês/ano</th><th>À vista</th><th>À prazo</th><th>Total</th></tr></thead><tbody id="billingMonthsTable"></tbody><tfoot><tr><th>Total</th><th id="billingCashTotal">R$ 0,00</th><th id="billingTermTotal">R$ 0,00</th><th id="billingGrandTotal">R$ 0,00</th></tr></tfoot></table></div>
+            </section>
+
+            <div id="billingMessage" class="inline-message" role="status" aria-live="polite"></div>
+            <button id="billingGenerate" class="button button--generate report-generate" type="submit" disabled><span aria-hidden="true">↗</span> Gerar relatório de faturamento</button>
+          </form>
+          <div id="billingResult" class="billing-result" hidden></div>
+          <section class="billing-history"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;"><h4 style="margin:0;">Histórico desta estação</h4><button id="billingClearHistory" type="button" class="report-button report-button--ghost" style="padding:4px 8px; font-size:11px; font-weight:700;">Limpar histórico</button></div><div id="billingHistoryList" class="billing-history-list"><p>Nenhuma atualização gerada.</p></div></section>
+        </section>
+      </div>
+    </section>
+  </main>
+  <footer class="footer"><div class="shell"><span>Central Empresas · uso interno</span><span class="footer-credit">Utilitários</span><span>Confira os dados antes de emitir</span></div></footer>
+</body>
+</html>
