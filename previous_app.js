@@ -52,32 +52,9 @@ function validBankReference(value, exactBaseDigits = null) {
   return pattern.test(String(value || '').trim());
 }
 
-function showCentralView(view = 'hub') {
-  const authenticated = Boolean(state.acesso);
-  const hub = $('#hubScreen');
-  const proposal = $('#inicio');
-  const headerHubButton = $('#btnHeaderHub');
-  const sessionMeta = $('.topbar__meta');
-  const logoutButton = $('#btnLogout');
-  if (hub) hub.hidden = !authenticated || view !== 'hub';
-  if (proposal) proposal.hidden = !authenticated || view !== 'proposal';
-  if (headerHubButton) headerHubButton.hidden = !authenticated || view === 'hub';
-  if (sessionMeta) sessionMeta.hidden = !authenticated || view !== 'hub';
-  if (logoutButton) logoutButton.hidden = !authenticated || view !== 'hub';
-  if (authenticated) window.scrollTo({ top: 0, behavior: 'instant' });
-}
-
 function setAuthenticatedView(authenticated) {
   $('#loginScreen').hidden = authenticated;
-  const topbar = $('.topbar.app-content');
-  const footer = $('.footer.app-content');
-  if (topbar) topbar.hidden = !authenticated;
-  if (footer) footer.hidden = !authenticated;
-  if (authenticated) showCentralView('hub');
-  else {
-    if ($('#hubScreen')) $('#hubScreen').hidden = true;
-    if ($('#inicio')) $('#inicio').hidden = true;
-  }
+  $$('.app-content').forEach(element => { element.hidden = !authenticated; });
 }
 
 function persistSession() {
@@ -126,12 +103,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 $('#loginForm').addEventListener('submit', enterApplication);
 $('#btnLogout').addEventListener('click', logoutApplication);
-$('#btnOpenProposal').addEventListener('click', () => showCentralView('proposal'));
-$('#btnHeaderHub').addEventListener('click', () => showCentralView('hub'));
-$('#btnHubHome').addEventListener('click', event => {
-  event.preventDefault();
-  showCentralView('hub');
-});
 $('#employeeRegistration').addEventListener('input', event => {
   event.target.value = event.target.value.toUpperCase().replace(/[^F0-9]/g, '').slice(0, 8);
   clearMessage(loginMessage);
@@ -328,7 +299,7 @@ async function enterApplication(event) {
 
   setButtonLoading($('#btnLogin'), true, 'Consultando agência...');
   await consultAgency(prefixo);
-  setButtonLoading($('#btnLogin'), false, 'Acessar Central Empresas');
+  setButtonLoading($('#btnLogin'), false, 'Acessar Central FCO');
   if (!state.agencia?.endereco) {
     showMessage(loginMessage, 'Não foi possível completar o endereço da agência. Tente novamente.', 'error');
     return;
@@ -515,8 +486,7 @@ async function consultAgency(prefix) {
   const status = $('#agencyLookupStatus');
   status.textContent = 'Carregando o endereço da planilha local...';
   try {
-    const agencies = window.FCO_AGENCIES || [];
-    const agency = agencies.find(a => String(a.prefixo) === String(prefix));
+    const agency = (window.FCO_AGENCIES || []).find(item => item.prefixo === prefix);
     if (!agency) throw new Error('Endereço não localizado.');
     state.agencia = agency;
     status.textContent = 'Endereço carregado da planilha agencias.xlsx.';
@@ -537,8 +507,7 @@ function renderAgency() {
   $('#agencyAddress').textContent = address || 'Endereço não localizado';
   $('#agencySource').textContent = agency.fonte || 'Planilha agencias.xlsx';
   $('#heroAgency').textContent = `${displayName.replace(/^Agência\s*/i, 'AGÊNCIA ')}`;
-  if ($('#hubAgency')) $('#hubAgency').textContent = `${displayName.replace(/^Agência\s*/i, 'AGÊNCIA ')}`;
-  $('#footerAgency').textContent = `Central Empresas · Agência ${agency.prefixo}`;
+  $('#footerAgency').textContent = `Central FCO Web · Agência ${agency.prefixo}`;
   if ($('#localEmissao') && agency.municipio && agency.uf) $('#localEmissao').value = `${agency.municipio}-${agency.uf}`;
 }
 
@@ -963,26 +932,21 @@ async function generateReports(event) {
     return;
   }
 
+  const preview = window.open('', '_blank');
+  if (!preview) {
+    showMessage(formMessage, 'Autorize a abertura de pop-ups para visualizar e imprimir o dossiê.', 'error');
+    return;
+  }
+  preview.document.write('<!doctype html><title>Gerando dossiê...</title><p style="font:16px Calibri,Arial;padding:30px">Gerando documentos...</p>');
   setButtonLoading(btnGenerate, true, 'Gerando documentos...');
   try {
-    const response = await fetch('/api/gerar-relatorios', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
-    });
-    if (!response.ok) {
-      const data = await response.json().catch(() => ({}));
-      throw new Error(data.message || 'Não foi possível gerar os relatórios.');
-    }
-    const blob = await response.blob();
-    const link = document.createElement('a');
-    const safeName = (state.empresa.razaoSocial || 'empresa').replace(/[^a-z0-9]+/gi, '_').replace(/^_|_$/g, '');
-    link.href = URL.createObjectURL(blob);
-    link.download = `Relatorios_FCO_${safeName}_${state.empresa.cnpj}.zip`;
-    document.body.append(link);
-    link.click();
-    link.remove();
-    setTimeout(() => URL.revokeObjectURL(link.href), 1500);
-    showMessage(formMessage, 'Relatórios gerados. O download do arquivo ZIP foi iniciado.', 'success');
+    const dossier = await window.FCOReports.renderDossier(payload);
+    preview.document.open();
+    preview.document.write(dossier);
+    preview.document.close();
+    showMessage(formMessage, 'Dossiê aberto em uma aba temporária para impressão. Nenhum arquivo HTML foi salvo no computador.', 'success');
   } catch (error) {
+    preview.close();
     showMessage(formMessage, error.message || 'Falha ao gerar os relatórios.', 'error');
   } finally {
     setButtonLoading(btnGenerate, false, 'Gerar Relatórios');

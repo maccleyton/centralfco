@@ -3,25 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Declarações, autorizações e utilitários da Central FCO.">
-  <title>Central FCO | Utilitários</title>
+  <meta name="description" content="Autorizações e declarações da Central Empresas.">
+  <title>Central Empresas | Autorizações e Declarações</title>
   <link rel="stylesheet" href="styles.css?v=10">
   <link rel="stylesheet" href="relatorios.css?v=6">
   <script defer src="cnpj-api.js?v=2"></script>
-  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script defer src="relatorios.js?v=10"></script>
-  <script defer src="relatorios-ferramentas.js?v=4"></script>
 </head>
 <body class="reports-body">
   <header class="topbar">
     <div class="topbar__accent" aria-hidden="true"></div>
     <div class="shell topbar__content">
-      <a id="reportsBackBrand" class="brand" href="index.html" aria-label="Voltar à Central FCO">
+      <a id="reportsBackBrand" class="brand" href="index.html" aria-label="Voltar ao Hub Empresas">
         <span class="brand__symbol" aria-hidden="true"><img src="logo02.png" alt=""></span>
-        <span><strong>Central FCO</strong><small>Utilitários</small></span>
+        <span><strong>Central Empresas</strong><small>Autorizações e declarações</small></span>
       </a>
-      <a id="reportsBackLink" class="header-link" href="index.html"><span aria-hidden="true">←</span> Voltar à Central</a>
+      <a id="reportsBackLink" class="header-link" href="index.html"><span aria-hidden="true">←</span> Voltar ao Hub</a>
     </div>
   </header>
 
@@ -30,20 +27,19 @@
       <div>
         <span class="eyebrow">DOCUMENTOS COMPLEMENTARES</span>
         <h1>Escolha o que precisa <br>usar agora.</h1>
-        <p>Abra somente a declaração, autorização ou ferramenta necessária para este atendimento.</p>
+        <p>Abra somente a declaração ou autorização necessária para este atendimento.</p>
       </div>
       <nav class="reports-hero__nav" aria-label="Atalhos desta página">
         <a href="#residenceForm" data-open-utility="residenceForm"><strong>01</strong><span>Residência</span></a>
         <a href="#incomeForm" data-open-utility="incomeForm"><strong>02</strong><span>Renda</span></a>
         <a href="#nifForm" data-open-utility="nifForm"><strong>03</strong><span>Domicílio fiscal - NIF</span></a>
         <a href="#scrForm" data-open-utility="scrForm"><strong>04</strong><span>Autorização SCR</span></a>
-        <a href="#pdfCompressorPanel" data-open-utility="pdfCompressorPanel"><strong>05</strong><span>Compactador de PDF</span></a>
       </nav>
     </section>
     <section id="declaracoes" class="report-section" aria-labelledby="declaracoesTitle">
       <div class="report-section__heading">
         <span class="section-number">01</span>
-        <div><span class="report-kicker">UTILITÁRIOS</span><h2 id="declaracoesTitle">Selecione uma opção</h2><p>Os campos aparecem somente depois que você escolher o documento ou a ferramenta.</p></div>
+        <div><span class="report-kicker">DOCUMENTOS</span><h2 id="declaracoesTitle">Selecione uma opção</h2><p>Os campos aparecem somente depois que você escolher a declaração ou autorização.</p></div>
       </div>
       <div class="document-grid">
         <article class="document-card">
@@ -94,18 +90,6 @@
           </div>
           <div class="document-card__actions">
             <button class="report-button report-button--primary" type="button" data-open-utility="scrForm">Preencher formulário <span aria-hidden="true">↓</span></button>
-          </div>
-        </article>
-        <article class="document-card document-card--wide">
-          <div class="document-card__icon document-card__icon--yellow" aria-hidden="true">PDF</div>
-          <div class="document-card__content">
-            <span class="document-card__type">PROCESSAMENTO LOCAL</span>
-            <h3>Compactador de PDF</h3>
-            <p>Reduza o tamanho de documentos diretamente no navegador, sem enviar o arquivo para um servidor.</p>
-            <div class="document-note"><strong>Privacidade:</strong> o PDF selecionado permanece no computador durante todo o processamento.</div>
-          </div>
-          <div class="document-card__actions">
-            <button class="report-button report-button--primary" type="button" data-open-utility="pdfCompressorPanel">Abrir compactador <span aria-hidden="true">↓</span></button>
           </div>
         </article>
       </div>
@@ -256,27 +240,11 @@
           <button class="button button--generate report-generate" type="submit"><span aria-hidden="true">↓</span> Gerar Autorização SCR</button>
         </form>
 
-        <section id="pdfCompressorPanel" class="report-form-card utility-panel" hidden>
-          <div class="report-form-card__head">
-            <div class="report-form-card__badge report-form-card__badge--yellow">PDF</div>
-            <div><span class="report-kicker">PROCESSAMENTO LOCAL</span><h3>Compactador de PDF</h3><p>Escolha o arquivo e o nível de compressão. Nada é enviado para um servidor.</p></div>
-          </div>
-          <article class="tool-card">
-            <form id="pdfCompressorForm" class="tool-form">
-              <div class="field"><label for="pdfCompressorInput">Arquivo PDF</label><input id="pdfCompressorInput" type="file" accept="application/pdf,.pdf" required><small>Selecione o nível conforme a qualidade necessária para leitura e protocolo.</small></div>
-              <div class="field"><label for="pdfCompressionQuality">Nível de compressão</label><select id="pdfCompressionQuality"><option value="extreme">Extrema - preto e branco, leitura</option><option value="high" selected>Alta - colorido e otimizado</option><option value="medium">Média - boa resolução</option><option value="low">Baixa - próxima do original</option></select></div>
-              <button id="pdfCompressorButton" class="button button--primary tool-submit" type="submit">Compactar PDF</button>
-            </form>
-            <div id="pdfProgress" class="tool-progress" hidden><progress id="pdfProgressBar" value="0" max="100"></progress><span id="pdfProgressText">Preparando arquivo...</span></div>
-            <div id="pdfCompressorResult" class="tool-result" role="status" aria-live="polite"></div>
-          </article>
-        </section>
-
       </div>
     </section>
 
 
   </main>
-  <footer class="footer"><div class="shell"><span>Central FCO · uso interno</span><span class="footer-credit">Declarações, autorizações e ferramentas</span><span>Confira os dados antes da assinatura</span></div></footer>
+  <footer class="footer"><div class="shell"><span>Central Empresas · uso interno</span><span class="footer-credit">Autorizações e declarações</span><span>Confira os dados antes da assinatura</span></div></footer>
 </body>
 </html>
