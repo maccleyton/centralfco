@@ -1,4 +1,4 @@
-# Central FCO
+# Central Empresas
 
 Versão integralmente executada no navegador. O preenchimento, as regras de cálculo, a lista de agências e a geração dos relatórios não dependem de servidor Python.
 

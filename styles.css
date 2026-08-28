@@ -72,3 +72,7 @@ select:disabled{background:#f0f1f6;color:#555a70}
 @media(max-width:1180px){.hub-page{padding-top:16px}.hub-hero{min-height:128px;padding:20px 28px}.hub-hero h1{font-size:32px}.hub-grid--four{grid-template-columns:repeat(2,minmax(0,1fr))}.hub-grid--four .hub-card{min-height:148px}.hub-grid--four .hub-card strong{margin-top:14px}.hub-grid--four .hub-card em{padding-top:8px}}
 @media(max-width:760px){.hub-hero{padding:25px 22px}.hub-access{padding:17px 15px}.hub-access__heading{align-items:flex-start;flex-direction:column}.hub-grid--four{grid-template-columns:1fr}.hub-grid--four .hub-card{min-height:165px}.topbar__actions .header-link:not([hidden]){display:inline-flex}.topbar__meta{display:none}}
 .hub-page{padding-bottom:20px}
+
+/* Alturas consistentes para ações regulares. Botões principais e compactos mantêm suas hierarquias. */
+.button:not(.button--generate):not(.button--small){height:44px;min-height:44px;padding-top:0;padding-bottom:0;line-height:1.2}
+.lookup-button{height:44px;min-height:44px}

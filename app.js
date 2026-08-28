@@ -7,7 +7,7 @@ const state = {
   garantias: [],
   agencia: {
     prefixo: '1031', nome: 'BONITO-MS', nomeCompleto: 'Agência 1031 - BONITO-MS', endereco: 'Rua Luiz da Costa Leite, 2279',
-    bairro: 'Centro', municipio: 'Bonito', uf: 'MS', cep: '79.290-000', fonte: 'Planilha agencias.xlsx'
+    bairro: 'Centro', municipio: 'Bonito', uf: 'MS', cep: '79.290-000', fonte: 'Base JavaScript versionada'
   }
 };
 
@@ -502,7 +502,7 @@ async function loadAgencies() {
     select.innerHTML = agencies.map(agency => `
       <option value="${escapeHtml(agency.prefixo)}"${agency.prefixo === state.agencia.prefixo ? ' selected' : ''}>${escapeHtml(agency.prefixo)} - ${escapeHtml(agency.nome)}</option>
     `).join('');
-    $('#agencyLookupStatus').textContent = 'Prefixos e endereços carregados da planilha local.';
+    $('#agencyLookupStatus').textContent = 'Prefixos e endereços carregados da base JavaScript versionada.';
   } catch (error) {
     select.innerHTML = '<option value="1031" selected>1031 - BONITO-MS</option>';
     renderAgency();
@@ -513,17 +513,17 @@ async function loadAgencies() {
 async function consultAgency(prefix) {
   if (!prefix) return;
   const status = $('#agencyLookupStatus');
-  status.textContent = 'Carregando o endereço da planilha local...';
+  status.textContent = 'Carregando o endereço da base JavaScript...';
   try {
     const agencies = window.FCO_AGENCIES || [];
     const agency = agencies.find(a => String(a.prefixo) === String(prefix));
     if (!agency) throw new Error('Endereço não localizado.');
     state.agencia = agency;
-    status.textContent = 'Endereço carregado da planilha agencias.xlsx.';
+    status.textContent = 'Endereço carregado da base JavaScript versionada.';
   } catch (error) {
     const option = $('#loginAgency').selectedOptions[0];
     state.agencia = { prefixo: prefix, nome: option?.textContent?.replace(/^\d+\s*-\s*/, '') || '', nomeCompleto: '', endereco: '', bairro: '', municipio: '', uf: 'MS', cep: '', fonte: 'Endereço pendente' };
-    status.textContent = 'A agência não foi encontrada na planilha local.';
+    status.textContent = 'A agência não foi encontrada na base JavaScript versionada.';
   }
   renderAgency();
 }
@@ -535,7 +535,7 @@ function renderAgency() {
   $('#agencyIcon').textContent = agency.prefixo;
   $('#agencyName').textContent = displayName;
   $('#agencyAddress').textContent = address || 'Endereço não localizado';
-  $('#agencySource').textContent = agency.fonte || 'Planilha agencias.xlsx';
+  $('#agencySource').textContent = 'Base JavaScript versionada';
   $('#heroAgency').textContent = `${displayName.replace(/^Agência\s*/i, 'AGÊNCIA ')}`;
   if ($('#hubAgency')) $('#hubAgency').textContent = `${displayName.replace(/^Agência\s*/i, 'AGÊNCIA ')}`;
   $('#footerAgency').textContent = `Central Empresas · Agência ${agency.prefixo}`;

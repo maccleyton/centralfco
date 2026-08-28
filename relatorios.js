@@ -95,16 +95,9 @@ if (lineFilter && purposeFilter && sizeFilter && tableBody && emptyState) {
 }
 
 const byId = id => document.getElementById(id);
-const reportsSource = new URLSearchParams(window.location.search).get('from');
-
-if (reportsSource === 'web') {
-  byId('reportsBackBrand').href = 'web/index.html';
-  byId('reportsBackLink').href = 'web/index.html';
-}
-
 function returnToCentral(event) {
   event.preventDefault();
-  if ((reportsSource === 'web' || reportsSource === 'local') && history.length > 1) {
+  if (document.referrer && new URL(document.referrer).origin === location.origin && history.length > 1) {
     history.back();
     return;
   }
@@ -463,9 +456,20 @@ function standardReportFooter() {
   return `<footer class="footer">CRBB: 4004-0001 (capitais e regiões metropolitanas) ou 0800 729 0001 (demais localidades).<br>SAC: 0800 729 0722 · Atendimento para Pessoas com Deficiência Auditiva ou de Fala: 0800 729 0088 · Ouvidoria BB: 0800 729 5678.</footer>`;
 }
 
+function reportFontCss() {
+  const base = window.location.href;
+  const regular = new URL('fonte/BancoDoBrasilTextos-Regular.ttf', base).href;
+  const medium = new URL('fonte/BancoDoBrasilTextos-Medium.ttf', base).href;
+  const bold = new URL('fonte/BancoDoBrasilTextos-Bold.ttf', base).href;
+  const titles = new URL('fonte/BancoDoBrasilTitulos-Bold.ttf', base).href;
+  return `@font-face{font-family:"BB Textos";src:url("${regular}") format("truetype");font-weight:400}@font-face{font-family:"BB Textos";src:url("${medium}") format("truetype");font-weight:500}@font-face{font-family:"BB Textos";src:url("${bold}") format("truetype");font-weight:700}@font-face{font-family:"BB Títulos";src:url("${titles}") format("truetype");font-weight:700}`;
+}
+
 function reportShell(title, body) {
   return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeReportHtml(title)}</title><style>
+  ${reportFontCss()}
   @page{size:A4;margin:0}*{box-sizing:border-box}body{margin:0;background:#eef0f7;color:#20213a;font-family:Arial,sans-serif;line-height:1.45}.page{position:relative;width:210mm;min-height:297mm;margin:20px auto;padding:13mm 18mm 27mm;background:#fff;box-shadow:0 12px 40px #1d1e3b26}.brand{height:18mm;display:flex;align-items:center;justify-content:space-between;gap:6mm;margin-bottom:6mm;padding-bottom:2.5mm;border-bottom:1.5pt solid #2037a0}.brand img{width:22mm;height:12mm;object-fit:contain}.brand span{color:#555;font-size:7.5pt;text-transform:uppercase;letter-spacing:.12em}.title{margin:18px 0 20px}.title small{color:#3333bd;font-weight:700;letter-spacing:.1em}.title h1{margin:5px 0 0;font-size:26px;line-height:1.1}.data-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:18px 0}.data{padding:10px 12px;border:1px solid #d9dcea;border-radius:8px}.data.wide{grid-column:1/-1}.data small,.signature small{display:block;color:#707387;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em}.data strong{display:block;margin-top:3px;font-size:12px}.copy{font-size:11px;text-align:justify}.copy h2{margin:22px 0 8px;color:#3333bd;font-size:14px}.copy li{margin-bottom:5px}.tax-table{width:100%;margin:13px 0 20px;border-collapse:collapse;font-size:11px}.tax-table th,.tax-table td{padding:9px;border:1px solid #cfd3e2;text-align:left}.tax-table th{background:#ededff;color:#3333bd}.signature{margin-top:42px;padding-top:30px;border-top:1px solid #777;text-align:center}.signature strong{font-size:12px}.footer{position:absolute;left:18mm;right:18mm;bottom:10mm;padding-top:2.5mm;border-top:.6pt solid #aaa;color:#333;font-size:7.5pt;line-height:1.25}.print{position:fixed;right:22px;bottom:22px;padding:12px 18px;border:0;border-radius:8px;background:#3333bd;color:#fff;font-weight:700;cursor:pointer}@media print{body{background:#fff}.page{margin:0;box-shadow:none}.print{display:none}}@media(max-width:800px){.page{width:100%;min-height:100vh;margin:0;padding:24px 18px 100px}.brand{height:auto}.brand img{width:64px;height:40px}.footer{left:18px;right:18px;bottom:20px}.data-grid{grid-template-columns:1fr}.data.wide{grid-column:auto}.print{right:12px;bottom:12px}}
+  body{font-family:"BB Textos",Arial,sans-serif}.title h1,.copy h2,.print{font-family:"BB Títulos","BB Textos",Arial,sans-serif}
   .signature{margin-top:18mm;padding-top:4mm;break-inside:avoid;page-break-inside:avoid}
   @media print{html,body{width:210mm;height:297mm}body{background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}.page{width:210mm;height:297mm;min-height:297mm;max-height:297mm;margin:0;padding:13mm 18mm 27mm;overflow:hidden;box-shadow:none}.brand,.title,.data-grid,.tax-table,.signature{break-inside:avoid;page-break-inside:avoid}.data-grid{grid-template-columns:1fr 1fr}.data.wide{grid-column:1/-1}.tax-table th{background:#ededff!important}.print{display:none}}
   .statement-copy{margin-top:5mm}.statement-copy p{margin:0 0 4mm}.legal-quote{margin:5mm 0;padding:4mm 5mm;border-left:3px solid #3333bd;background:#f4f5ff;font-size:10px;text-align:justify}.place-date{margin:8mm 0 0;font-size:11px}.statement-copy+.place-date{break-after:avoid;page-break-after:avoid}
