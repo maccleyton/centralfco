@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Catálogo versionado, triagem e cálculos documentados de crédito empresarial.">
+  <title>Crédito Empresarial | Central Empresas</title>
+  <link rel="stylesheet" href="styles.css?v=18">
+  <link rel="stylesheet" href="credit-lines.css?v=1">
+  <script defer src="credit-catalog.js?v=1"></script>
+  <script defer src="credit-eligibility.js?v=1"></script>
+  <script defer src="financial-engine.js?v=1"></script>
+  <script defer src="credit-lines.js?v=1"></script>
+  <script defer src="footer.js?v=1"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar__accent" aria-hidden="true"></div>
+    <div class="shell topbar__content"><a class="brand" href="index.html"><span class="brand__symbol"><img src="logo02.png" alt=""></span><span><strong>Central Empresas</strong><small>Crédito, relatórios e utilitários</small></span></a><a class="header-link" href="index.html">← Voltar ao Hub</a></div>
+  </header>
+  <main class="shell credit-page">
+    <section class="credit-hero"><div><span class="eyebrow">MAPA DE EVOLUÇÃO · CRÉDITO</span><h1>Linhas de crédito com fonte e versão.</h1><p>Consulte condições documentadas, faça uma triagem preliminar e use somente cálculos com fórmula conhecida.</p></div><div class="catalog-stamp"><strong id="catalogCount">—</strong><span>linhas catalogadas</span><small id="catalogVersion">Versão —</small></div></section>
+
+    <section class="credit-notice" role="note"><strong>Consulta orientativa</strong><span>A aprovação e a precificação dependem das normas, limites e parâmetros vigentes. O sistema não presume taxas nem completa fórmulas ausentes.</span></section>
+
+    <section class="credit-workspace">
+      <aside class="credit-browser" aria-label="Catálogo de linhas">
+        <div class="credit-filters"><label>Buscar<input id="creditSearch" type="search" placeholder="Nome, finalidade ou público"></label><label>Família<select id="creditFamily"><option value="">Todas</option></select></label></div>
+        <div id="creditList" class="credit-list"></div>
+      </aside>
+      <article id="creditDetail" class="credit-detail" aria-live="polite"></article>
+    </section>
+
+    <section class="calculator-section" aria-labelledby="calculatorTitle">
+      <div class="section-heading"><span class="section-number">✓</span><div><h2 id="calculatorTitle">Cálculos documentados</h2><p>Resultados determinísticos em centavos. Entradas inválidas são rejeitadas.</p></div></div>
+      <div class="calculator-grid">
+        <form class="calculator" data-calculator="capacity"><h3>Capacidade de pagamento</h3><p>Receita − custos − outras prestações</p><label>Receita mensal (R$)<input name="revenue" inputmode="decimal" required></label><label>Custos mensais (R$)<input name="operatingCosts" inputmode="decimal" required></label><label>Outras prestações (R$)<input name="otherInstallments" inputmode="decimal" required></label><button class="button button--primary" type="submit">Calcular</button><output></output></form>
+        <form class="calculator" data-calculator="participation"><h3>Participação própria</h3><p>Investimento total − financiamento</p><label>Investimento total (R$)<input name="totalInvestment" inputmode="decimal" required></label><label>Financiamento (R$)<input name="financing" inputmode="decimal" required></label><button class="button button--primary" type="submit">Calcular</button><output></output></form>
+        <form class="calculator" data-calculator="coverage"><h3>Cobertura de garantias</h3><p>Garantias ÷ valor da operação</p><label>Garantias (R$)<input name="guaranteeValue" inputmode="decimal" required></label><label>Operação (R$)<input name="operationValue" inputmode="decimal" required></label><button class="button button--primary" type="submit">Calcular</button><output></output></form>
+      </div>
+    </section>
+  </main>
+  <footer class="footer"><div class="shell"><span data-footer-agency>Central Empresas</span><span class="footer-credit">Desenvolvido por Cleyton Duda Macedo - F2125360</span><span>Uso interno</span></div></footer>
+</body>
+</html>

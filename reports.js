@@ -274,7 +274,7 @@
       .proposal-purpose-options{margin-top:1.5mm}
       .proposal-other-info{break-inside:auto;page-break-inside:auto}
       .proposal-other-info p{margin-bottom:3mm;font-size:9.5pt;line-height:1.28;text-align:justify}
-      @media print{.document{margin:0;box-shadow:none}.proposal-document{height:295mm;min-height:295mm;max-height:295mm;overflow:hidden;break-after:auto!important;page-break-after:auto!important}.proposal-document--continuation{break-before:page!important;page-break-before:always!important}.signature-block,.signature-grid,.signature{break-inside:avoid!important;page-break-inside:avoid!important}}
+      @media print{.document{margin:0;box-shadow:none}.proposal-document{min-height:297mm;overflow:visible;break-after:auto!important;page-break-after:auto!important}.proposal-document--continuation{break-before:page!important;page-break-before:always!important}.signature-block,.signature-grid,.signature{break-inside:avoid!important;page-break-inside:avoid!important}}
     `;
   }
 
@@ -301,7 +301,7 @@
       absenceOperations(data, logo), condemnation(data, logo), regularity(data, logo),
       ...optionalSimples, proposal(data, logo)
     ].join('');
-    return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Dossiê FCO - ${escapeHtml(data.empresa.razaoSocial)}</title><style>${dossierCss()}${dossierPrintFixCss()}</style></head><body><div class="toolbar"><strong>Dossiê FCO · ${escapeHtml(data.empresa.razaoSocial)}</strong><button onclick="window.print()">Imprimir / Salvar em PDF</button></div>${documents}</body></html>`;
+    return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Dossiê FCO - ${escapeHtml(data.empresa.razaoSocial)}</title><style>${dossierCss()}${dossierPrintFixCss()}</style></head><body>${documents}</body></html>`;
   }
 
   window.FCOReports = { renderDossier };

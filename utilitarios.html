@@ -6,15 +6,16 @@
   <meta name="description" content="Ferramentas de apoio da Central Empresas.">
   <title>Central Empresas | Utilitários</title>
   <link rel="stylesheet" href="styles.css?v=17">
-  <link rel="stylesheet" href="relatorios.css?v=13">
+  <link rel="stylesheet" href="relatorios.css?v=14">
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script defer src="agencies.js?v=3"></script>
   <script defer src="cnpj-api.js?v=2"></script>
+  <script defer src="document-core.js?v=1"></script>
   <script defer src="relatorios-ferramentas.js?v=4"></script>
-  <script defer src="faturamento.js?v=10"></script>
+  <script defer src="faturamento.js?v=11"></script>
   <script defer src="correios-logo-data.js?v=1"></script>
-  <script defer src="correios.js?v=5"></script>
+  <script defer src="correios.js?v=7"></script>
   <script defer src="footer.js?v=1"></script>
 </head>
 <body class="reports-body">
@@ -119,7 +120,7 @@
         </section>
 
         <section id="correiosPanel" class="report-form-card utility-panel" hidden>
-          <div class="report-form-card__head"><div class="report-form-card__badge report-form-card__badge--yellow">AR</div><div><span class="report-kicker">CORRESPONDÊNCIA</span><h3>Gerar AR e Etiqueta dos Correios</h3><p>Informe somente o CNPJ. Os demais dados serão carregados automaticamente.</p></div></div>
+          <div class="report-form-card__head"><div class="report-form-card__badge report-form-card__badge--yellow">AR</div><div><span class="report-kicker">CORRESPONDÊNCIA</span><h3>Gerar AR e Etiqueta dos Correios</h3><p>Informe o CNPJ. Se o endereço não estiver disponível, complete os campos de contingência.</p></div></div>
           <div class="postal-parties">
             <article class="postal-party-card">
               <span class="report-kicker">REMETENTE</span>
@@ -133,6 +134,20 @@
               </form>
               <div id="postalLookupMessage" class="inline-message" role="status" aria-live="polite"></div>
               <div id="postalRecipientPreview" class="postal-address-preview" hidden></div>
+              <form id="postalManualForm" class="postal-manual-form" hidden novalidate>
+                <div class="postal-manual-form__head"><strong>Completar endereço manualmente</strong><small>Confira e complete os campos que não foram retornados pela consulta.</small></div>
+                <div class="fields-grid fields-grid--2">
+                  <div class="field field--span-2"><label for="postalManualName">Razão social</label><input id="postalManualName" autocomplete="organization" required></div>
+                  <div class="field"><label for="postalManualStreet">Logradouro</label><input id="postalManualStreet" autocomplete="address-line1" required></div>
+                  <div class="field"><label for="postalManualNumber">Número</label><input id="postalManualNumber" autocomplete="address-line2" placeholder="S/N"></div>
+                  <div class="field"><label for="postalManualComplement">Complemento</label><input id="postalManualComplement"></div>
+                  <div class="field"><label for="postalManualDistrict">Bairro</label><input id="postalManualDistrict" required></div>
+                  <div class="field"><label for="postalManualZip">CEP</label><input id="postalManualZip" inputmode="numeric" maxlength="10" placeholder="00.000-000" required></div>
+                  <div class="field"><label for="postalManualCity">Município</label><input id="postalManualCity" required></div>
+                  <div class="field"><label for="postalManualState">UF</label><input id="postalManualState" maxlength="2" placeholder="UF" required></div>
+                </div>
+                <button class="button button--primary postal-manual-confirm" type="submit">Usar endereço informado</button>
+              </form>
             </article>
           </div>
           <label class="postal-neighbor-option" for="postalNeighborAuthorization">

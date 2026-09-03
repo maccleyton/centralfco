@@ -468,12 +468,10 @@ function reportFontCss() {
 function reportShell(title, body) {
   return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeReportHtml(title)}</title><style>
   ${reportFontCss()}
-  @page{size:A4;margin:0}*{box-sizing:border-box}body{margin:0;background:#eef0f7;color:#20213a;font-family:Arial,sans-serif;line-height:1.45}.page{position:relative;width:210mm;min-height:297mm;margin:20px auto;padding:13mm 18mm 27mm;background:#fff;box-shadow:0 12px 40px #1d1e3b26}.brand{height:18mm;display:flex;align-items:center;justify-content:space-between;gap:6mm;margin-bottom:6mm;padding-bottom:2.5mm;border-bottom:1.5pt solid #2037a0}.brand img{width:22mm;height:12mm;object-fit:contain}.brand span{color:#555;font-size:7.5pt;text-transform:uppercase;letter-spacing:.12em}.title{margin:18px 0 20px}.title small{color:#3333bd;font-weight:700;letter-spacing:.1em}.title h1{margin:5px 0 0;font-size:26px;line-height:1.1}.data-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:18px 0}.data{padding:10px 12px;border:1px solid #d9dcea;border-radius:8px}.data.wide{grid-column:1/-1}.data small,.signature small{display:block;color:#707387;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em}.data strong{display:block;margin-top:3px;font-size:12px}.copy{font-size:11px;text-align:justify}.copy h2{margin:22px 0 8px;color:#3333bd;font-size:14px}.copy li{margin-bottom:5px}.tax-table{width:100%;margin:13px 0 20px;border-collapse:collapse;font-size:11px}.tax-table th,.tax-table td{padding:9px;border:1px solid #cfd3e2;text-align:left}.tax-table th{background:#ededff;color:#3333bd}.signature{margin-top:42px;padding-top:30px;border-top:1px solid #777;text-align:center}.signature strong{font-size:12px}.footer{position:absolute;left:18mm;right:18mm;bottom:10mm;padding-top:2.5mm;border-top:.6pt solid #aaa;color:#333;font-size:7.5pt;line-height:1.25}.print{position:fixed;right:22px;bottom:22px;padding:12px 18px;border:0;border-radius:8px;background:#3333bd;color:#fff;font-weight:700;cursor:pointer}@media print{body{background:#fff}.page{margin:0;box-shadow:none}.print{display:none}}@media(max-width:800px){.page{width:100%;min-height:100vh;margin:0;padding:24px 18px 100px}.brand{height:auto}.brand img{width:64px;height:40px}.footer{left:18px;right:18px;bottom:20px}.data-grid{grid-template-columns:1fr}.data.wide{grid-column:auto}.print{right:12px;bottom:12px}}
-  body{font-family:"BB Textos",Arial,sans-serif}.title h1,.copy h2,.print{font-family:"BB Títulos","BB Textos",Arial,sans-serif}
-  .signature{margin-top:18mm;padding-top:4mm;break-inside:avoid;page-break-inside:avoid}
-  @media print{html,body{width:210mm;height:297mm}body{background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}.page{width:210mm;height:297mm;min-height:297mm;max-height:297mm;margin:0;padding:13mm 18mm 27mm;overflow:hidden;box-shadow:none}.brand,.title,.data-grid,.tax-table,.signature{break-inside:avoid;page-break-inside:avoid}.data-grid{grid-template-columns:1fr 1fr}.data.wide{grid-column:1/-1}.tax-table th{background:#ededff!important}.print{display:none}}
+  @page{size:A4;margin:0}*{box-sizing:border-box}html{background:#eef0f7}body{margin:0;background:#eef0f7;color:#20213a;font-family:"BB Textos",Arial,sans-serif;font-size:10.5pt;line-height:1.42}.page{position:relative;width:210mm;min-height:297mm;margin:20px auto;padding:13mm 18mm 27mm;background:#fff;box-shadow:0 12px 40px #1d1e3b26}.brand{height:18mm;display:flex;align-items:center;justify-content:space-between;gap:6mm;margin-bottom:6mm;padding-bottom:2.5mm;border-bottom:1.5pt solid #2037a0}.brand img{width:22mm;height:12mm;object-fit:contain}.brand span{color:#555;font-size:7.5pt;text-transform:uppercase;letter-spacing:.12em}.title{margin:4.5mm 0 5mm}.title small{color:#3333bd;font-weight:700;letter-spacing:.1em}.title h1{margin:1.5mm 0 0;font-family:"BB Títulos","BB Textos",Arial,sans-serif;font-size:20pt;line-height:1.1}.data-grid{display:grid;grid-template-columns:1fr 1fr;gap:2.5mm;margin:4.5mm 0}.data{padding:2.5mm 3mm;border:1px solid #d9dcea;border-radius:2mm}.data.wide{grid-column:1/-1}.data small,.signature small{display:block;color:#707387;font-size:7.5pt;font-weight:700;text-transform:uppercase;letter-spacing:.07em}.data strong{display:block;margin-top:.8mm;font-size:9pt}.copy{font-size:8.5pt;text-align:justify;orphans:3;widows:3}.copy h2{margin:5mm 0 2mm;color:#3333bd;font-family:"BB Títulos","BB Textos",Arial,sans-serif;font-size:11pt}.copy p{break-inside:auto}.copy li{margin-bottom:1.3mm}.tax-table{width:100%;margin:3.5mm 0 5mm;border-collapse:collapse;font-size:8.5pt}.tax-table th,.tax-table td{padding:2.3mm;border:1px solid #cfd3e2;text-align:left}.tax-table th{background:#ededff;color:#3333bd}.signature{margin-top:14mm;padding-top:4mm;border-top:1px solid #777;text-align:center;break-inside:avoid;page-break-inside:avoid}.signature strong{font-size:9pt}.footer{position:absolute;left:18mm;right:18mm;bottom:10mm;padding-top:2.5mm;border-top:.6pt solid #aaa;color:#333;font-size:7.5pt;line-height:1.25}
+  @media print{html,body{width:210mm;min-height:297mm;background:#fff}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}.page{width:210mm;min-height:297mm;margin:0;padding:13mm 18mm 27mm;overflow:visible;box-shadow:none}.brand,.title,.data-grid,.tax-table,.signature{break-inside:avoid;page-break-inside:avoid}.data-grid{grid-template-columns:1fr 1fr}.data.wide{grid-column:1/-1}.tax-table th{background:#ededff!important}}
   .statement-copy{margin-top:5mm}.statement-copy p{margin:0 0 4mm}.legal-quote{margin:5mm 0;padding:4mm 5mm;border-left:3px solid #3333bd;background:#f4f5ff;font-size:10px;text-align:justify}.place-date{margin:8mm 0 0;font-size:11px}.statement-copy+.place-date{break-after:avoid;page-break-after:avoid}
-  </style></head><body><main class="page">${body}</main><button class="print" onclick="window.print()">Imprimir / salvar PDF</button></body></html>`;
+  </style></head><body><main class="page">${body}</main></body></html>`;
 }
 
 function buildNifReport(data) {
@@ -557,39 +555,28 @@ function validateClientForm(prefix, data) {
   return true;
 }
 
-function deliverHtmlReport(html, filename, popup) {
-  if (popup) {
-    popup.document.open();
-    popup.document.write(html);
-    popup.document.close();
-  }
-  const blobUrl = URL.createObjectURL(new Blob([html], { type: 'text/html;charset=utf-8' }));
-  const link = document.createElement('a');
-  link.href = blobUrl;
-  link.download = filename;
-  document.body.append(link);
-  link.click();
-  link.remove();
-  setTimeout(() => URL.revokeObjectURL(blobUrl), 3000);
+function createReportViewer() {
+  return window.CentralDocuments?.openViewer() || null;
 }
 
-function handleReportSubmit(prefix, builder, filenamePrefix) {
+function handleReportSubmit(prefix, builder) {
   return async event => {
     event.preventDefault();
     const data = formValues(event.currentTarget);
     if (!validateClientForm(prefix, data)) return;
-    const popup = window.open('', '_blank');
+    const viewer = createReportViewer();
+    if (!viewer) {
+      setFormMessage(`${prefix}FormMessage`, 'O navegador bloqueou a visualização. Autorize pop-ups para a Central Empresas e tente novamente.', 'error');
+      return;
+    }
     await reportLogoReady;
-    const documentNumber = prefix === 'nif' ? data.taxNumber1 : data.document;
-    const safeDocument = data.personType === 'pj' ? cleanCnpj(documentNumber) : onlyDigits(documentNumber);
-    const filename = `${filenamePrefix}_${safeDocument}.html`;
     if (data.personType === 'pf') saveUtilityHistory(`${prefix}Form`, data);
-    deliverHtmlReport(builder(data), filename, popup);
-    setFormMessage(`${prefix}FormMessage`, 'Documento gerado. A versão para impressão foi aberta e o HTML foi baixado.', 'success');
+    viewer.deliver(builder(data));
+    setFormMessage(`${prefix}FormMessage`, 'Documento gerado no visualizador da Central Empresas. Nenhum arquivo HTML foi baixado.', 'success');
   };
 }
 
-function handleSimpleReportSubmit(formId, messageId, builder, filenamePrefix) {
+function handleSimpleReportSubmit(formId, messageId, builder) {
   return async event => {
     event.preventDefault();
     const form = byId(formId);
@@ -609,11 +596,15 @@ function handleSimpleReportSubmit(formId, messageId, builder, filenamePrefix) {
       form.querySelector('[name="name"]').focus();
       return;
     }
-    const popup = window.open('', '_blank');
+    const viewer = createReportViewer();
+    if (!viewer) {
+      setFormMessage(messageId, 'O navegador bloqueou a visualização. Autorize pop-ups para a Central Empresas e tente novamente.', 'error');
+      return;
+    }
     await reportLogoReady;
     saveUtilityHistory(formId, data);
-    deliverHtmlReport(builder(data), `${filenamePrefix}_${onlyDigits(data.cpf)}.html`, popup);
-    setFormMessage(messageId, 'Documento gerado. A versão para impressão foi aberta e o HTML foi baixado.', 'success');
+    viewer.deliver(builder(data));
+    setFormMessage(messageId, 'Documento gerado no visualizador da Central Empresas. Nenhum arquivo HTML foi baixado.', 'success');
   };
 }
 
@@ -651,8 +642,8 @@ document.querySelectorAll('[data-open-utility]').forEach(control => control.addE
   event.preventDefault();
   openUtilityPanel(control.dataset.openUtility);
 }));
-byId('nifForm').addEventListener('submit', handleReportSubmit('nif', buildNifReport, 'Declaracao_Domicilio_Fiscal_NIF'));
-byId('scrForm').addEventListener('submit', handleReportSubmit('scr', buildScrReport, 'Autorizacao_Consulta_SCR'));
-byId('residenceForm').addEventListener('submit', handleSimpleReportSubmit('residenceForm', 'residenceFormMessage', buildResidenceReport, 'Autodeclaracao_Residencia'));
-byId('incomeForm').addEventListener('submit', handleSimpleReportSubmit('incomeForm', 'incomeFormMessage', buildIncomeReport, 'Autodeclaracao_Renda'));
+byId('nifForm').addEventListener('submit', handleReportSubmit('nif', buildNifReport));
+byId('scrForm').addEventListener('submit', handleReportSubmit('scr', buildScrReport));
+byId('residenceForm').addEventListener('submit', handleSimpleReportSubmit('residenceForm', 'residenceFormMessage', buildResidenceReport));
+byId('incomeForm').addEventListener('submit', handleSimpleReportSubmit('incomeForm', 'incomeFormMessage', buildIncomeReport));
 }

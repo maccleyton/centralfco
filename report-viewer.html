@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Visualizador de documentos | Central Empresas</title>
+  <link rel="icon" href="logo02.png" type="image/png">
+  <link rel="stylesheet" href="report-viewer.css?v=1">
+  <script defer src="report-viewer.js?v=2"></script>
+</head>
+<body>
+  <header class="viewer-toolbar">
+    <div class="viewer-brand">
+      <img src="logo02.png" alt="Banco do Brasil">
+      <div>
+        <strong>Central Empresas</strong>
+        <span id="viewerTitle">Visualizador de documentos</span>
+      </div>
+    </div>
+    <div class="viewer-actions">
+      <button id="viewerClose" class="viewer-button viewer-button--secondary" type="button">Fechar</button>
+      <button id="viewerPrint" class="viewer-button" type="button" disabled>Imprimir / salvar PDF</button>
+    </div>
+  </header>
+  <main class="viewer-stage">
+    <div id="viewerStatus" class="viewer-status" role="status">Preparando o documento…</div>
+    <iframe id="reportFrame" title="Documento para impressão" scrolling="no"></iframe>
+  </main>
+</body>
+</html>

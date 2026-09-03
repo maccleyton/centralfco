@@ -433,7 +433,7 @@ function reportHtml(data, logo) {
   <table><colgroup><col class="billing-col-month"><col class="billing-col-value"><col class="billing-col-value"><col class="billing-col-value"></colgroup><thead><tr><th>Mês/ano</th><th>À vista - R$</th><th>À prazo - R$</th><th>Total - R$</th></tr></thead><tbody>${monthRows}</tbody><tfoot><tr><th>Total</th><th>${billingCurrency.format(cashTotal)}</th><th>${billingCurrency.format(termTotal)}</th><th>${billingCurrency.format(data.updated)}</th></tr></tfoot></table>
   <section class="split-summary"><div class="box cash-box"><small>Vendas à vista</small><strong>${cashPercent}%</strong></div><div class="box term-box"><small>Vendas à prazo</small><strong>${termPercent}%</strong></div></section>
   <p class="place-date">${billingEscape(placeAndDate)}</p><section class="signature"><div class="signature__line"><strong>${billingEscape(data.company)}</strong><span>${billingEscape(data.cnpj)}</span></div><p style="margin-top:14px;font-size:8px;color:#64677b">Obs.: Dispensada a assinatura do contador para faturamento até R$ 4.800.000,00.</p></section>
-  <footer class="footer">CRBB: 4004-0001 (capitais e regiões metropolitanas) ou 0800 729 0001 (demais localidades).<br>SAC: 0800 729 0722 · Atendimento para Pessoas com Deficiência Auditiva ou de Fala: 0800 729 0088 · Ouvidoria BB: 0800 729 5678.</footer></main><button class="print" onclick="window.print()">Imprimir / salvar PDF</button></body></html>`;
+  <footer class="footer">CRBB: 4004-0001 (capitais e regiões metropolitanas) ou 0800 729 0001 (demais localidades).<br>SAC: 0800 729 0722 · Atendimento para Pessoas com Deficiência Auditiva ou de Fala: 0800 729 0088 · Ouvidoria BB: 0800 729 5678.</footer></main></body></html>`;
 }
 
 function saveBillingHistory(data) {
@@ -465,9 +465,8 @@ async function submitBilling(event) {
   const company = billingById('billingCompany').value.trim();
   if (!billingUpdateState?.months?.length) return showBillingMessage('Atualize e distribua o faturamento antes de gerar o relatório.');
   if (billingCompanyLookup.cnpj !== cnpj || typeof billingCompanyLookup.simples !== 'boolean') return showBillingMessage('Consulte novamente o CNPJ antes de gerar o relatório.');
-  const preview = window.open('', '_blank');
-  if (!preview) return showBillingMessage('O navegador bloqueou a nova janela. Permita pop-ups e tente novamente.');
-  preview.document.write('<!doctype html><title>Gerando relatório...</title><p style="font:16px Arial;padding:30px">Preparando a relação de faturamento...</p>');
+  const viewer = window.CentralDocuments?.openViewer();
+  if (!viewer) return showBillingMessage('O navegador bloqueou a nova janela. Permita pop-ups e tente novamente.');
   const button = billingById('billingGenerate');
   button.disabled = true;
   button.textContent = 'Gerando relatório...';
@@ -475,13 +474,13 @@ async function submitBilling(event) {
     const simpleLabel = billingCompanyLookup.simples ? 'Optante pelo Simples Nacional' : 'Não optante pelo Simples Nacional';
     const data = { cnpj: formatBillingCnpj(cnpj), company, simpleLabel, ...billingUpdateState, calculation: { updated: billingUpdateState.updated, percentage: billingUpdateState.percentage } };
     const logo = await logoDataUrl();
-    preview.document.open(); preview.document.write(reportHtml(data, logo)); preview.document.close();
+    viewer.deliver(reportHtml(data, logo));
     billingById('billingResult').hidden = false;
     billingById('billingResult').innerHTML = `<strong>Relatório preparado</strong><span>${billingCurrency.format(data.updated)}</span><small>${simpleLabel} · ${data.months.length} competências distribuídas.</small>`;
     saveBillingHistory(data);
     showBillingMessage('Relatório de faturamento gerado com sucesso.', 'success');
   } catch (error) {
-    preview.close();
+    viewer.close();
     showBillingMessage(error.message || 'Não foi possível gerar o relatório.');
   } finally {
     button.disabled = false;

@@ -963,21 +963,18 @@ async function generateReports(event) {
     return;
   }
 
-  const preview = window.open('', '_blank');
-  if (!preview) {
+  const viewer = window.CentralDocuments?.openViewer();
+  if (!viewer) {
     showMessage(formMessage, 'Autorize a abertura de pop-ups para visualizar e imprimir o dossiê.', 'error');
     return;
   }
-  preview.document.write('<!doctype html><title>Gerando dossiê...</title><p style="font:16px Calibri,Arial;padding:30px">Gerando documentos...</p>');
   setButtonLoading(btnGenerate, true, 'Gerando documentos...');
   try {
     const dossier = await window.FCOReports.renderDossier(payload);
-    preview.document.open();
-    preview.document.write(dossier);
-    preview.document.close();
+    viewer.deliver(dossier);
     showMessage(formMessage, 'Dossiê aberto em uma aba temporária para impressão. Nenhum arquivo HTML foi salvo no computador.', 'success');
   } catch (error) {
-    preview.close();
+    viewer.close();
     showMessage(formMessage, error.message || 'Falha ao gerar os relatórios.', 'error');
   } finally {
     setButtonLoading(btnGenerate, false, 'Gerar Relatórios');
