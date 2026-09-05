@@ -122,6 +122,8 @@ document.addEventListener('DOMContentLoaded', () => {
   syncConditionalFields();
   loadAgencies();
   restoreSession();
+  const currentCompany = window.CentralData?.getCurrent();
+  if (currentCompany && !cnpjInput.value) cnpjInput.value = formatCnpj(currentCompany.cnpj);
 });
 
 $('#loginForm').addEventListener('submit', enterApplication);
@@ -447,6 +449,7 @@ function saveManualCompany() {
     enderecoCompleto: address,
     endereco: { logradouro: address, numero: '', complemento: '', bairro: '', cep: '', municipio: '', uf: '' }
   };
+  window.CentralData?.upsertCompany(state.empresa, { source: 'Preenchimento manual' });
   renderCompany();
   if (!$('#localEmpreendimento').value) $('#localEmpreendimento').value = address;
   manualCompanyPrompt.hidden = true;

@@ -10,6 +10,8 @@ test('catálogo mantém versões distintas e fontes', () => {
   assert.ok(catalog.getById('pronampe-historico'));
   assert.ok(catalog.getById('pronampe-atual'));
   assert.ok(catalog.lines.every(line => line.catalogVersion === catalog.CATALOG_VERSION && line.sources.length));
+  assert.equal(catalog.auditCatalog().valid,true);
+  assert.ok(catalog.lines.every(line => line.sources.every(item => catalog.getSource(item.file))));
 });
 test('triagem reprova limite documentado e não promete aprovação final', () => {
   assert.equal(eligibility.evaluate(catalog.getById('bndes-digital'),{annualRevenue:5000000}).status,'ineligible');

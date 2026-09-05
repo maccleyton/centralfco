@@ -278,5 +278,7 @@
   byId('postalManualZip').addEventListener('input', event => { event.target.value = formatCep(event.target.value); });
   byId('postalManualState').addEventListener('input', event => { event.target.value = event.target.value.replace(/[^a-z]/gi, '').toUpperCase().slice(0, 2); });
   generateButton.addEventListener('click', generatePostalDocuments);
+  const sharedCompany = window.CentralData?.getCurrent();
+  if (sharedCompany && !input.value) input.value = formatCnpj(sharedCompany.cnpj);
   renderSender();
 })();

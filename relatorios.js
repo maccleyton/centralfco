@@ -453,16 +453,11 @@ function reportHeader(label) {
 }
 
 function standardReportFooter() {
-  return `<footer class="footer">CRBB: 4004-0001 (capitais e regiões metropolitanas) ou 0800 729 0001 (demais localidades).<br>SAC: 0800 729 0722 · Atendimento para Pessoas com Deficiência Auditiva ou de Fala: 0800 729 0088 · Ouvidoria BB: 0800 729 5678.</footer>`;
+  return window.CentralDocuments.supportFooter('footer');
 }
 
 function reportFontCss() {
-  const base = window.location.href;
-  const regular = new URL('fonte/BancoDoBrasilTextos-Regular.ttf', base).href;
-  const medium = new URL('fonte/BancoDoBrasilTextos-Medium.ttf', base).href;
-  const bold = new URL('fonte/BancoDoBrasilTextos-Bold.ttf', base).href;
-  const titles = new URL('fonte/BancoDoBrasilTitulos-Bold.ttf', base).href;
-  return `@font-face{font-family:"BB Textos";src:url("${regular}") format("truetype");font-weight:400}@font-face{font-family:"BB Textos";src:url("${medium}") format("truetype");font-weight:500}@font-face{font-family:"BB Textos";src:url("${bold}") format("truetype");font-weight:700}@font-face{font-family:"BB Títulos";src:url("${titles}") format("truetype");font-weight:700}`;
+  return window.CentralDocuments.fontCss(window.location.href);
 }
 
 function reportShell(title, body) {
@@ -609,7 +604,13 @@ function handleSimpleReportSubmit(formId, messageId, builder) {
 }
 
 ['nif', 'scr'].forEach(prefix => {
-  byId(`${prefix}PersonType`).addEventListener('change', () => syncPersonType(prefix));
+  byId(`${prefix}PersonType`).addEventListener('change', () => {
+    syncPersonType(prefix);
+    const sharedCompany = window.CentralData?.getCurrent();
+    if (byId(`${prefix}PersonType`).value === 'pj' && sharedCompany && !byId(`${prefix}Document`).value) {
+      byId(`${prefix}Document`).value = formatCnpj(sharedCompany.cnpj);
+    }
+  });
   byId(`${prefix}Lookup`).addEventListener('click', () => lookupCompanyForForm(prefix));
   byId(`${prefix}Document`).addEventListener('input', event => {
     const isCompany = byId(`${prefix}PersonType`).value === 'pj';

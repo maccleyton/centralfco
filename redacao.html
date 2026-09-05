@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Editor modular de documentos oficiais da Central Empresas.">
+  <title>Redação e Automação | Central Empresas</title>
+  <link rel="stylesheet" href="styles.css?v=19">
+  <link rel="stylesheet" href="redacao.css?v=1">
+  <script defer src="central-data.js?v=1"></script>
+  <script defer src="cnpj-api.js?v=4"></script>
+  <script defer src="document-core.js?v=2"></script>
+  <script defer src="redacao.js?v=2"></script>
+  <script defer src="footer.js?v=1"></script>
+</head>
+<body class="writing-body">
+  <header class="topbar">
+    <div class="topbar__accent" aria-hidden="true"></div>
+    <div class="shell topbar__content">
+      <a class="brand" href="index.html" aria-label="Voltar ao Hub Empresas"><span class="brand__symbol" aria-hidden="true"><img src="logo02.png" alt=""></span><span><strong>Central Empresas</strong><small>Redação e Automação</small></span></a>
+      <a class="header-link" href="index.html"><span aria-hidden="true">←</span> Voltar ao Hub</a>
+    </div>
+  </header>
+
+  <main class="shell writing-page">
+    <section class="writing-hero">
+      <div><span class="eyebrow">ÁREA DE TRABALHO 06</span><h1>Documentos oficiais,<br>sem brigar com a formatação.</h1><p>Escolha um modelo, escreva em blocos e deixe a Central cuidar da estrutura visual, das listas e dos cálculos das tabelas.</p></div>
+      <nav class="writing-hero__nav" aria-label="Atalhos desta página">
+        <a href="#editor"><strong>01</strong><span>Editor por blocos</span></a>
+        <a href="#integracoes"><strong>02</strong><span>Mapa de integrações</span></a>
+      </nav>
+    </section>
+
+    <section id="editor" class="writing-section" aria-labelledby="writingTitle">
+      <div class="writing-section__heading">
+        <span class="section-number">01</span>
+        <div><span class="writing-kicker">MOTOR DE REDAÇÃO</span><h2 id="writingTitle">Compor documento</h2><p>O rascunho é salvo somente neste navegador. A impressão é aberta no visualizador seguro da Central.</p></div>
+        <div id="draftStatus" class="draft-status" role="status" aria-live="polite">Novo documento</div>
+      </div>
+
+      <div class="writing-setup">
+        <label>Modelo<select id="writingTemplate"><option value="oficio">Ofício</option><option value="memorando">Memorando</option><option value="parecer">Parecer</option><option value="relatorio">Relatório</option><option value="portaria">Portaria</option><option value="autorizacao_faturamento">Autorização de Faturamento</option></select></label>
+        <label>Número do documento<input id="documentNumber" type="text" placeholder="Ex.: 123/2026"></label>
+        <label>Setor<input id="documentSector" type="text" placeholder="Ex.: Agência 1031"></label>
+        <label>Local<input id="documentLocation" type="text" placeholder="Município-UF"></label>
+        <label>Data<input id="documentDate" type="date"></label>
+        <label id="recipientField" class="writing-setup__wide">Destinatário<input id="documentRecipient" type="text" placeholder="Nome, empresa ou unidade destinatária"></label>
+        <label class="writing-setup__wide">Assunto<input id="documentSubject" type="text" placeholder="Assunto do documento"></label>
+        <label>Assinante<input id="documentSigner" type="text" placeholder="Nome completo"></label>
+        <label>Cargo ou função<input id="documentRole" type="text" placeholder="Cargo ou função"></label>
+      </div>
+
+      <section id="sellerPanel" class="seller-panel" hidden aria-labelledby="sellerTitle">
+        <div class="seller-panel__heading"><div><span>VENDEDOR OU FORNECEDOR</span><h3 id="sellerTitle">Dados para faturamento</h3></div><p>Pesquise pelo CNPJ. O endereço permanece editável para permitir filial ou outro local de faturamento.</p></div>
+        <div class="seller-lookup">
+          <label>CNPJ do vendedor<input id="sellerCnpj" type="text" maxlength="18" autocomplete="off" placeholder="00.000.000/0000-00"></label>
+          <button id="sellerLookup" class="button button--primary" type="button">Consultar CNPJ</button>
+        </div>
+        <div id="sellerMessage" class="inline-message" role="status" aria-live="polite"></div>
+        <div class="seller-fields">
+          <label>Razão social<input id="sellerName" type="text" readonly></label>
+          <label>Nome fantasia<input id="sellerTradeName" type="text" readonly></label>
+          <label class="seller-fields__wide">Endereço do faturamento<textarea id="sellerAddress" rows="3" placeholder="O endereço consultado poderá ser ajustado para a filial"></textarea></label>
+        </div>
+      </section>
+
+      <div class="writing-toolbar" aria-label="Adicionar bloco">
+        <span>Adicionar</span>
+        <button type="button" data-add-block="paragraph">Parágrafo</button>
+        <button type="button" data-add-block="section">Seção</button>
+        <button type="button" data-add-block="numbered-list">Lista numerada</button>
+        <button type="button" data-add-block="bullet-list">Marcadores</button>
+        <button type="button" data-add-block="check-list">Checklist</button>
+        <button type="button" data-add-block="table">Tabela</button>
+      </div>
+
+      <div class="writing-workspace">
+        <section class="block-editor" aria-labelledby="blocksTitle">
+          <div class="pane-heading"><div><span>CONTEÚDO</span><h3 id="blocksTitle">Blocos do documento</h3></div><button id="clearDraft" class="quiet-button" type="button">Limpar rascunho</button></div>
+          <div id="blockList" class="block-list"></div>
+          <div id="emptyBlocks" class="empty-blocks"><strong>Comece pelo conteúdo</strong><span>Adicione um parágrafo, uma lista, uma seção ou uma tabela.</span></div>
+        </section>
+
+        <aside class="preview-pane" aria-labelledby="previewTitle">
+          <div class="pane-heading"><div><span>VISUALIZAÇÃO</span><h3 id="previewTitle">Prévia em tempo real</h3></div><button id="openDocument" class="button button--primary" type="button">Abrir para imprimir</button></div>
+          <div class="paper-stage"><article id="documentPreview" class="writing-paper" aria-live="polite"></article></div>
+        </aside>
+      </div>
+    </section>
+
+    <section id="integracoes" class="writing-section" aria-labelledby="integrationsTitle">
+      <div class="writing-section__heading"><span class="section-number">02</span><div><span class="writing-kicker">ARQUITETURA FUTURA</span><h2 id="integrationsTitle">Mapa de integrações</h2><p>Catálogo de possibilidades levantadas na documentação, sem confundir ideia com recurso já implantado.</p></div></div>
+      <div class="integration-legend"><span><i class="status-dot status-dot--ready"></i>Pública, adequada ao navegador</span><span><i class="status-dot status-dot--protected"></i>Exige serviço protegido</span><span><i class="status-dot status-dot--study"></i>Precisa de estudo ou convênio</span></div>
+      <div id="integrationGrid" class="integration-grid"></div>
+      <p class="integration-note"><strong>Regra de segurança:</strong> chaves privadas, serviços pagos e dados autorizados do cliente nunca devem ficar gravados no código do navegador.</p>
+    </section>
+  </main>
+
+  <footer class="footer"><div class="shell"><span data-footer-agency>Central Empresas</span><span class="footer-credit">Desenvolvido por Cleyton Duda Macedo - F2125360</span><span>Uso interno</span></div></footer>
+</body>
+</html>

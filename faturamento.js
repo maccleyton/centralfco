@@ -400,12 +400,7 @@ async function logoDataUrl() {
 }
 
 function billingReportFontCss() {
-  const base = window.location.href;
-  const regular = new URL('fonte/BancoDoBrasilTextos-Regular.ttf', base).href;
-  const medium = new URL('fonte/BancoDoBrasilTextos-Medium.ttf', base).href;
-  const bold = new URL('fonte/BancoDoBrasilTextos-Bold.ttf', base).href;
-  const titles = new URL('fonte/BancoDoBrasilTitulos-Bold.ttf', base).href;
-  return `@font-face{font-family:"BB Textos";src:url("${regular}") format("truetype");font-weight:400}@font-face{font-family:"BB Textos";src:url("${medium}") format("truetype");font-weight:500}@font-face{font-family:"BB Textos";src:url("${bold}") format("truetype");font-weight:700}@font-face{font-family:"BB Títulos";src:url("${titles}") format("truetype");font-weight:700}body{font-family:"BB Textos",Arial,sans-serif!important}.title,.section-title,.summary strong,.print{font-family:"BB Títulos","BB Textos",Arial,sans-serif!important}`;
+  return `${window.CentralDocuments.fontCss(window.location.href)}body{font-family:"BB Textos",Arial,sans-serif!important}.title,.section-title,.summary strong,.print{font-family:"BB Títulos","BB Textos",Arial,sans-serif!important}`;
 }
 
 function reportHtml(data, logo) {
@@ -433,7 +428,7 @@ function reportHtml(data, logo) {
   <table><colgroup><col class="billing-col-month"><col class="billing-col-value"><col class="billing-col-value"><col class="billing-col-value"></colgroup><thead><tr><th>Mês/ano</th><th>À vista - R$</th><th>À prazo - R$</th><th>Total - R$</th></tr></thead><tbody>${monthRows}</tbody><tfoot><tr><th>Total</th><th>${billingCurrency.format(cashTotal)}</th><th>${billingCurrency.format(termTotal)}</th><th>${billingCurrency.format(data.updated)}</th></tr></tfoot></table>
   <section class="split-summary"><div class="box cash-box"><small>Vendas à vista</small><strong>${cashPercent}%</strong></div><div class="box term-box"><small>Vendas à prazo</small><strong>${termPercent}%</strong></div></section>
   <p class="place-date">${billingEscape(placeAndDate)}</p><section class="signature"><div class="signature__line"><strong>${billingEscape(data.company)}</strong><span>${billingEscape(data.cnpj)}</span></div><p style="margin-top:14px;font-size:8px;color:#64677b">Obs.: Dispensada a assinatura do contador para faturamento até R$ 4.800.000,00.</p></section>
-  <footer class="footer">CRBB: 4004-0001 (capitais e regiões metropolitanas) ou 0800 729 0001 (demais localidades).<br>SAC: 0800 729 0722 · Atendimento para Pessoas com Deficiência Auditiva ou de Fala: 0800 729 0088 · Ouvidoria BB: 0800 729 5678.</footer></main></body></html>`;
+  ${window.CentralDocuments.supportFooter('footer')}</main></body></html>`;
 }
 
 function saveBillingHistory(data) {
@@ -530,5 +525,12 @@ if (historyButton) historyButton.addEventListener('click', clearBillingHistory);
 const defaultReference = new Date();
 defaultReference.setMonth(defaultReference.getMonth() - 1);
 billingById('billingReference').value = monthKey(defaultReference);
+const sharedBillingCompany = window.CentralData?.getCurrent();
+if (sharedBillingCompany) {
+  billingById('billingCnpj').value = formatBillingCnpj(sharedBillingCompany.cnpj);
+  billingById('billingCompany').value = sharedBillingCompany.legalName;
+  billingCompanyLookup = { cnpj: sharedBillingCompany.cnpj, simples: sharedBillingCompany.simple, founded: sharedBillingCompany.foundedAt };
+  if (typeof sharedBillingCompany.simple === 'boolean') showBillingLookupMessage('Cadastro compartilhado carregado. Confira os dados antes de continuar.', 'success');
+}
 updateSalesSplit();
 renderBillingHistory();

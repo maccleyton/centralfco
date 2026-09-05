@@ -103,7 +103,7 @@
   }
 
   function footer() {
-    return `<footer class="document-footer">CRBB: 4004-0001 (capitais e regiões metropolitanas) ou 0800 729 0001 (demais localidades).<br>SAC: 0800 729 0722 · Atendimento para Pessoas com Deficiência Auditiva ou de Fala: 0800 729 0088 · Ouvidoria BB: 0800 729 5678.</footer>`;
+    return window.CentralDocuments.supportFooter('document-footer');
   }
 
   function documentPage(title, logo, body, className = '') {
@@ -194,7 +194,7 @@
       <p class="local-date">${localDate(data)}</p>
       <p>Atenciosamente,</p>
       ${signatures(signaturePeople(data), data.empresa.razaoSocial)}`;
-    return documentPage('DECLARAÇÃO DE REGULARIDADE JUNTO À CVM E AOS FUNDOS', logo, body);
+    return documentPage('DECLARAÇÃO DE REGULARIDADE JUNTO À CVM E AOS FUNDOS', logo, body, 'regularity-document');
   }
 
   function simplesDeclaration(data, logo) {
@@ -247,12 +247,7 @@
   }
 
   function dossierFontCss() {
-    const base = window.location.href;
-    const regular = new URL('fonte/BancoDoBrasilTextos-Regular.ttf', base).href;
-    const medium = new URL('fonte/BancoDoBrasilTextos-Medium.ttf', base).href;
-    const bold = new URL('fonte/BancoDoBrasilTextos-Bold.ttf', base).href;
-    const titles = new URL('fonte/BancoDoBrasilTitulos-Bold.ttf', base).href;
-    return `@font-face{font-family:"BB Textos";src:url("${regular}") format("truetype");font-weight:400}@font-face{font-family:"BB Textos";src:url("${medium}") format("truetype");font-weight:500}@font-face{font-family:"BB Textos";src:url("${bold}") format("truetype");font-weight:700}@font-face{font-family:"BB Títulos";src:url("${titles}") format("truetype");font-weight:700}`;
+    return window.CentralDocuments.fontCss(window.location.href);
   }
 
   function dossierCss() {
@@ -270,11 +265,24 @@
       thead th{background:#e5e5e5!important;color:#111!important}
       thead tr:first-child th{background:#3333bd!important;color:#fff!important}
       .signature-block{break-inside:avoid;page-break-inside:avoid}
+      .regularity-document{height:297mm;min-height:297mm;max-height:297mm;overflow:hidden;padding-top:10mm;padding-bottom:28mm;break-inside:avoid;page-break-inside:avoid}
+      .regularity-document .document-header{height:15mm;margin-bottom:3mm}
+      .regularity-document .address-block{margin-bottom:3mm}
+      .regularity-document .document-body{font-size:9.5pt;line-height:1.3}
+      .regularity-document .document-body p{margin-bottom:2.5mm}
+      .regularity-document .document-body ul{margin-bottom:3mm}
+      .regularity-document .document-body li{margin-bottom:1mm}
+      .regularity-document .checks{gap:1mm;margin:2.5mm 0 3mm}
+      .regularity-document .checks small{margin-top:.4mm}
+      .regularity-document .local-date{margin-top:3mm!important}
+      .regularity-document .signature-heading{margin-top:2mm}
+      .regularity-document .signature-grid{row-gap:3mm}
+      .regularity-document .signature-line{height:9mm}
       .proposal-document .signature-line{height:20mm}
       .proposal-purpose-options{margin-top:1.5mm}
       .proposal-other-info{break-inside:auto;page-break-inside:auto}
       .proposal-other-info p{margin-bottom:3mm;font-size:9.5pt;line-height:1.28;text-align:justify}
-      @media print{.document{margin:0;box-shadow:none}.proposal-document{min-height:297mm;overflow:visible;break-after:auto!important;page-break-after:auto!important}.proposal-document--continuation{break-before:page!important;page-break-before:always!important}.signature-block,.signature-grid,.signature{break-inside:avoid!important;page-break-inside:avoid!important}}
+      @media print{.document{margin:0;box-shadow:none}.regularity-document{height:297mm!important;min-height:297mm!important;max-height:297mm!important;overflow:hidden!important;break-inside:avoid!important;page-break-inside:avoid!important}.proposal-document{min-height:297mm;overflow:visible;break-after:auto!important;page-break-after:auto!important}.proposal-document--continuation{break-before:page!important;page-break-before:always!important}.signature-block,.signature-grid,.signature{break-inside:avoid!important;page-break-inside:avoid!important}}
     `;
   }
 

@@ -15,10 +15,33 @@
     return {
       templateVersion: TEMPLATE_VERSION,
       issuedAt: new Date().toISOString(),
-      employee: session.employeeName || session.nome || '',
-      registration: session.employeeRegistration || session.matricula || '',
-      agency: session.agency || session.agencia || ''
+      employee: session.acesso?.nome || session.employeeName || session.nome || '',
+      registration: session.acesso?.matricula || session.employeeRegistration || session.matricula || '',
+      agency: session.agencia?.prefixo || session.agency || ''
     };
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, character => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[character]);
+  }
+
+  function fontCss(baseHref = root.location?.href || '') {
+    const asset = file => new URL(`fonte/${file}`, baseHref).href;
+    return `@font-face{font-family:"BB Textos";src:url("${asset('BancoDoBrasilTextos-Regular.ttf')}") format("truetype");font-weight:400}@font-face{font-family:"BB Textos";src:url("${asset('BancoDoBrasilTextos-Medium.ttf')}") format("truetype");font-weight:500}@font-face{font-family:"BB Textos";src:url("${asset('BancoDoBrasilTextos-Bold.ttf')}") format("truetype");font-weight:700}@font-face{font-family:"BB Títulos";src:url("${asset('BancoDoBrasilTitulos-Bold.ttf')}") format("truetype");font-weight:700}`;
+  }
+
+  function traceText() {
+    const meta = sessionMetadata();
+    const issued = new Intl.DateTimeFormat('pt-BR',{dateStyle:'short',timeStyle:'short'}).format(new Date(meta.issuedAt));
+    return [`Modelo ${meta.templateVersion}`, `emitido em ${issued}`, meta.registration ? `por ${meta.registration}` : '', meta.agency ? `agência ${meta.agency}` : ''].filter(Boolean).join(' · ');
+  }
+
+  function supportFooter(className = 'document-footer') {
+    return `<footer class="${escapeHtml(className)}">CRBB: 4004-0001 (capitais e regiões metropolitanas) ou 0800 729 0001 (demais localidades).<br>SAC: 0800 729 0722 · Atendimento para Pessoas com Deficiência Auditiva ou de Fala: 0800 729 0088 · Ouvidoria BB: 0800 729 5678.<br><span class="document-trace">${escapeHtml(traceText())}</span></footer>`;
+  }
+
+  function page({ title, logo, body, className = '', footerClass = 'document-footer' }) {
+    return `<section class="document ${escapeHtml(className)}"><header class="document-header"><img src="${escapeHtml(logo)}" alt="Banco do Brasil"><div><span>CENTRAL EMPRESAS</span><strong>${escapeHtml(title)}</strong></div></header><main class="document-body">${body}</main>${supportFooter(footerClass)}</section>`;
   }
 
   function enrich(html) {
@@ -71,7 +94,7 @@
     };
   }
 
-  const api = { TEMPLATE_VERSION, VIEWER_LIFETIME_MS, EVENTS, sessionMetadata, enrich, openViewer };
+  const api = { TEMPLATE_VERSION, VIEWER_LIFETIME_MS, EVENTS, sessionMetadata, escapeHtml, fontCss, traceText, supportFooter, page, enrich, openViewer };
   root.CentralDocuments = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

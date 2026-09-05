@@ -7,9 +7,7 @@
   <title>Central Empresas | Guia Prático do FCO</title>
   <link rel="stylesheet" href="styles.css?v=17">
   <link rel="stylesheet" href="relatorios.css?v=9">
-  <script defer src="cnpj-api.js?v=2"></script>
   <script defer src="relatorios.js?v=12"></script>
-  <script defer src="relatorios-ferramentas.js?v=3"></script>
   <script defer src="footer.js?v=1"></script>
 </head>
 <body class="reports-body">
@@ -34,7 +32,6 @@
       <nav class="reports-hero__nav" aria-label="Atalhos desta página">
         <a href="#tutorial"><strong>01</strong><span>Tutorial FCO</span></a>
         <a href="#linhas-prazos"><strong>02</strong><span>Linhas e prazos</span></a>
-        <a href="#consulta-cnpj"><strong>03</strong><span>Consulta CNPJ</span></a>
       </nav>
     </section>
 
@@ -114,23 +111,6 @@
       </div>
     </section>
 
-    <section id="consulta-cnpj" class="report-section" aria-labelledby="consultaCnpjTitle">
-      <div class="report-section__heading">
-        <span class="section-number">03</span>
-        <div><span class="report-kicker">CONSULTA COMPLEMENTAR</span><h2 id="consultaCnpjTitle">Consulta completa de CNPJ</h2><p>Última etapa da página: confira cadastro, atividades e todos os integrantes do quadro societário.</p></div>
-      </div>
-      <div class="tools-grid tools-grid--single">
-        <article class="tool-card">
-          <div class="tool-card__head"><span class="tool-card__icon tool-card__icon--yellow" aria-hidden="true">⌕</span><div><span class="report-kicker">DADOS CADASTRAIS</span><h3>Consultar empresa</h3><p>A consulta usa uma fonte alternativa automaticamente se a fonte principal estiver indisponível.</p></div></div>
-          <form id="companyLookupForm" class="tool-form">
-            <div class="field"><label for="companyLookupDocument">CNPJ</label><input id="companyLookupDocument" type="text" maxlength="18" autocomplete="off" placeholder="00.000.000/0000-00" required><small>Serão exibidos os dados cadastrais e os dirigentes fornecidos pelas APIs.</small></div>
-            <button id="companyLookupButton" class="button button--primary tool-submit" type="submit">Consultar CNPJ</button>
-          </form>
-          <div id="companyLookupMessage" class="tool-result" role="status" aria-live="polite"></div>
-        </article>
-      </div>
-      <div id="companyLookupResult" class="company-lookup-result" hidden></div>
-    </section>
   </main>
 
   <footer class="footer"><div class="shell"><span data-footer-agency>Central Empresas · Agência 1031</span><span class="footer-credit">Desenvolvido por Cleyton Duda Macedo - F2125360</span><span>Uso interno</span></div></footer>

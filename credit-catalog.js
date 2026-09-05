@@ -1,7 +1,25 @@
 (function (root) {
   'use strict';
 
-  const CATALOG_VERSION = '2026.09.1';
+  const CATALOG_VERSION = '2026.09.2';
+  const SOURCE_REVIEW_DATE = '2026-09-03';
+  const sourceRegistry = Object.freeze({
+    'estudo01.pdf':{kind:'catalog_and_process',confidence:'medium'},
+    'estudo02.pdf':{kind:'catalog',confidence:'medium'},
+    'estudo03.pdf':{kind:'catalog_and_process',confidence:'medium'},
+    'estudo04.pdf':{kind:'catalog',confidence:'medium'},
+    'estudo05.pdf':{kind:'process',confidence:'limited'},
+    'estudo06.pdf':{kind:'catalog_and_process',confidence:'medium'},
+    'estudo07.pdf':{kind:'process',confidence:'limited'},
+    'estudo08.pdf':{kind:'release_and_process',confidence:'limited'},
+    'estudo09.pdf':{kind:'catalog_with_external_parameters',confidence:'limited'},
+    'estudo10.pdf':{kind:'mixed_versions',confidence:'limited'},
+    'estudo11.pdf':{kind:'program_rules',confidence:'medium'},
+    'estudo12.pdf':{kind:'program_rules',confidence:'medium'},
+    'estudo13.pdf':{kind:'calculation_guidance',confidence:'limited'},
+    'estudo14.pdf':{kind:'catalog_and_process',confidence:'medium'},
+    'estudo15.pdf':{kind:'catalog_and_process',confidence:'medium'}
+  });
   const source = (file, pages, note) => ({ file, pages, note });
   const unavailable = reason => ({ status: 'unavailable', engine: null, reason });
   const lines = [
@@ -24,7 +42,19 @@
     { id:'aqs-cartao', name:'Aquisição de Saldos de Cartão (AQS)', family:'Recebíveis', status:'informative', audience:'Estabelecimentos com recebíveis de cartão elegíveis', purpose:'Antecipação de saldos de cartão', terms:['Usa o limite da adquirente conforme material analisado.','Não impacta o limite do cliente nas condições documentadas.'], sources:[source('estudo15.pdf','documento completo','Condições AQS')], calculation:unavailable('Preço e disponibilidade dependem da adquirente e da operação.') }
   ].map(line => Object.freeze({ catalogVersion:CATALOG_VERSION, rules:[], ...line }));
 
-  const api = { CATALOG_VERSION, lines, getById:id => lines.find(line => line.id === id) || null };
+  function auditCatalog() {
+    const issues = [];
+    const ids = new Set();
+    for (const line of lines) {
+      if (ids.has(line.id)) issues.push(`Identificador duplicado: ${line.id}`);
+      ids.add(line.id);
+      if (!line.sources.length) issues.push(`Linha sem fonte: ${line.id}`);
+      line.sources.forEach(item => { if (!sourceRegistry[item.file]) issues.push(`Fonte não classificada: ${item.file}`); });
+      if (line.calculation?.status !== 'unavailable' || line.calculation?.engine) issues.push(`Motor não autorizado no catálogo: ${line.id}`);
+    }
+    return { valid:issues.length===0, issues, reviewedAt:SOURCE_REVIEW_DATE };
+  }
+  const api = { CATALOG_VERSION, SOURCE_REVIEW_DATE, sourceRegistry, lines, getById:id => lines.find(line => line.id === id) || null, getSource:file => sourceRegistry[file] || null, auditCatalog };
   root.CentralCreditCatalog = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

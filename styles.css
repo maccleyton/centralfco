@@ -78,3 +78,5 @@ select:disabled{background:#f0f1f6;color:#555a70}
 /* Alturas consistentes para ações regulares. Botões principais e compactos mantêm suas hierarquias. */
 .button:not(.button--generate):not(.button--small){height:44px;min-height:44px;padding-top:0;padding-bottom:0;line-height:1.2}
 .lookup-button{height:44px;min-height:44px}
+.hub-card--writing{border-color:#d8dcff;background:linear-gradient(140deg,#f5f6ff,#fff)}
+.hub-card--writing .hub-card__icon{background:var(--blue-dark);color:var(--yellow)}

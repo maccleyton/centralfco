@@ -10,10 +10,11 @@
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script defer src="agencies.js?v=3"></script>
-  <script defer src="cnpj-api.js?v=2"></script>
-  <script defer src="document-core.js?v=1"></script>
+  <script defer src="central-data.js?v=1"></script>
+  <script defer src="cnpj-api.js?v=3"></script>
+  <script defer src="document-core.js?v=2"></script>
   <script defer src="relatorios-ferramentas.js?v=4"></script>
-  <script defer src="faturamento.js?v=11"></script>
+  <script defer src="faturamento.js?v=12"></script>
   <script defer src="correios-logo-data.js?v=1"></script>
   <script defer src="correios.js?v=7"></script>
   <script defer src="footer.js?v=1"></script>
@@ -36,12 +37,13 @@
       <nav class="reports-hero__nav" aria-label="Atalhos desta página">
         <a href="#pdfCompressorPanel" data-open-tool="pdfCompressorPanel"><strong>01</strong><span>Compactador de PDF</span></a>
         <a href="#billingPanel" data-open-tool="billingPanel"><strong>02</strong><span>Gerador de Faturamento</span></a>
-        <a href="#correiosPanel" data-open-tool="correiosPanel"><strong>03</strong><span>AR e Etiqueta</span></a>
+        <a href="#companyLookupPanel" data-open-tool="companyLookupPanel"><strong>03</strong><span>Consulta CNPJ</span></a>
+        <a href="#correiosPanel" data-open-tool="correiosPanel"><strong>04</strong><span>AR e Etiqueta</span></a>
       </nav>
     </section>
 
     <section class="report-section" aria-labelledby="utilitiesTitle">
-      <div class="report-section__heading"><span class="section-number">01</span><div><span class="report-kicker">UTILITÁRIOS</span><h2 id="utilitiesTitle">Selecione uma ferramenta</h2><p>Os dados são processados no navegador; somente a consulta do índice acessa a API oficial do Banco Central.</p></div></div>
+      <div class="report-section__heading"><span class="section-number">01</span><div><span class="report-kicker">UTILITÁRIOS</span><h2 id="utilitiesTitle">Selecione uma ferramenta</h2><p>Os arquivos são processados localmente; consultas cadastrais e de índices usam serviços externos identificados na tela.</p></div></div>
       <div class="document-grid">
         <article class="document-card">
           <div class="document-card__icon document-card__icon--yellow" aria-hidden="true">PDF</div>
@@ -53,7 +55,12 @@
           <div class="document-card__content"><span class="document-card__type">ATUALIZAÇÃO MONETÁRIA</span><h3>Gerador de Faturamento</h3><p>Atualize o faturamento anual pelo IPCA oficial e distribua o valor automaticamente entre os 12 meses.</p><div class="document-note"><strong>Fonte:</strong> série 433 do Sistema Gerenciador de Séries Temporais do Banco Central.</div></div>
           <div class="document-card__actions"><button class="report-button report-button--primary" type="button" data-open-tool="billingPanel">Abrir gerador <span aria-hidden="true">↓</span></button></div>
         </article>
-        <article class="document-card document-card--wide">
+        <article class="document-card">
+          <div class="document-card__icon document-card__icon--yellow" aria-hidden="true">⌕</div>
+          <div class="document-card__content"><span class="document-card__type">DADOS CADASTRAIS</span><h3>Consulta completa de CNPJ</h3><p>Confira cadastro, atividades econômicas, Simples Nacional e quadro societário.</p><div class="document-note"><strong>Fontes:</strong> consulta com alternativa automática quando a fonte principal não responder.</div></div>
+          <div class="document-card__actions"><button class="report-button report-button--primary" type="button" data-open-tool="companyLookupPanel">Consultar empresa <span aria-hidden="true">↓</span></button></div>
+        </article>
+        <article class="document-card">
           <div class="document-card__icon document-card__icon--yellow" aria-hidden="true">AR</div>
           <div class="document-card__content"><span class="document-card__type">CORRESPONDÊNCIA</span><h3>AR e Etiqueta dos Correios</h3><p>Consulte o destinatário pelo CNPJ e gere o aviso de recebimento e a etiqueta com os dados da agência remetente.</p><div class="document-note"><strong>Preenchimento automático:</strong> remetente pela agência da sessão e destinatário pela consulta cadastral.</div></div>
           <div class="document-card__actions"><button class="report-button report-button--primary" type="button" data-open-tool="correiosPanel">Abrir gerador <span aria-hidden="true">↓</span></button></div>
@@ -117,6 +124,18 @@
           </form>
           <div id="billingResult" class="billing-result" hidden></div>
           <section class="billing-history"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;"><h4 style="margin:0;">Histórico desta estação</h4><button id="billingClearHistory" type="button" class="report-button report-button--ghost" style="padding:4px 8px; font-size:11px; font-weight:700;">Limpar histórico</button></div><div id="billingHistoryList" class="billing-history-list"><p>Nenhuma atualização gerada.</p></div></section>
+        </section>
+
+        <section id="companyLookupPanel" class="report-form-card utility-panel" hidden>
+          <div class="report-form-card__head"><div class="report-form-card__badge report-form-card__badge--yellow">⌕</div><div><span class="report-kicker">DADOS CADASTRAIS</span><h3>Consulta completa de CNPJ</h3><p>Consulte cadastro, atividades econômicas, situação do Simples Nacional e quadro societário.</p></div></div>
+          <article class="tool-card">
+            <form id="companyLookupForm" class="tool-form">
+              <div class="field"><label for="companyLookupDocument">CNPJ</label><input id="companyLookupDocument" type="text" maxlength="18" autocomplete="off" placeholder="00.000.000/0000-00" required><small>Serão exibidos os dados fornecidos pelas fontes cadastrais disponíveis.</small></div>
+              <button id="companyLookupButton" class="button button--primary tool-submit" type="submit">Consultar CNPJ</button>
+            </form>
+            <div id="companyLookupMessage" class="tool-result" role="status" aria-live="polite"></div>
+          </article>
+          <div id="companyLookupResult" class="company-lookup-result" hidden></div>
         </section>
 
         <section id="correiosPanel" class="report-form-card utility-panel" hidden>

@@ -80,13 +80,19 @@
     return providers;
   }
 
-  async function request(cnpj) {
+  function rememberCompany(data, source) {
+    try { global.CentralData?.upsertCompany(data, { source }); } catch (_) { /* O cache local nunca bloqueia a consulta. */ }
+  }
+
+  async function request(cnpj, options = {}) {
     let lastError = null;
     for (const provider of providersFor(cnpj)) {
       try {
         const response = await fetch(provider.url, { headers: JSON_HEADERS });
         const data = await readJson(response);
-        return provider.normalize(data);
+        const normalized = provider.normalize(data);
+        if (options.remember !== false) rememberCompany(normalized, normalized.fonte_consulta || provider.name);
+        return normalized;
       } catch (error) {
         lastError = error;
       }
@@ -102,12 +108,18 @@
         const response = await fetch(provider.url, { headers: JSON_HEADERS });
         const data = provider.normalize(await readJson(response));
         firstSuccessful ||= data;
-        if (typeof data.opcao_pelo_simples === 'boolean') return data;
+        if (typeof data.opcao_pelo_simples === 'boolean') {
+          rememberCompany(data, data.fonte_consulta || provider.name);
+          return data;
+        }
       } catch (error) {
         lastError = error;
       }
     }
-    if (firstSuccessful) return firstSuccessful;
+    if (firstSuccessful) {
+      rememberCompany(firstSuccessful, firstSuccessful.fonte_consulta || 'Consulta cadastral');
+      return firstSuccessful;
+    }
     throw new Error(lastError?.message || 'Não foi possível verificar a opção pelo Simples Nacional.');
   }
 
