@@ -36,6 +36,19 @@ test('visualizador aplica expiração e remove o conteúdo', () => {
   assert.match(read('document-core.js'),/5 \* 60 \* 1000/);
 });
 
+test('visualizador baixa formulários separados e mantém a impressão consolidada', () => {
+  const html = read('report-viewer.html');
+  const source = read('report-viewer.js');
+  assert.match(html,/id="viewerDownloadList"/);
+  assert.match(html,/html2canvas\/1\.4\.1/);
+  assert.match(html,/jspdf\/2\.5\.1/);
+  assert.match(source,/querySelectorAll\('\.document\[data-documento\]'\)/);
+  assert.match(source,/current\?\.title === title/);
+  assert.match(source,/window\.html2canvas/);
+  assert.match(source,/pdf\.save\(filename\)/);
+  assert.match(source,/reportFrame\.contentWindow\.print\(\)/);
+});
+
 test('consulta completa de CNPJ pertence somente aos utilitários', () => {
   assert.doesNotMatch(read('relatorios.html'),/companyLookupForm|consulta-cnpj/);
   assert.match(read('utilitarios.html'),/id="companyLookupPanel"/);

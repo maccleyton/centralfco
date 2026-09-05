@@ -5,8 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Visualizador de documentos | Central Empresas</title>
   <link rel="icon" href="logo02.png" type="image/png">
-  <link rel="stylesheet" href="report-viewer.css?v=1">
-  <script defer src="report-viewer.js?v=2"></script>
+  <link rel="stylesheet" href="report-viewer.css?v=2">
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script defer src="report-viewer.js?v=3"></script>
 </head>
 <body>
   <header class="viewer-toolbar">
@@ -24,6 +26,18 @@
   </header>
   <main class="viewer-stage">
     <div id="viewerStatus" class="viewer-status" role="status">Preparando o documento…</div>
+    <section id="viewerDownloads" class="viewer-downloads" aria-labelledby="viewerDownloadsTitle" hidden>
+      <div class="viewer-downloads__heading">
+        <div>
+          <span class="viewer-eyebrow">DOWNLOADS INDIVIDUAIS</span>
+          <h1 id="viewerDownloadsTitle">Baixar cada formulário</h1>
+          <p>As páginas do mesmo formulário serão reunidas em um único PDF.</p>
+        </div>
+        <span id="viewerDownloadsCount" class="viewer-downloads__count"></span>
+      </div>
+      <div id="viewerDownloadList" class="viewer-download-list"></div>
+      <p id="viewerDownloadStatus" class="viewer-download-status" role="status" aria-live="polite"></p>
+    </section>
     <iframe id="reportFrame" title="Documento para impressão" scrolling="no"></iframe>
   </main>
 </body>
