@@ -28,28 +28,53 @@
   function baseMeta() {
     let session={};
     try { session=JSON.parse(sessionStorage.getItem('centralFcoSessionV1')||'{}'); } catch (_) {}
-    return {number:'',sector:session.agencia?.prefixo?`Agência ${session.agencia.prefixo}`:'',location:session.agencia?.municipio?`${session.agencia.municipio}-${session.agencia.uf||''}`:'',date:new Date().toISOString().slice(0,10),recipient:'',subject:'',signer:session.acesso?.nome||'',role:'',seller:{cnpj:'',legalName:'',tradeName:'',address:'',source:''}};
+    return {number:'',sector:session.agencia?.prefixo?`Agência ${session.agencia.prefixo}`:'',agencyName:session.agencia?.nome||'',location:session.agencia?.municipio?`${session.agencia.municipio}-${session.agencia.uf||''}`:'',date:new Date().toISOString().slice(0,10),recipient:'',subject:'',signer:session.acesso?.nome||'',role:'',seller:{cnpj:'',legalName:'',tradeName:'',address:'',source:''},client:{cnpj:'',legalName:'',tradeName:'',source:''},creditInstrument:'CÉDULA DE CRÉDITO',creditInstrumentNumber:''};
   }
   function address(company) { return company?.fullAddress || [company?.address?.street,company?.address?.number,company?.address?.district,[company?.address?.city,company?.address?.state].filter(Boolean).join('-'),company?.address?.zip].filter(Boolean).join(', '); }
   function cnpj(value) { return String(value||'').replace(/\D/g,'').replace(/^(\d{2})(\d)/,'$1.$2').replace(/^(\d{2})\.(\d{3})(\d)/,'$1.$2.$3').replace(/\.(\d{3})(\d)/,'.$1/$2').replace(/(\/\d{4})(\d)/,'$1-$2').slice(0,18); }
+  function authorizationIntro(meta) {
+    const client=meta.client||{};
+    const instrument=meta.creditInstrument||'CÉDULA DE CRÉDITO';
+    const article=instrument.startsWith('CÉDULA')?'da':'do';
+    return `Autorizamos proceder o faturamento do bem abaixo discriminado, objeto ${article} ${instrument} ${meta.creditInstrumentNumber||'{Nº DA CÉDULA}'}, firmado entre o BANCO DO BRASIL S.A. e ${client.legalName||'{RAZÃO SOCIAL DO CLIENTE}'}, CNPJ: ${client.cnpj||'{Nº DO CNPJ}'}.`;
+  }
+  function authorizationInstructions(meta) {
+    return `A nota fiscal deverá consignar, OBRIGATORIAMENTE, além dos requisitos legais, as informações: denominação social ou sigla do fabricante, e, no campo “dados adicionais/informações complementares”, os dados referentes ao ano de fabricação do bem, número de série ou identificação e modelo da máquina ou do equipamento, as suas características e os elementos que o constituem, o nº da cédula CCB ${meta.creditInstrumentNumber||'{Nº DA CÉDULA}'} do agente financeiro e a condição de que “o Banco do Brasil S.A. é o PROPRIETÁRIO FIDUCIÁRIO ou BENEFICIÁRIO DO PENHOR, conforme o caso, do bem discriminado nesta nota fiscal ou DANFE.” Esclarecemos que a ausência dessas informações no campo dados adicionais/informações complementares da nota fiscal poderá ocasionar a não liberação de recursos.`;
+  }
+  function authorizationParagraph(text,role) { return {id:uid(),type:'paragraph',text,role}; }
   function preset(templateName) {
     const meta=baseMeta();
     if (templateName==='autorizacao_faturamento') {
       const company=window.CentralData?.getCurrent?.();
-      const name=company?.legalName||'{RAZÃO SOCIAL DO CLIENTE}';
-      const document=company?.cnpj?cnpj(company.cnpj):'{Nº DO CNPJ}';
+      if(company)meta.client={cnpj:cnpj(company.cnpj),legalName:company.legalName||'',tradeName:company.tradeName||'',source:company.source||'Cadastro compartilhado'};
       meta.subject='Autorização de faturamento';
-      return {template:templateName,meta,blocks:[paragraph(`Autorizamos proceder ao faturamento do bem abaixo discriminado, objeto do contrato de abertura de crédito ou cédula de crédito {Nº DA CÉDULA}, firmado entre o BANCO DO BRASIL S.A. e ${name}, CNPJ ${document}.`),{id:uid(),type:'table',header:true,rowTotals:false,columns:[{label:'Qtd.',type:'number'},{label:'Identificação do bem',type:'text'},{label:'Valor orçado',type:'currency'},{label:'Valor financiado',type:'currency'},{label:'Recursos próprios',type:'currency'}],rows:[['1','Descrição do bem','0,00','0,00','0,00']]},paragraph('A nota fiscal deverá consignar, obrigatoriamente, os requisitos legais, a identificação completa do bem, o número da cédula e a condição do Banco do Brasil S.A. como proprietário fiduciário ou beneficiário do penhor, conforme o caso.'),paragraph('A ausência das informações obrigatórias poderá ocasionar a não liberação dos recursos.'),paragraph('Atenciosamente,')],dirty:false};
+      return {template:templateName,meta,authorizationVersion:2,blocks:[authorizationParagraph(authorizationIntro(meta),'authorization-intro'),{id:uid(),type:'table',header:true,rowTotals:false,columns:[{label:'Qtd.',type:'number'},{label:'Identificação do bem',type:'text'},{label:'Valor orçado',type:'currency'},{label:'Valor financiado',type:'currency'},{label:'Recursos próprios',type:'currency'}],rows:[['1','Descrição do bem','0,00','0,00','0,00']]},authorizationParagraph(authorizationInstructions(meta),'authorization-instructions')],dirty:false};
     }
     const text={oficio:'Cumprimentando-o cordialmente, encaminhamos as informações a seguir para conhecimento e providências.',memorando:'Apresentamos, para ciência e encaminhamento interno, o assunto descrito neste documento.',parecer:'Este parecer examina os elementos apresentados e registra a análise técnica correspondente.',relatorio:'Este relatório apresenta o objetivo, os dados considerados e os resultados da análise.',portaria:'Estabelece as disposições e responsabilidades descritas a seguir.'}[templateName]||'';
     return {template:templateName,meta,blocks:[paragraph(text)],dirty:false};
   }
-  function load() { try { const saved=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null'); if(saved?.version===1&&Array.isArray(saved.document?.blocks)){saved.document.dirty=saved.document.dirty??saved.document.blocks.length>1;return saved.document;} } catch (_) {} return preset('oficio'); }
+  function load() { try { const saved=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null'); if([1,2].includes(saved?.version)&&Array.isArray(saved.document?.blocks)){saved.document.dirty=saved.document.dirty??saved.document.blocks.length>1;return saved.document;} } catch (_) {} return preset('oficio'); }
   let state=load();
   state.meta.seller ||= {cnpj:'',legalName:'',tradeName:'',address:'',source:''};
+  state.meta.client ||= {cnpj:'',legalName:'',tradeName:'',source:''};
+  state.meta.creditInstrument ||= 'CÉDULA DE CRÉDITO';
+  state.meta.creditInstrumentNumber ||= '';
+  state.meta.agencyName ||= '';
+  function refreshAuthorizationContent() {
+    if(state.template!=='autorizacao_faturamento')return;
+    const standardized=state.blocks.filter(block=>block.type!=='paragraph'||!block.role&&!/^(Autorizamos proceder|A nota fiscal deverá|A ausência das informações|Atenciosamente)/i.test(block.text.trim()));
+    const tableBlock=state.blocks.find(block=>block.type==='table')||{id:uid(),type:'table',header:true,rowTotals:false,columns:[{label:'Qtd.',type:'number'},{label:'Identificação do bem',type:'text'},{label:'Valor orçado',type:'currency'},{label:'Valor financiado',type:'currency'},{label:'Recursos próprios',type:'currency'}],rows:[['1','Descrição do bem','0,00','0,00','0,00']]};
+    const extras=standardized.filter(block=>block!==tableBlock&&block.role!=='authorization-intro'&&block.role!=='authorization-instructions');
+    const intro=state.blocks.find(block=>block.role==='authorization-intro')||authorizationParagraph('','authorization-intro');
+    const instructions=state.blocks.find(block=>block.role==='authorization-instructions')||authorizationParagraph('','authorization-instructions');
+    intro.text=authorizationIntro(state.meta);instructions.text=authorizationInstructions(state.meta);
+    state.blocks=[intro,tableBlock,instructions,...extras];
+    state.authorizationVersion=2;
+  }
+  refreshAuthorizationContent();
   let priorTemplate=state.template;
   let saveTimer;
-  function save() { clearTimeout(saveTimer); $('#draftStatus').textContent='Salvando…'; saveTimer=setTimeout(()=>{try{localStorage.setItem(STORAGE_KEY,JSON.stringify({version:1,updatedAt:new Date().toISOString(),document:state}));$('#draftStatus').textContent='Rascunho salvo neste navegador';}catch(_){$('#draftStatus').textContent='Rascunho em memória';}},180); }
+  function save() { clearTimeout(saveTimer); $('#draftStatus').textContent='Salvando…'; saveTimer=setTimeout(()=>{try{localStorage.setItem(STORAGE_KEY,JSON.stringify({version:2,updatedAt:new Date().toISOString(),document:state}));$('#draftStatus').textContent='Rascunho salvo neste navegador';}catch(_){$('#draftStatus').textContent='Rascunho em memória';}},180); }
   function blockName(block) { return block.type==='paragraph'?'Parágrafo':block.type==='section'?'Seção':block.type==='table'?'Tabela':block.style==='numbered'?'Lista numerada':block.style==='check'?'Checklist':'Lista com marcadores'; }
 
   function listEditor(block) {
@@ -76,6 +101,13 @@
     $('#sellerName').value=seller.legalName||'';
     $('#sellerTradeName').value=seller.tradeName||'';
     $('#sellerAddress').value=seller.address||'';
+    const client=state.meta.client||{};
+    $('#authorizationPanel').hidden=state.template!=='autorizacao_faturamento';
+    $('#clientCnpj').value=client.cnpj||'';
+    $('#clientName').value=client.legalName||'';
+    $('#clientTradeName').value=client.tradeName||'';
+    $('#creditInstrument').value=state.meta.creditInstrument||'CÉDULA DE CRÉDITO';
+    $('#creditInstrumentNumber').value=state.meta.creditInstrumentNumber||'';
   }
   function number(value) {
     const raw=String(value||'').trim().replace(/R\$\s?/g,'').replace(/\s/g,'');
@@ -113,14 +145,26 @@
     const placeDate=[state.meta.location,dateText()].filter(Boolean).join(', ');
     const logo=absoluteLogo?new URL('logo02.png',location.href).href:'logo02.png';
     const support=window.CentralDocuments.supportFooter('writing-support-footer').replace(/^<footer[^>]*>/,'').replace(/<\/footer>$/,'');
-    return `<header class="paper-header"><img src="${esc(logo)}" alt="Banco do Brasil"><div><span>CENTRAL EMPRESAS · ${esc(state.meta.sector||'DOCUMENTO OFICIAL')}</span><strong>${labels[state.template]}${state.meta.number?` Nº ${esc(state.meta.number)}`:''}</strong></div></header><section class="paper-meta">${recipient}<p>${esc(placeDate)}</p>${subject}</section><main class="paper-content">${state.blocks.map(blockHtml).join('')}</main>${state.meta.signer?`<section class="paper-signature"><strong>${esc(state.meta.signer)}</strong><span>${esc(state.meta.role||state.meta.sector)}</span></section>`:''}<footer class="paper-footer">${support}</footer>`;
+    const header=`<header class="paper-header"><img src="${esc(logo)}" alt="Banco do Brasil"><div><span>CENTRAL EMPRESAS · ${esc(state.meta.sector||'DOCUMENTO OFICIAL')}</span><strong>${labels[state.template]}${state.meta.number?` Nº ${esc(state.meta.number)}`:''}</strong></div></header>`;
+    const footer=`<footer class="paper-footer">${support}</footer>`;
+    if(state.template==='autorizacao_faturamento'){
+      const agency=[state.meta.sector?.replace(/^Agência\s*/i,''),state.meta.agencyName].filter(Boolean).join(' - ');
+      const closing=`<section class="authorization-closing"><p>${esc(placeDate)}</p><p>Atenciosamente,</p><div class="authorization-bank"><strong>Banco do Brasil S.A.</strong>${agency?`<span>Agência ${esc(agency)}</span>`:''}</div>${state.meta.signer?`<div class="paper-signature"><strong>${esc(state.meta.signer)}</strong><span>${esc(state.meta.role||'Gerente de Relacionamento')}</span></div>`:''}</section>`;
+      return `${header}<section class="paper-meta paper-meta--authorization">${recipient}</section><p class="paper-reference">REF.: AUTORIZAÇÃO DE FATURAMENTO</p><main class="paper-content">${state.blocks.map(blockHtml).join('')}</main>${closing}${footer}`;
+    }
+    return `${header}<section class="paper-meta">${recipient}<p>${esc(placeDate)}</p>${subject}</section><main class="paper-content">${state.blocks.map(blockHtml).join('')}</main>${state.meta.signer?`<section class="paper-signature"><strong>${esc(state.meta.signer)}</strong><span>${esc(state.meta.role||state.meta.sector)}</span></section>`:''}${footer}`;
   }
-  function renderPreview(){ $('#documentPreview').innerHTML=previewInner(); }
+  function renderPreview(){ const preview=$('#documentPreview');preview.classList.toggle('writing-paper--authorization',state.template==='autorizacao_faturamento');preview.innerHTML=previewInner(); }
   function update(editor=false){save();if(editor)renderEditor();renderPreview();}
   function find(blockId){return state.blocks.find(block=>block.id===blockId);}
   function syncSellerRecipient(){
     const seller=state.meta.seller||{};
     state.meta.recipient=[seller.legalName,seller.tradeName,seller.cnpj?`CNPJ: ${seller.cnpj}`:'',seller.address].filter(Boolean).join(' · ');
+  }
+  function updateAuthorizationFields(){
+    refreshAuthorizationContent();
+    state.blocks.filter(block=>block.role).forEach(block=>{const input=document.querySelector(`[data-block="${block.id}"][data-prop="text"]`);if(input)input.value=block.text;});
+    state.dirty=true;renderPreview();save();
   }
 
   document.querySelectorAll('[data-add-block]').forEach(button=>button.addEventListener('click',()=>{
@@ -160,6 +204,9 @@
   });
   $('#clearDraft').addEventListener('click',()=>{if(!confirm('Deseja apagar o rascunho atual e começar novamente?'))return;localStorage.removeItem(STORAGE_KEY);state=preset(state.template);priorTemplate=state.template;update(true);});
   $('#sellerCnpj').addEventListener('input',event=>{event.target.value=event.target.value.toUpperCase().replace(/[^A-Z0-9./-]/g,'').slice(0,18);});
+  $('#clientCnpj').addEventListener('input',event=>{event.target.value=cnpj(event.target.value);});
+  $('#creditInstrument').addEventListener('change',event=>{state.meta.creditInstrument=event.target.value;updateAuthorizationFields();});
+  $('#creditInstrumentNumber').addEventListener('input',event=>{state.meta.creditInstrumentNumber=event.target.value;updateAuthorizationFields();});
   $('#sellerAddress').addEventListener('input',event=>{state.meta.seller.address=event.target.value;syncSellerRecipient();state.dirty=true;update();});
   $('#sellerLookup').addEventListener('click',async()=>{
     const document=$('#sellerCnpj').value.toUpperCase().replace(/[^A-Z0-9]/g,'');
@@ -175,12 +222,49 @@
     }catch(error){message.className='inline-message is-error';message.textContent=error.message||'Não foi possível consultar o vendedor.';}
     finally{$('#sellerLookup').disabled=false;}
   });
+  $('#clientLookup').addEventListener('click',async()=>{
+    const document=$('#clientCnpj').value.replace(/\D/g,'');
+    const message=$('#clientMessage');
+    if(document.length!==14){message.className='inline-message is-error';message.textContent='Informe um CNPJ com 14 dígitos.';return;}
+    $('#clientLookup').disabled=true;message.className='inline-message';message.textContent='Consultando o cliente…';
+    try{
+      const raw=await window.CnpjApi.request(document);
+      const company=window.CentralData.normalizeCompany(raw,{source:raw.fonte_consulta||'Consulta cadastral'});
+      state.meta.client={cnpj:cnpj(company.cnpj),legalName:company.legalName,tradeName:company.tradeName,source:company.source};
+      refreshAuthorizationContent();state.dirty=true;renderEditor();renderPreview();save();
+      message.className='inline-message is-success';message.textContent=`Cliente localizado em ${company.source}. Os dados foram aplicados ao documento.`;
+    }catch(error){message.className='inline-message is-error';message.textContent=error.message||'Não foi possível consultar o cliente.';}
+    finally{$('#clientLookup').disabled=false;}
+  });
 
   function printableHtml(){
     const font=window.CentralDocuments.fontCss(location.href);
-    return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>${esc(labels[state.template])}</title><style>${font}*{box-sizing:border-box}@page{size:A4;margin:16mm 18mm 24mm}body{margin:0;color:#111;font-family:"BB Textos",Arial,sans-serif}.writing-paper{min-height:257mm;display:flex;flex-direction:column}.paper-header{display:grid;grid-template-columns:46px 1fr;align-items:center;gap:12px;padding-bottom:8mm;border-bottom:1px solid #dadada}.paper-header img{width:43px}.paper-header span,.paper-header strong{display:block}.paper-header span{font-size:8pt;letter-spacing:.1em}.paper-header strong{font-family:"BB Títulos";font-size:13pt}.paper-meta{display:grid;grid-template-columns:1fr auto;gap:6px;margin:7mm 0 5mm;font-size:9.5pt}.paper-meta p{margin:0}.paper-subject{grid-column:1/-1;padding-top:3mm;font-weight:700}.paper-content{flex:1;font-size:10.5pt;line-height:1.5}.paper-content p{margin:0 0 4mm;text-align:justify}.paper-content h2{margin:7mm 0 3mm;font-family:"BB Títulos";font-size:12pt;break-after:avoid}.paper-list{margin:0 0 4mm}.paper-list__item{display:grid;grid-template-columns:7mm 1fr;gap:2mm;margin:1.2mm 0 1.2mm calc(var(--level)*7mm);break-inside:avoid}.paper-list__item p{margin:0;text-align:left}.paper-content table{width:100%;margin:4mm 0;border-collapse:collapse;font-size:8.5pt}.paper-content tr{break-inside:avoid}.paper-content th,.paper-content td{padding:2.2mm;border:1px solid #cfd0d5}.paper-content th{background:#29298f;color:#fff;text-align:left}.is-number{text-align:right!important}.paper-content tfoot th,.paper-content tfoot td{background:#eef0ff;color:#202072;font-weight:700}.paper-signature{width:75mm;margin:18mm auto 8mm;text-align:center;font-size:9.5pt;break-inside:avoid}.paper-signature:before{content:"";display:block;margin-bottom:2mm;border-top:1px solid #222}.paper-signature strong,.paper-signature span{display:block}.paper-footer{margin-top:10mm;padding-top:3mm;border-top:1px solid #d8d8d8;color:#555;font-size:7pt;line-height:1.35;text-align:center}.writing-support-footer .document-trace{display:block;margin-top:1mm;color:#777}</style></head><body><article class="writing-paper">${previewInner(true)}</article></body></html>`;
+    return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>${esc(labels[state.template])}</title><style>
+${font}
+*{box-sizing:border-box;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+@page{size:A4;margin:0}
+html,body{width:210mm;min-height:297mm;margin:0;background:#fff;color:#111;font-family:"BB Textos",Arial,sans-serif}
+.writing-paper{position:relative;width:210mm;min-height:297mm;display:flex;flex-direction:column;padding:13mm 18mm 27mm}
+.paper-header{display:grid;grid-template-columns:46px 1fr;align-items:center;gap:12px;padding-bottom:6mm;border-bottom:.8pt solid #29298f}
+.paper-header img{width:43px}.paper-header span,.paper-header strong{display:block}.paper-header span{font-size:8pt;letter-spacing:.1em}.paper-header strong{font-family:"BB Títulos";font-size:13pt}
+.paper-meta{display:grid;grid-template-columns:1fr auto;gap:6px;margin:7mm 0 5mm;font-size:9.5pt}.paper-meta p{margin:0}.paper-meta--authorization{display:block;margin-bottom:4mm}.paper-subject{grid-column:1/-1;padding-top:3mm;font-weight:700}.paper-reference{margin:0 0 5mm;font-size:9.5pt;font-weight:700}
+.paper-content{font-size:10.5pt;line-height:1.5}.paper-content p{margin:0 0 4mm;text-align:justify}.paper-content h2{margin:7mm 0 3mm;font-family:"BB Títulos";font-size:12pt;break-after:avoid}.paper-list{margin:0 0 4mm}.paper-list__item{display:grid;grid-template-columns:7mm 1fr;gap:2mm;margin:1.2mm 0 1.2mm calc(var(--level)*7mm);break-inside:avoid}.paper-list__item p{margin:0;text-align:left}
+.paper-content table{width:100%;margin:4mm 0;border-collapse:collapse;font-size:8.5pt}.paper-content tr{break-inside:avoid}.paper-content th,.paper-content td{padding:2.2mm;border:1px solid #cfd0d5}.paper-content th{background:#29298f!important;color:#fff!important;text-align:left}.is-number{text-align:right!important}.paper-content tfoot th,.paper-content tfoot td{background:#eef0ff!important;color:#202072!important;font-weight:700}
+.authorization-closing{font-size:9.5pt;line-height:1.45;break-inside:avoid}.authorization-closing>p{margin:0 0 4mm}.authorization-bank strong,.authorization-bank span{display:block}.paper-signature{width:75mm;margin:12mm auto 0;text-align:center;font-size:9.5pt;break-inside:avoid}.paper-signature:before{content:"";display:block;margin-bottom:2mm;border-top:1px solid #222}.paper-signature strong,.paper-signature span{display:block}
+.paper-footer{position:absolute;left:18mm;right:18mm;bottom:10mm;padding-top:2.5mm;border-top:.6pt solid #aaa;color:#333;font-size:7.5pt;line-height:1.25;text-align:left}.writing-support-footer .document-trace{display:block;margin-top:1mm;color:#555}
+@media print{html,body{width:210mm;height:297mm}.writing-paper{break-after:page}}
+</style></head><body><article class="writing-paper">${previewInner(true)}</article></body></html>`;
   }
-  $('#openDocument').addEventListener('click',()=>{const viewer=window.CentralDocuments.openViewer();if(!viewer){$('#draftStatus').textContent='Permita a abertura da janela para visualizar o documento';return;}viewer.deliver(printableHtml());});
+  $('#openDocument').addEventListener('click',()=>{
+    if(state.template==='autorizacao_faturamento'){
+      const missing=[];
+      if(!state.meta.seller?.cnpj)missing.push('CNPJ do vendedor');
+      if(!state.meta.client?.cnpj)missing.push('CNPJ do cliente');
+      if(!state.meta.creditInstrumentNumber?.trim())missing.push('número da cédula');
+      if(missing.length){$('#draftStatus').textContent=`Preencha antes de abrir: ${missing.join(', ')}`;return;}
+    }
+    const viewer=window.CentralDocuments.openViewer();if(!viewer){$('#draftStatus').textContent='Permita a abertura da janela para visualizar o documento';return;}viewer.deliver(printableHtml());
+  });
   $('#integrationGrid').innerHTML=integrations.map(([name,status,use,note])=>`<article class="integration-card"><div class="integration-card__head"><h3>${esc(name)}</h3><i class="status-dot status-dot--${status}"></i></div><p>${esc(note)}</p><small>Uso possível</small><strong>${esc(use)}</strong></article>`).join('');
 
   renderEditor();renderPreview();save();

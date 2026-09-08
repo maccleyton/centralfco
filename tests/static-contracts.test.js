@@ -75,6 +75,24 @@ test('hub oferece área própria de redação com editor modular', () => {
   assert.match(source,/CentralDocuments\.openViewer/);
   assert.match(page,/id="sellerCnpj"/);
   assert.match(page,/id="sellerAddress"/);
+  assert.match(page,/id="clientCnpj"/);
+  assert.match(page,/id="creditInstrumentNumber"/);
   assert.match(source,/CnpjApi\.request\(document,\{remember:false\}\)/);
+  assert.match(source,/authorizationInstructions/);
+  assert.match(source,/PROPRIETÁRIO FIDUCIÁRIO ou BENEFICIÁRIO DO PENHOR/);
+  assert.match(source,/id="clientLookup"|\$\('#clientLookup'\)/);
   assert.match(read('cnpj-api.js'),/options\.remember !== false/);
+});
+
+test('hub fixa quatro colunas e redação preserva rodapé e cores na impressão', () => {
+  const styles = read('styles.css');
+  const pageStyles = read('redacao.css');
+  const source = read('redacao.js');
+  assert.match(styles,/\.hub-grid--four\{grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/);
+  assert.doesNotMatch(styles,/\.hub-grid--four\{grid-template-columns:repeat\(auto-fit/);
+  assert.match(pageStyles,/\.paper-footer\{position:absolute/);
+  assert.match(pageStyles,/text-align:left/);
+  assert.match(source,/print-color-adjust:exact!important/);
+  assert.match(source,/\.paper-footer\{position:absolute/);
+  assert.match(source,/background:#29298f!important/);
 });

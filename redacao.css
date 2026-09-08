@@ -18,3 +18,22 @@
 @media(max-width:720px){.writing-page{padding-top:16px}.writing-hero{grid-template-columns:1fr;padding:28px 22px}.writing-hero::after{display:none}.writing-section{padding:18px 14px}.writing-section__heading{grid-template-columns:42px 1fr}.writing-section__heading .draft-status{grid-column:2;justify-self:start}.writing-setup{grid-template-columns:1fr}.writing-setup__wide{grid-column:auto}.writing-toolbar button{flex:1 1 130px}.paper-stage{padding:12px}.writing-paper{width:210mm;zoom:.6}.integration-grid{grid-template-columns:1fr}.pane-heading{align-items:flex-start;flex-direction:column}.preview-pane>.pane-heading .button{width:100%}}
 @media(max-width:480px){.writing-paper{zoom:.4}}
 @media(max-width:720px){.seller-panel__heading{align-items:flex-start;flex-direction:column}.seller-panel__heading p{text-align:left}.seller-lookup,.seller-fields{grid-template-columns:1fr}.seller-fields__wide{grid-column:auto}.seller-lookup .button{width:100%}}
+
+/* O editor prioriza os campos; a folha A4 permanece completa, porém em escala menor. */
+.writing-workspace{grid-template-columns:minmax(520px,1.28fr) minmax(370px,.72fr)}
+.paper-stage{display:grid;justify-content:center;max-height:790px;padding:18px}
+.writing-paper{position:relative;padding:13mm 18mm 27mm;zoom:.46}
+.paper-header{border-bottom:1.5pt solid #2037a0}
+.paper-reference{margin:5mm 0 4mm;font-weight:700}
+.authorization-closing{margin-top:5mm;font-size:10.5pt;line-height:1.45}
+.authorization-closing p{margin:0 0 3mm}
+.authorization-bank{margin-top:6mm}
+.authorization-bank strong,.authorization-bank span{display:block}
+.paper-footer{position:absolute;right:18mm;bottom:10mm;left:18mm;margin:0;padding-top:2.5mm;border-top:.6pt solid #aaa;color:#333;font-size:7.5pt;line-height:1.25;text-align:left}
+.seller-panel input,.seller-panel textarea,.seller-panel select{width:100%;padding:10px 11px;border:1px solid #cfd3e2;border-radius:9px;background:#fff;color:var(--writing-ink);font:12px "BB Textos",Arial,sans-serif}
+.seller-panel input,.seller-panel select{height:42px}
+.authorization-panel{margin-top:12px;background:#fff}
+.authorization-fields{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media(max-width:1050px){.writing-workspace{grid-template-columns:1fr}.writing-paper{zoom:.7}}
+@media(max-width:720px){.writing-paper{zoom:.56}.authorization-fields{grid-template-columns:1fr}}
+@media(max-width:480px){.writing-paper{zoom:.4}}

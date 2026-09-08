@@ -6,11 +6,11 @@
   <meta name="description" content="Editor modular de documentos oficiais da Central Empresas.">
   <title>Redação e Automação | Central Empresas</title>
   <link rel="stylesheet" href="styles.css?v=19">
-  <link rel="stylesheet" href="redacao.css?v=1">
+  <link rel="stylesheet" href="redacao.css?v=3">
   <script defer src="central-data.js?v=1"></script>
   <script defer src="cnpj-api.js?v=4"></script>
   <script defer src="document-core.js?v=2"></script>
-  <script defer src="redacao.js?v=2"></script>
+  <script defer src="redacao.js?v=4"></script>
   <script defer src="footer.js?v=1"></script>
 </head>
 <body class="writing-body">
@@ -61,6 +61,21 @@
           <label>Razão social<input id="sellerName" type="text" readonly></label>
           <label>Nome fantasia<input id="sellerTradeName" type="text" readonly></label>
           <label class="seller-fields__wide">Endereço do faturamento<textarea id="sellerAddress" rows="3" placeholder="O endereço consultado poderá ser ajustado para a filial"></textarea></label>
+        </div>
+      </section>
+
+      <section id="authorizationPanel" class="seller-panel authorization-panel" hidden aria-labelledby="authorizationTitle">
+        <div class="seller-panel__heading"><div><span>CLIENTE E OPERAÇÃO</span><h3 id="authorizationTitle">Dados da cédula</h3></div><p>Consulte o CNPJ do cliente e informe o número da cédula para preencher automaticamente o documento.</p></div>
+        <div class="seller-lookup">
+          <label>CNPJ do cliente<input id="clientCnpj" type="text" maxlength="18" autocomplete="off" placeholder="00.000.000/0000-00"></label>
+          <button id="clientLookup" class="button button--primary" type="button">Consultar CNPJ</button>
+        </div>
+        <div id="clientMessage" class="inline-message" role="status" aria-live="polite"></div>
+        <div class="seller-fields authorization-fields">
+          <label>Razão social do cliente<input id="clientName" type="text" readonly></label>
+          <label>Nome fantasia<input id="clientTradeName" type="text" readonly></label>
+          <label>Instrumento de crédito<select id="creditInstrument"><option value="CÉDULA DE CRÉDITO">Cédula de Crédito</option><option value="CONTRATO DE ABERTURA DE CRÉDITO">Contrato de Abertura de Crédito</option></select></label>
+          <label>Número da cédula<input id="creditInstrumentNumber" type="text" maxlength="60" placeholder="Ex.: 103.111.154"></label>
         </div>
       </section>
 
