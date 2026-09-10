@@ -22,7 +22,7 @@
 
   const paragraph = (text='') => ({id:uid(),type:'paragraph',text});
   const section = (text='Nova seção') => ({id:uid(),type:'section',text});
-  const list = style => ({id:uid(),type:'list',style,numbering:'decimal',bullet:'•',items:[{text:'Novo item',level:0,checked:false}]});
+  const list = style => ({id:uid(),type:'list',style,numbering:'decimal',numberingFlow:'restart',bullet:'•',items:[{text:'Novo item',level:0,checked:false}]});
   const table = () => ({id:uid(),type:'table',header:true,rowTotals:true,columns:[{label:'Descrição',type:'text'},{label:'Valor',type:'currency'}],rows:[['','0,00']]});
 
   function baseMeta() {
@@ -60,6 +60,7 @@
   state.meta.creditInstrument ||= 'CÉDULA DE CRÉDITO';
   state.meta.creditInstrumentNumber ||= '';
   state.meta.agencyName ||= '';
+  state.blocks.forEach(block=>{if(block.type==='list')block.numberingFlow||='restart';});
   function refreshAuthorizationContent() {
     if(state.template!=='autorizacao_faturamento')return;
     const standardized=state.blocks.filter(block=>block.type!=='paragraph'||!block.role&&!/^(Autorizamos proceder|A nota fiscal deverá|A ausência das informações|Atenciosamente)/i.test(block.text.trim()));
@@ -78,8 +79,9 @@
   function blockName(block) { return block.type==='paragraph'?'Parágrafo':block.type==='section'?'Seção':block.type==='table'?'Tabela':block.style==='numbered'?'Lista numerada':block.style==='check'?'Checklist':'Lista com marcadores'; }
 
   function listEditor(block) {
-    const option=block.style==='numbered'?`<label>Numeração <select data-block="${block.id}" data-prop="numbering"><option value="decimal">1, 2, 3</option><option value="hierarchical"${block.numbering==='hierarchical'?' selected':''}>1.1 hierárquica</option><option value="roman"${block.numbering==='roman'?' selected':''}>I, II, III</option><option value="alpha"${block.numbering==='alpha'?' selected':''}>a), b), c)</option></select></label>`:block.style==='bullet'?`<label>Marcador <select data-block="${block.id}" data-prop="bullet">${['•','–','○','▪','→'].map(mark=>`<option${block.bullet===mark?' selected':''}>${mark}</option>`).join('')}</select></label>`:'';
-    const items=block.items.map((item,index)=>`<div class="list-item-editor">${block.style==='check'?`<input type="checkbox" data-block="${block.id}" data-item="${index}" data-item-prop="checked"${item.checked?' checked':''}>`:`<span>${index+1}</span>`}<input data-block="${block.id}" data-item="${index}" data-item-prop="text" value="${esc(item.text)}"><div><button class="block-action" type="button" data-level="-1" data-block="${block.id}" data-index="${index}">←</button><button class="block-action" type="button" data-level="1" data-block="${block.id}" data-index="${index}">→</button><button class="block-action" type="button" data-remove-item data-block="${block.id}" data-index="${index}">×</button></div></div>`).join('');
+    const option=block.style==='numbered'?`<div class="list-settings"><label>Numeração <select data-block="${block.id}" data-prop="numbering"><option value="decimal">1, 2, 3</option><option value="hierarchical"${block.numbering==='hierarchical'?' selected':''}>1.1 hierárquica</option><option value="roman"${block.numbering==='roman'?' selected':''}>I, II, III</option><option value="alpha"${block.numbering==='alpha'?' selected':''}>a), b), c)</option></select></label><label>Sequência <select data-block="${block.id}" data-prop="numberingFlow"><option value="restart">Reiniciar nesta lista</option><option value="continue"${block.numberingFlow==='continue'?' selected':''}>Continuar lista anterior</option></select></label></div>`:block.style==='bullet'?`<label>Marcador <select data-block="${block.id}" data-prop="bullet">${['•','–','○','▪','→'].map(mark=>`<option${block.bullet===mark?' selected':''}>${mark}</option>`).join('')}</select></label>`:'';
+    const counters=[0,0,0,0,0];
+    const items=block.items.map((item,index)=>`<div class="list-item-editor">${block.style==='check'?`<input type="checkbox" data-block="${block.id}" data-item="${index}" data-item-prop="checked"${item.checked?' checked':''}>`:`<span>${esc(block.style==='bullet'?block.bullet:marker(block,index,counters))}</span>`}<input data-block="${block.id}" data-item="${index}" data-item-prop="text" value="${esc(item.text)}"><div><button class="block-action" type="button" data-level="-1" data-block="${block.id}" data-index="${index}">←</button><button class="block-action" type="button" data-level="1" data-block="${block.id}" data-index="${index}">→</button><button class="block-action" type="button" data-remove-item data-block="${block.id}" data-index="${index}">×</button></div></div>`).join('');
     return `${option}<div class="table-config">${items}</div><button class="block-action" type="button" data-add-item data-block="${block.id}">+ Adicionar item</button>`;
   }
   function tableEditor(block) {
@@ -124,12 +126,14 @@
     if(block.numbering==='alpha') return `${String.fromCharCode(96+Math.min(counters[level],26))})`;
     return `${counters[level]}.`;
   }
-  function blockHtml(block) {
+  function blockHtml(block,context={numbered:{}}) {
     if(block.type==='paragraph') return `<p>${esc(block.text).replace(/\n/g,'<br>')}</p>`;
     if(block.type==='section') return `<h2>${esc(block.text)}</h2>`;
     if(block.type==='list') {
-      const counters=[0,0,0,0,0];
-      return `<div class="paper-list">${block.items.map((item,index)=>{const prefix=block.style==='check'?(item.checked?'☑':'☐'):block.style==='bullet'?block.bullet:marker(block,index,counters);return `<div class="paper-list__item" style="--level:${Math.max(0,Math.min(4,Number(item.level)||0))}"><span>${esc(prefix)}</span><p>${esc(item.text)}</p></div>`;}).join('')}</div>`;
+      const counters=block.style==='numbered'&&block.numberingFlow==='continue'&&context.numbered[block.numbering]?[...context.numbered[block.numbering]]:[0,0,0,0,0];
+      const html=`<div class="paper-list">${block.items.map((item,index)=>{const prefix=block.style==='check'?(item.checked?'☑':'☐'):block.style==='bullet'?block.bullet:marker(block,index,counters);return `<div class="paper-list__item" style="--level:${Math.max(0,Math.min(4,Number(item.level)||0))}"><span>${esc(prefix)}</span><p>${esc(item.text)}</p></div>`;}).join('')}</div>`;
+      if(block.style==='numbered')context.numbered[block.numbering]=[...counters];
+      return html;
     }
     const numeric=block.columns.map((column,index)=>['number','currency'].includes(column.type)?index:-1).filter(index=>index>=0);
     const rowTotals=block.rowTotals&&numeric.length>1;
@@ -138,6 +142,7 @@
     const foot=numeric.length?`<tfoot><tr>${block.columns.map((column,index)=>numeric.includes(index)?`<td class="is-number">${format(block.rows.reduce((sum,row)=>sum+number(row[index]),0),column.type)}</td>`:`<th>${index===0?'Total':''}</th>`).join('')}${rowTotals?`<td class="is-number">${format(block.rows.reduce((total,row)=>total+numeric.reduce((sum,index)=>sum+number(row[index]),0),0),'currency')}</td>`:''}</tr></tfoot>`:'';
     return `<table>${head}<tbody>${body}</tbody>${foot}</table>`;
   }
+  function blocksHtml(){const context={numbered:{}};return state.blocks.map(block=>blockHtml(block,context)).join('');}
   function dateText() { return state.meta.date?new Intl.DateTimeFormat('pt-BR',{dateStyle:'long',timeZone:'UTC'}).format(new Date(`${state.meta.date}T12:00:00Z`)):''; }
   function previewInner(absoluteLogo=false) {
     const recipient=state.meta.recipient?`<p><strong>À</strong><br>${esc(state.meta.recipient).replace(/ · /g,'<br>')}</p>`:'';
@@ -150,9 +155,9 @@
     if(state.template==='autorizacao_faturamento'){
       const agency=[state.meta.sector?.replace(/^Agência\s*/i,''),state.meta.agencyName].filter(Boolean).join(' - ');
       const closing=`<section class="authorization-closing"><p>${esc(placeDate)}</p><p>Atenciosamente,</p><div class="authorization-bank"><strong>Banco do Brasil S.A.</strong>${agency?`<span>Agência ${esc(agency)}</span>`:''}</div>${state.meta.signer?`<div class="paper-signature"><strong>${esc(state.meta.signer)}</strong><span>${esc(state.meta.role||'Gerente de Relacionamento')}</span></div>`:''}</section>`;
-      return `${header}<section class="paper-meta paper-meta--authorization">${recipient}</section><p class="paper-reference">REF.: AUTORIZAÇÃO DE FATURAMENTO</p><main class="paper-content">${state.blocks.map(blockHtml).join('')}</main>${closing}${footer}`;
+      return `${header}<section class="paper-meta paper-meta--authorization">${recipient}</section><p class="paper-reference">REF.: AUTORIZAÇÃO DE FATURAMENTO</p><main class="paper-content">${blocksHtml()}</main>${closing}${footer}`;
     }
-    return `${header}<section class="paper-meta">${recipient}<p>${esc(placeDate)}</p>${subject}</section><main class="paper-content">${state.blocks.map(blockHtml).join('')}</main>${state.meta.signer?`<section class="paper-signature"><strong>${esc(state.meta.signer)}</strong><span>${esc(state.meta.role||state.meta.sector)}</span></section>`:''}${footer}`;
+    return `${header}<section class="paper-meta">${recipient}<p>${esc(placeDate)}</p>${subject}</section><main class="paper-content">${blocksHtml()}</main>${state.meta.signer?`<section class="paper-signature"><strong>${esc(state.meta.signer)}</strong><span>${esc(state.meta.role||state.meta.sector)}</span></section>`:''}${footer}`;
   }
   function renderPreview(){ const preview=$('#documentPreview');preview.classList.toggle('writing-paper--authorization',state.template==='autorizacao_faturamento');preview.innerHTML=previewInner(); }
   function update(editor=false){save();if(editor)renderEditor();renderPreview();}
@@ -186,6 +191,24 @@
     else if(target.dataset.row!==undefined)block.rows[Number(target.dataset.row)][Number(target.dataset.cell)]=target.value;
     else if(target.dataset.prop)block[target.dataset.prop]=target.type==='checkbox'?target.checked:target.value;
     state.dirty=true;update();
+  });
+  $('#blockList').addEventListener('keydown',event=>{
+    const target=event.target;
+    if(target.dataset.item===undefined||target.dataset.itemProp!=='text'||!['Enter','Tab'].includes(event.key))return;
+    const block=find(target.dataset.block);
+    if(!block||block.type!=='list')return;
+    event.preventDefault();
+    const index=Number(target.dataset.item);
+    let focusIndex=index;
+    if(event.key==='Enter'){
+      block.items.splice(index+1,0,{text:'',level:Number(block.items[index].level)||0,checked:false});
+      focusIndex=index+1;
+    }else{
+      const direction=event.shiftKey?-1:1;
+      block.items[index].level=Math.max(0,Math.min(4,(Number(block.items[index].level)||0)+direction));
+    }
+    state.dirty=true;update(true);
+    requestAnimationFrame(()=>document.querySelector(`[data-block="${block.id}"][data-item="${focusIndex}"][data-item-prop="text"]`)?.focus());
   });
   $('#blockList').addEventListener('click',event=>{
     const button=event.target.closest('button');if(!button)return;

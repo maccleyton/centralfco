@@ -36,17 +36,44 @@ test('visualizador aplica expiração e remove o conteúdo', () => {
   assert.match(read('document-core.js'),/5 \* 60 \* 1000/);
 });
 
-test('visualizador baixa formulários separados e mantém a impressão consolidada', () => {
-  const html = read('report-viewer.html');
-  const source = read('report-viewer.js');
-  assert.match(html,/id="viewerDownloadList"/);
-  assert.match(html,/html2canvas\/1\.4\.1/);
-  assert.match(html,/jspdf\/2\.5\.1/);
-  assert.match(source,/querySelectorAll\('\.document\[data-documento\]'\)/);
-  assert.match(source,/current\?\.title === title/);
-  assert.match(source,/window\.html2canvas/);
-  assert.match(source,/pdf\.save\(filename\)/);
-  assert.match(source,/reportFrame\.contentWindow\.print\(\)/);
+test('formulário baixa documentos separados e visualizador mantém a impressão consolidada responsiva', () => {
+  const form = read('index.html');
+  const core = read('document-core.js');
+  const viewer = read('report-viewer.js');
+  assert.match(form,/id="individualDownloadList"/);
+  assert.match(form,/html2canvas\/1\.4\.1/);
+  assert.match(form,/jspdf\/2\.5\.1/);
+  assert.match(core,/querySelectorAll\('\.document\[data-documento\]'\)/);
+  assert.match(core,/current\?\.title === title/);
+  assert.match(core,/downloadDocumentFromHtml/);
+  assert.match(core,/pdf\.save\(filename\)/);
+  assert.match(viewer,/reportFrameShell\.clientWidth \/ reportFrame\.offsetWidth/);
+  assert.match(viewer,/reportFrame\.contentWindow\.print\(\)/);
+});
+
+test('composição financeira calcula o financiamento e limita o giro a trinta por cento', () => {
+  const form = read('index.html');
+  const source = read('app.js');
+  const budgetPosition = form.indexOf('id="valorOrcamento"');
+  const ownResourcesPosition = form.indexOf('id="recursosProprios"');
+  const financedPosition = form.indexOf('id="valorFinanciado"');
+
+  assert.ok(budgetPosition < ownResourcesPosition && ownResourcesPosition < financedPosition);
+  assert.match(form,/id="recursosProprios" name="recursosProprios"[^>]*required/);
+  assert.match(form,/id="valorFinanciado" name="valorFinanciado"[^>]*readonly/);
+  assert.match(form,/id="valorGiroHint"[^>]*>Limite: 30%/);
+  assert.match(source,/MAX_ASSOCIATED_WORKING_CAPITAL_RATE = 0\.30/);
+  assert.match(source,/workingCapitalLimit = Math\.round\(budget \* MAX_ASSOCIATED_WORKING_CAPITAL_RATE \* 100\) \/ 100/);
+  assert.match(source,/workingCapitalInput\.value = formatMoneyValue\(workingCapitalLimit\)/);
+  assert.match(source,/valorFinanciadoBase = Math\.max\(0, valorOrcamento - recursosProprios\)/);
+  assert.match(source,/valorFinanciado = valorFinanciadoBase \+ valorGiroAssociado/);
+});
+
+test('download individual possui logotipo incorporado para não contaminar o canvas', () => {
+  const source = read('reports.js');
+  assert.match(source,/embeddedReportLogo = 'data:image\/png;base64,/);
+  assert.match(source,/return embeddedReportLogo/);
+  assert.doesNotMatch(source,/catch\s*\{\s*return new URL\('logo02\.png'/);
 });
 
 test('consulta completa de CNPJ pertence somente aos utilitários', () => {
@@ -55,10 +82,11 @@ test('consulta completa de CNPJ pertence somente aos utilitários', () => {
   assert.match(read('utilitarios.html'),/id="companyLookupForm"/);
 });
 
-test('declaração de regularidade reserva uma página e mantém o rodapé ancorado', () => {
+test('declaração de regularidade preserva a página e mantém o rodapé ancorado', () => {
   const source = read('reports.js');
   assert.match(source,/regularity-document/);
-  assert.match(source,/\.regularity-document\{height:297mm/);
+  assert.doesNotMatch(source,/\.regularity-document\{height:297mm/);
+  assert.match(source,/\.regularity-document \.document-body\{font-size:10\.25pt/);
   assert.match(source,/\.document-footer\{position:absolute/);
 });
 

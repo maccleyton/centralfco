@@ -1,7 +1,9 @@
 (function (root) {
   'use strict';
+  const documentedRules=root.CentralCreditRules||(typeof module==='object'&&module.exports?require('./credit-rules.js'):null);
   function finite(value) { const number = Number(value); return Number.isFinite(number) ? number : null; }
   function evaluate(line, input = {}) {
+    if(documentedRules?.getProfile(line?.id)||line?.status==='historical')return documentedRules.evaluate(line,input);
     if (!line) return { status:'needs_review', reasons:['Linha não localizada no catálogo.'] };
     const failures = [];
     const pending = [];
@@ -17,7 +19,7 @@
     }
     return { status:'preliminarily_eligible', reasons:['Os critérios locais informados foram atendidos; confirme as condições vigentes.'] };
   }
-  const api = { evaluate };
+  const api = { evaluate, screen:(lines,input)=>documentedRules?documentedRules.screen(lines,input):lines.map(line=>({line,...evaluate(line,input)})) };
   root.CentralCreditEligibility = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

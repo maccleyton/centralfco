@@ -50,6 +50,90 @@
     return String(html).includes('</head>') ? String(html).replace('</head>', `${marker}</head>`) : String(html);
   }
 
+  function safeFilename(value) {
+    const normalized = String(value || 'formulario').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    return normalized.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'formulario';
+  }
+
+  function collectDocumentGroups(reportDocument) {
+    return [...reportDocument.querySelectorAll('.document[data-documento]')].reduce((groups, page) => {
+      const title = page.dataset.documento?.trim() || `Formulário ${groups.length + 1}`;
+      const current = groups.at(-1);
+      if (current?.title === title) current.pages.push(page);
+      else groups.push({ title, pages: [page] });
+      return groups;
+    }, []);
+  }
+
+  async function waitForDocumentAssets(reportDocument) {
+    try { await reportDocument.fonts?.ready; } catch (_) {}
+    await Promise.all([...reportDocument.images].map(image => image.complete ? Promise.resolve() : new Promise(resolve => {
+      image.addEventListener('load', resolve, { once: true });
+      image.addEventListener('error', resolve, { once: true });
+    })));
+  }
+
+  async function downloadDocumentPages(pages, title, index = 0) {
+    if (!root.html2canvas || !root.jspdf?.jsPDF) throw new Error('O gerador de PDF não foi carregado. Verifique sua conexão e tente novamente.');
+    const pdf = new root.jspdf.jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true });
+    for (let pageIndex = 0; pageIndex < pages.length; pageIndex += 1) {
+      if (pageIndex > 0) pdf.addPage('a4', 'portrait');
+      const canvas = await root.html2canvas(pages[pageIndex], {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false
+      });
+      const pageRatio = 210 / 297;
+      const canvasRatio = canvas.width / canvas.height;
+      const imageWidth = canvasRatio > pageRatio ? 210 : 297 * canvasRatio;
+      const imageHeight = canvasRatio > pageRatio ? 210 / canvasRatio : 297;
+      pdf.addImage(
+        canvas.toDataURL('image/jpeg', 0.95),
+        'JPEG',
+        (210 - imageWidth) / 2,
+        (297 - imageHeight) / 2,
+        imageWidth,
+        imageHeight,
+        undefined,
+        'FAST'
+      );
+    }
+    const filename = `${String(index + 1).padStart(2, '0')}-${safeFilename(title)}.pdf`;
+    pdf.save(filename);
+    return filename;
+  }
+
+  async function downloadDocumentFromHtml(html, title) {
+    const frame = root.document.createElement('iframe');
+    frame.title = `Preparação do PDF: ${title}`;
+    frame.setAttribute('aria-hidden', 'true');
+    Object.assign(frame.style, {
+      position: 'fixed',
+      left: '-10000px',
+      top: '0',
+      width: '210mm',
+      height: '297mm',
+      border: '0',
+      pointerEvents: 'none'
+    });
+    root.document.body.append(frame);
+    try {
+      await new Promise((resolve, reject) => {
+        const timer = root.setTimeout(() => reject(new Error('Tempo esgotado ao preparar o PDF.')), 10000);
+        frame.addEventListener('load', () => { root.clearTimeout(timer); resolve(); }, { once: true });
+        frame.srcdoc = enrich(html);
+      });
+      await waitForDocumentAssets(frame.contentDocument);
+      const groups = collectDocumentGroups(frame.contentDocument);
+      const index = groups.findIndex(group => group.title === title);
+      if (index < 0) throw new Error('O formulário selecionado não foi encontrado no dossiê.');
+      return await downloadDocumentPages(groups[index].pages, groups[index].title, index);
+    } finally {
+      frame.remove();
+    }
+  }
+
   function openViewer() {
     const reportId = root.crypto && typeof root.crypto.randomUUID === 'function'
       ? root.crypto.randomUUID()
@@ -94,7 +178,7 @@
     };
   }
 
-  const api = { TEMPLATE_VERSION, VIEWER_LIFETIME_MS, EVENTS, sessionMetadata, escapeHtml, fontCss, traceText, supportFooter, page, enrich, openViewer };
+  const api = { TEMPLATE_VERSION, VIEWER_LIFETIME_MS, EVENTS, sessionMetadata, escapeHtml, fontCss, traceText, supportFooter, page, enrich, safeFilename, collectDocumentGroups, waitForDocumentAssets, downloadDocumentPages, downloadDocumentFromHtml, openViewer };
   root.CentralDocuments = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
