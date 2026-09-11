@@ -4,11 +4,11 @@
   const profiles = Object.freeze({
     'bndes-digital':{
       purposes:['working_capital'],amount:{min:1000,max:50000},revenue:{minExclusive:360000,max:4800000},term:{min:13,max:24},grace:{max:0},ruralAllowed:false,
-      notes:['Exige cobertura de 80% pelo FGI PEAC e garantia complementar para os 20% restantes.'],requirements:[{field:'fgiAvailable',label:'Disponibilidade do FGI PEAC'}],source:'estudo06.pdf, páginas 1 a 7'
+      notes:['Exige cobertura de 80% pelo FGI PEAC e garantia complementar para os 20% restantes.'],requirements:[{field:'fgiAvailable',label:'Disponibilidade do FGI PEAC'},{field:'guaranteeCoverage',label:'Cobertura total das garantias de pelo menos 100%',operator:'gte',value:100}],source:'estudo06.pdf, páginas 1 a 7'
     },
     'bndes-giro':{
       purposes:['working_capital'],amount:{min:20000,max:100000000},term:{max:input=>input.annualRevenue<=1000000?12:input.annualRevenue<45000000?24:60},grace:{max:input=>input.annualRevenue<45000000?3:12},
-      requirements:[{field:'bndesRisk',label:'Risco do cliente A, B ou C e da operação AA, A ou B'}],notes:['Taxas, TAC, TCA e garantias dependem da configuração vigente.'],source:'estudo09.pdf, páginas 39 a 49'
+      requirements:[{field:'bndesRisk',label:'Risco do cliente A, B ou C e da operação AA, A ou B'},{field:'activityAllowed',label:'Atividade fora das restrições documentadas'}],notes:['Taxas, TAC, TCA e garantias dependem da configuração vigente.'],source:'estudo09.pdf, páginas 39 a 49'
     },
     'procred-360':{
       purposes:['working_capital','investment'],amount:{max:input=>Math.min((input.womenLeadership?0.6:0.5)*input.annualRevenue,180000)},revenue:{max:360000},term:{max:48},grace:{max:6},system:'sac',rate:{kind:'selic_plus',spreadAnnual:5,label:'Selic + 5% a.a.'},fee:0,
@@ -24,11 +24,11 @@
     },
     'peac-fgi':{
       purposes:['working_capital'],amount:{min:5000,max:10000000},revenue:{max:300000000},term:{max:input=>input.annualRevenue<=1000000?36:input.annualRevenue<=5000000?48:60},grace:{max:6},
-      requirements:[{field:'fgiAvailable',label:'Disponibilidade do FGI PEAC'},{field:'dicreEnabled',label:'Habilitação pela Dicre'}],notes:['Vedado para investimento fixo. Exige FGI de 80%, garantias complementares, IOF, ECG e TAC.'],source:'estudo12.pdf, páginas 14 a 23'
+      requirements:[{field:'fgiAvailable',label:'Disponibilidade do FGI PEAC'},{field:'dicreEnabled',label:'Habilitação pela Dicre'},{field:'fbaHistoryComplete',label:'FBA mensal completo de janeiro a dezembro'},{field:'socialSecurityRegular',label:'Regularidade com a Seguridade Social'},{field:'noOverdue14',label:'Ausência de operações com atraso superior a 14 dias'},{field:'activityAllowed',label:'CNAE e atividade permitidos'},{field:'guaranteeCoverage',label:'Cobertura total das garantias de pelo menos 100%',operator:'gte',value:100}],notes:['Vedado para investimento fixo. Exige FGI de 80%, garantias complementares, IOF, ECG e TAC.'],source:'estudo12.pdf, páginas 14 a 23'
     },
     'giro-cashback':{
       purposes:['working_capital'],amount:{max:300000},revenue:{max:5000000},term:{max:24},grace:{max:3},system:'price',rate:{kind:'manual_discount',discountMonthly:0.1,label:'Taxa vigente menos 0,10 p.p.'},
-      requirements:[{field:'dicreEnabled',label:'Habilitação Dicre para Giro Digital'}],notes:['A TAC é cobrada na contratação e deve ser informada no cenário.'],source:'estudo13.pdf, páginas 2 a 7'
+      requirements:[{field:'dicreEnabled',label:'Habilitação Dicre para Giro Digital'},{field:'cashbackEligible',label:'Requisitos comerciais do cashback confirmados'}],notes:['A TAC é cobrada na contratação e deve ser informada no cenário.'],source:'estudo13.pdf, páginas 2 a 7'
     }
   });
 
@@ -77,7 +77,12 @@
     if(grace===null)pending.push('Informe a carência desejada.');
     else if(resolved.graceMax!==null&&grace>resolved.graceMax)failures.push(`A carência máxima documentada é ${resolved.graceMax} meses.`);
     for(const requirement of profile.requirements||[]){
-      if(input[requirement.field]==='no')failures.push(`Não atende: ${requirement.label}.`);
+      if(requirement.operator){
+        const value=number(input[requirement.field]);
+        if(value===null)pending.push(`Informe: ${requirement.label}.`);
+        else if(requirement.operator==='gte'&&value<requirement.value)failures.push(`Não atende: ${requirement.label}.`);
+        else if(requirement.operator==='lte'&&value>requirement.value)failures.push(`Não atende: ${requirement.label}.`);
+      }else if(input[requirement.field]==='no')failures.push(`Não atende: ${requirement.label}.`);
       else if(input[requirement.field]!=='yes')pending.push(`Confirmar: ${requirement.label}.`);
     }
     if(failures.length)return {status:'ineligible',reasons:failures,limits:resolved,profile};

@@ -67,17 +67,12 @@
     return data;
   }
 
-  function providersFor(cnpj, endpoint = 'cnpj') {
+  function providersFor(cnpj) {
     const encoded = encodeURIComponent(cnpj);
-    const providers = [];
-    if (/^https?:$/.test(global.location?.protocol || '')) {
-      providers.push({ name: 'servidor local', url: `/api/${endpoint}/${encoded}`, normalize: data => data });
-    }
-    providers.push(
+    return [
       { name: 'BrasilAPI', url: `https://brasilapi.com.br/api/cnpj/v1/${encoded}`, normalize: data => ({ ...data, fonte_consulta: data.fonte_consulta || 'BrasilAPI' }) },
       { name: 'CNPJá', url: `https://open.cnpja.com/office/${encoded}`, normalize: normalizeCnpja }
-    );
-    return providers;
+    ];
   }
 
   function rememberCompany(data, source) {
@@ -103,7 +98,7 @@
   async function requestSimples(cnpj) {
     let firstSuccessful = null;
     let lastError = null;
-    for (const provider of providersFor(cnpj, 'simples')) {
+    for (const provider of providersFor(cnpj)) {
       try {
         const response = await fetch(provider.url, { headers: JSON_HEADERS });
         const data = provider.normalize(await readJson(response));

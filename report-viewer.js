@@ -72,10 +72,18 @@ reportFrame.addEventListener('load', async () => {
 
   const syncFrameLayout = () => {
     const reportDocument = reportFrame.contentDocument;
+    const reportPage = reportDocument.querySelector('.page');
+    const naturalWidth = Math.ceil(Math.max(
+      reportPage?.scrollWidth || 0,
+      reportPage?.getBoundingClientRect().width || 0,
+      794
+    ));
+    reportFrame.style.width = `${naturalWidth}px`;
+    reportFrameShell.style.maxWidth = `${naturalWidth}px`;
     const documentHeight = Math.max(
       reportDocument.documentElement.scrollHeight,
       reportDocument.body.scrollHeight,
-      reportDocument.querySelector('.page')?.getBoundingClientRect().bottom || 0
+      reportPage?.getBoundingClientRect().bottom || 0
     );
     const naturalHeight = Math.ceil(Math.max(documentHeight, 1123));
     const scale = Math.min(1, reportFrameShell.clientWidth / reportFrame.offsetWidth);

@@ -19,13 +19,19 @@ test('triagem reprova limite documentado e não promete aprovação final', () =
   assert.equal(eligibility.evaluate(catalog.getById('pronampe-atual'),{}).status,'needs_review');
 });
 test('triagem inteligente aplica limites documentados por produto', () => {
-  const base={principal:50000,annualRevenue:1000000,installments:24,graceMonths:0,purpose:'working_capital',ruralActivity:false,fgiAvailable:'yes'};
+  const base={principal:50000,annualRevenue:1000000,installments:24,graceMonths:0,purpose:'working_capital',ruralActivity:false,fgiAvailable:'yes',guaranteeCoverage:100};
   assert.equal(eligibility.evaluate(catalog.getById('bndes-digital'),base).status,'preliminarily_eligible');
   assert.equal(eligibility.evaluate(catalog.getById('bndes-digital'),{...base,principal:50001}).status,'ineligible');
   assert.equal(eligibility.evaluate(catalog.getById('bndes-digital'),{...base,ruralActivity:true}).status,'ineligible');
   const pronampe={principal:480000,annualRevenue:800000,installments:48,graceMonths:6,purpose:'investment',womenLeadership:true,dicreEnabled:'yes'};
   assert.equal(eligibility.evaluate(catalog.getById('pronampe-atual'),pronampe).status,'preliminarily_eligible');
   assert.equal(eligibility.evaluate(catalog.getById('pronampe-atual'),{...pronampe,womenLeadership:false}).status,'ineligible');
+});
+test('PEAC valida requisitos cadastrais e cobertura informados localmente', () => {
+  const base={principal:100000,annualRevenue:1000000,installments:24,graceMonths:6,purpose:'working_capital',fgiAvailable:'yes',dicreEnabled:'yes',fbaHistoryComplete:'yes',socialSecurityRegular:'yes',noOverdue14:'yes',activityAllowed:'yes',guaranteeCoverage:100};
+  assert.equal(eligibility.evaluate(catalog.getById('peac-fgi'),base).status,'preliminarily_eligible');
+  assert.equal(eligibility.evaluate(catalog.getById('peac-fgi'),{...base,guaranteeCoverage:99}).status,'ineligible');
+  assert.equal(eligibility.evaluate(catalog.getById('peac-fgi'),{...base,noOverdue14:'no'}).status,'ineligible');
 });
 test('regras sugerem taxas somente quando documentadas', () => {
   const fies=rules.suggestedRate(rules.getProfile('fies-empreendedor'));
@@ -71,11 +77,19 @@ test('simulador comparativo calcula Price, carência e custo efetivo', () => {
   assert.equal(grace.totalMonths,3);
   assert.equal(grace.schedule.at(-1).closingBalance,0);
 });
+test('CET incorpora IOF, tarifas e outros encargos no fluxo financeiro', () => {
+  const result=engine.simulateSchedule({principal:10000,monthlyRate:1,installments:12,system:'price',fee:100,iof:200,otherCharges:50});
+  assert.equal(result.totalCharges,350);
+  assert.equal(result.netDisbursement,9650);
+  assert.ok(result.effectiveMonthlyCost>result.monthlyRate);
+  assert.ok(result.effectiveAnnualCost>result.effectiveMonthlyCost);
+  assert.equal(result.totalPaid,result.installmentTotal+result.totalCharges);
+});
 test('simulador comparativo rejeita entradas fora dos limites', () => {
   assert.throws(()=>engine.simulateSchedule({principal:0,monthlyRate:1,installments:12}),RangeError);
   assert.throws(()=>engine.simulateSchedule({principal:1000,monthlyRate:-1,installments:12}),RangeError);
   assert.throws(()=>engine.simulateSchedule({principal:1000,monthlyRate:1,installments:0}),RangeError);
-  assert.throws(()=>engine.simulateSchedule({principal:1000,monthlyRate:1,installments:12,fee:1000}),RangeError);
+  assert.throws(()=>engine.simulateSchedule({principal:1000,monthlyRate:1,installments:12,fee:500,iof:300,otherCharges:200}),RangeError);
 });
 test('núcleo documental acrescenta versão e emissão', () => {
   const html = documents.enrich('<html><head><title>Teste</title></head><body></body></html>');
@@ -90,11 +104,29 @@ test('interfaces publicam o simulador PJ e os comandos avançados de lista', () 
   const creditJs=fs.readFileSync(path.join(__dirname,'..','credit-lines.js'),'utf8');
   const writingJs=fs.readFileSync(path.join(__dirname,'..','redacao.js'),'utf8');
   assert.match(creditHtml,/id="pjSimulatorForm"/);
-  assert.match(creditHtml,/credit-rules\.js\?v=1/);
+  assert.match(creditHtml,/credit-rules\.js\?v=2/);
   assert.match(creditHtml,/id="identifyLines"/);
   assert.match(creditHtml,/id="loadSelic"/);
+  assert.match(creditHtml,/id="simulationFbaHistory"/);
+  assert.match(creditHtml,/id="simulationGuaranteeCoverage"/);
+  assert.match(creditHtml,/id="simulationCashbackEligible"/);
+  assert.match(creditHtml,/id="saveSimulation"/);
+  assert.match(creditHtml,/id="savedSimulation"/);
+  assert.match(creditHtml,/calcular o CET/i);
   assert.match(creditHtml,/valores meramente estimativos/i);
   assert.match(creditJs,/simulateSchedule/);
+  assert.match(creditJs,/IOF total/);
+  assert.match(creditJs,/CET a\.a\./);
+  assert.match(creditJs,/Melhor opção geral/);
+  assert.match(creditJs,/scenario-card__validation/);
+  assert.match(creditJs,/centralCreditSimulationsV1/);
+  assert.match(creditJs,/saveCurrentSimulation/);
+  assert.match(creditJs,/loadSavedSimulation/);
+  assert.match(creditJs,/comparisonReportHtml/);
+  assert.match(creditJs,/id="printSimulationReport"/);
+  assert.match(creditJs,/Imprimir relatório \/ salvar PDF/);
+  assert.match(creditJs,/CentralDocuments\?\.openViewer/);
+  assert.match(creditJs,/CRONOGRAMA/);
   assert.match(writingJs,/numberingFlow/);
   assert.match(writingJs,/\['Enter','Tab'\]/);
 });

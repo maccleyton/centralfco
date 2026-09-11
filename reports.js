@@ -178,7 +178,7 @@
       <p class="local-date">${localDate(data)}</p>
       ${signatures(people, company.razaoSocial, singular ? 'Representante legal' : 'Representantes legais')}
       ${signatures(people, company.razaoSocial, singular ? 'Dirigente' : 'Dirigentes')}`;
-    return documentPage('DECLARAÇÃO DE INEXISTÊNCIA DE CONDENAÇÃO', logo, body);
+    return documentPage('DECLARAÇÃO DE INEXISTÊNCIA DE CONDENAÇÃO POR TRABALHO INFANTIL, TRABALHO ESCRAVO, CRIME CONTRA O MEIO AMBIENTE, ASSÉDIO MORAL OU SEXUAL, VIOLÊNCIA CONTRA A MULHER, OU RACIAL E DE ETNIA', logo, body);
   }
 
   function regularity(data, logo) {

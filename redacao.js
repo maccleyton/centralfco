@@ -7,17 +7,12 @@
   const uid = () => window.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
   const labels = { oficio:'OFÍCIO', memorando:'MEMORANDO', parecer:'PARECER', relatorio:'RELATÓRIO', portaria:'PORTARIA', autorizacao_faturamento:'AUTORIZAÇÃO DE FATURAMENTO' };
   const integrations = [
-    ['BrasilAPI','ready','CNPJ, CEP e bancos','Pública e sem chave. CNPJ já é usado pela Central.'],
-    ['Banco Central SGS','ready','Índices e taxas','Pública. Parte das séries já alimenta o atualizador.'],
-    ['IBGE Localidades','ready','Municípios e códigos IBGE','Adequada para padronização cadastral.'],
-    ['SIDRA IBGE','ready','Indicadores regionais','As tabelas e períodos precisam ser escolhidos e versionados.'],
-    ['ViaCEP','ready','Endereços por CEP','Pode funcionar como fonte alternativa.'],
-    ['ReceitaWS','study','CNPJ, CNAE e QSA','Requer revisão de limites, licença e política de uso.'],
-    ['AwesomeAPI','study','Câmbio','Avaliar necessidade, origem dos dados e limites.'],
-    ['Mercado financeiro','protected','Cotações e indicadores','Serviços com chave devem passar por backend protegido.'],
-    ['Clima e agro','protected','Clima, uso do solo e produção','Serviços autenticados exigem backend; bases públicas precisam de estudo próprio.'],
-    ['Open Finance','study','Dados autorizados','Depende de consentimento, segurança, governança e projeto próprio.'],
-    ['SERPRO','study','Integrações oficiais','Pode depender de contratação ou convênio institucional.']
+    ['BrasilAPI','ready','CNPJ, CEP e bancos','Ativa no navegador, pública e sem chave.'],
+    ['CNPJá Open API','ready','CNPJ, CNAE e QSA','Ativa como fonte pública alternativa para consulta cadastral.'],
+    ['Banco Central SGS','ready','Índices e taxas','Ativa no navegador para séries públicas já utilizadas pela Central.'],
+    ['IBGE Localidades','study','Municípios e códigos IBGE','Planejada exclusivamente pela API pública acessível no navegador.'],
+    ['SIDRA IBGE','study','Indicadores regionais','Planejada com tabelas e períodos públicos previamente definidos.'],
+    ['ViaCEP','study','Endereços por CEP','Planejada como alternativa pública, sem chave e compatível com o navegador.']
   ];
 
   const paragraph = (text='') => ({id:uid(),type:'paragraph',text});

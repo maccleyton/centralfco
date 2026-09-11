@@ -33,7 +33,7 @@
     for(let index=0;index<100;index+=1){const middle=(low+high)/2;if(npv(middle)>0)low=middle;else high=middle;}
     return (low+high)/2;
   }
-  function simulateSchedule({ principal, monthlyRate, installments, graceMonths=0, system='sac', fee=0 }) {
+  function simulateSchedule({ principal, monthlyRate, installments, graceMonths=0, system='sac', fee=0, iof=0, otherCharges=0 }) {
     const amount=money(principal,'Valor do crédito');
     if(amount===0)throw new RangeError('O valor do crédito deve ser maior que zero.');
     const rate=Number(monthlyRate)/100;
@@ -41,7 +41,10 @@
     const term=integer(installments,'Prazo',1,600);
     const grace=integer(graceMonths,'Carência',0,120);
     const upfrontFee=money(fee,'Tarifas');
-    if(upfrontFee>=amount)throw new RangeError('As tarifas devem ser menores que o valor do crédito.');
+    const iofCost=money(iof,'IOF');
+    const additionalCharges=money(otherCharges,'Outros encargos');
+    const totalCharges=round(upfrontFee+iofCost+additionalCharges);
+    if(totalCharges>=amount)throw new RangeError('A soma de IOF, tarifas e outros encargos deve ser menor que o valor do crédito.');
     if(!['sac','price'].includes(system))throw new RangeError('Sistema de amortização inválido.');
     const schedule=[];
     let balance=amount;
@@ -64,9 +67,13 @@
     const paidInstallments=payments.filter(value=>value>0);
     const graceInterest=round(schedule.filter(row=>row.phase==='grace').reduce((sum,row)=>sum+row.interest,0));
     const totalInterest=round(schedule.reduce((sum,row)=>sum+row.interest,0));
-    const totalPaid=round(paidInstallments.reduce((sum,value)=>sum+value,0)+upfrontFee);
-    const irr=monthlyIrr(amount-upfrontFee,payments);
-    return { system,principal:amount,monthlyRate:round(rate*100),installments:term,graceMonths:grace,totalMonths:term+grace,fee:upfrontFee,graceInterest,graceDisbursement:0,firstPayment:paidInstallments[0]||0,lastPayment:paidInstallments.at(-1)||0,averagePayment:paidInstallments.length?round(paidInstallments.reduce((sum,value)=>sum+value,0)/paidInstallments.length):0,totalInterest,totalPaid,effectiveMonthlyCost:irr===null?null:round(irr*100),schedule };
+    const installmentTotal=round(paidInstallments.reduce((sum,value)=>sum+value,0));
+    const totalPaid=round(installmentTotal+totalCharges);
+    const netDisbursement=round(amount-totalCharges);
+    const irr=monthlyIrr(netDisbursement,payments);
+    const effectiveMonthlyCost=irr===null?null:round(irr*100);
+    const effectiveAnnualCost=irr===null?null:round((((1+irr)**12)-1)*100);
+    return { system,principal:amount,netDisbursement,monthlyRate:round(rate*100),installments:term,graceMonths:grace,totalMonths:term+grace,fee:upfrontFee,iof:iofCost,otherCharges:additionalCharges,totalCharges,graceInterest,graceDisbursement:0,firstPayment:paidInstallments[0]||0,lastPayment:paidInstallments.at(-1)||0,averagePayment:paidInstallments.length?round(installmentTotal/paidInstallments.length):0,totalInterest,installmentTotal,totalPaid,effectiveMonthlyCost,effectiveAnnualCost,schedule };
   }
   function simulateLine(line) {
     return { status:'unavailable', reason:line?.calculation?.reason || 'Não há fórmula documentada e parametrizada para esta linha.' };

@@ -47,8 +47,16 @@ test('formulário baixa documentos separados e visualizador mantém a impressão
   assert.match(core,/current\?\.title === title/);
   assert.match(core,/downloadDocumentFromHtml/);
   assert.match(core,/pdf\.save\(filename\)/);
+  assert.match(viewer,/reportPage\?\.getBoundingClientRect\(\)\.width/);
+  assert.match(viewer,/reportFrame\.style\.width = `\$\{naturalWidth\}px`/);
   assert.match(viewer,/reportFrameShell\.clientWidth \/ reportFrame\.offsetWidth/);
   assert.match(viewer,/reportFrame\.contentWindow\.print\(\)/);
+});
+
+test('declaração de condenação usa o título integral do template', () => {
+  const expected = 'DECLARAÇÃO DE INEXISTÊNCIA DE CONDENAÇÃO POR TRABALHO INFANTIL, TRABALHO ESCRAVO, CRIME CONTRA O MEIO AMBIENTE, ASSÉDIO MORAL OU SEXUAL, VIOLÊNCIA CONTRA A MULHER, OU RACIAL E DE ETNIA';
+  assert.match(read('reports.js'), new RegExp(expected));
+  assert.match(read('index.html'), new RegExp(`data-document-title="${expected}"`));
 });
 
 test('composição financeira calcula o financiamento e limita o giro a trinta por cento', () => {
@@ -80,6 +88,44 @@ test('consulta completa de CNPJ pertence somente aos utilitários', () => {
   assert.doesNotMatch(read('relatorios.html'),/companyLookupForm|consulta-cnpj/);
   assert.match(read('utilitarios.html'),/id="companyLookupPanel"/);
   assert.match(read('utilitarios.html'),/id="companyLookupForm"/);
+});
+
+test('aplicação mantém arquitetura frontend sem rotas ou integrações protegidas', () => {
+  const cnpjApi = read('cnpj-api.js');
+  const billing = read('faturamento.js');
+  const integrations = read('redacao.js');
+  const integrationsPage = read('redacao.html');
+  const readme = read('README.md');
+  assert.doesNotMatch(cnpjApi,/servidor local|url:\s*`\/api\//);
+  assert.doesNotMatch(billing,/proxyUrl|`\/api\/sgs/);
+  assert.match(billing,/fetch\(officialUrl/);
+  assert.doesNotMatch(integrations,/ReceitaWS|Open Finance|SERPRO|backend protegido|status-dot--protected/);
+  assert.doesNotMatch(integrationsPage,/status-dot--protected|Exige serviço protegido/);
+  assert.match(integrationsPage,/a aplicação não exige backend/i);
+  assert.match(readme,/Aplicação 100% frontend/);
+  assert.match(readme,/Não existe rota `\/api`/);
+});
+
+test('login local da Central preserva a identificação na sessão e nos relatórios', () => {
+  const page = read('index.html');
+  const source = read('app.js');
+  const documents = read('document-core.js');
+  const footer = read('footer.js');
+  assert.match(page,/id="loginForm"/);
+  assert.match(page,/id="btnLogout"/);
+  assert.match(source,/centralFcoSessionV1/);
+  assert.match(source,/sessionStorage\.setItem\(sessionKey/);
+  assert.match(source,/payload\.acesso\?\.matricula/);
+  assert.match(documents,/sessionStorage/);
+  assert.match(footer,/centralFcoSessionV1/);
+  assert.match(read('reports.js'),/data\.acesso\.matricula/);
+  assert.match(read('README.md'),/login local da Central e o controle de sessão permanecem obrigatórios/i);
+});
+
+test('código não oferece assinatura digital e preserva apenas assinatura manual dos modelos', () => {
+  const sources = ['app.js','document-core.js','reports.js','relatorios.js','redacao.js','faturamento.js'].map(read).join('\n');
+  assert.doesNotMatch(sources,/assinatura digital|certificado digital|ICP-Brasil|e-CPF|e-CNPJ/i);
+  assert.match(read('README.md'),/espaços de assinatura manual/);
 });
 
 test('declaração de regularidade preserva a página e mantém o rodapé ancorado', () => {

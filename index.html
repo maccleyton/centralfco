@@ -5,16 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Central integrada para propostas empresariais, declarações e utilitários.">
   <title>Central Empresas</title>
-  <link rel="stylesheet" href="styles.css?v=20">
+  <link rel="stylesheet" href="styles.css?v=21">
   <script defer src="agencies.js?v=3"></script>
   <script defer src="central-data.js?v=1"></script>
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script defer src="document-core.js?v=3"></script>
-  <script defer src="reports.js?v=21"></script>
-  <script defer src="cnpj-api.js?v=3"></script>
-  <script defer src="app.js?v=25"></script>
-  <script defer src="footer.js?v=1"></script>
+  <script defer src="document-core.js?v=4"></script>
+  <script defer src="reports.js?v=22"></script>
+  <script defer src="cnpj-api.js?v=4"></script>
+  <script defer src="app.js?v=26"></script>
+  <script defer src="footer.js?v=2"></script>
 </head>
 <body>
   <main id="loginScreen" class="login-screen">
@@ -135,8 +135,7 @@
 
         <section id="manualCompanyPrompt" class="manual-company-prompt" role="alert" aria-labelledby="manualCompanyPromptTitle" hidden>
           <h3 id="manualCompanyPromptTitle">⚠️ Não foi possível consultar os dados.</h3>
-          <p><strong>Possível causa:</strong><br>Perfil sem o papel: <strong>BLOGS (GMWG04A)</strong>.</p>
-          <p>Caso o acesso tenha sido liberado hoje, a disponibilização ocorre normalmente em D+1.</p>
+          <p>A fonte pública pode estar temporariamente indisponível ou a conexão do navegador pode ter sido bloqueada.</p>
           <p><strong>Deseja preencher os dados manualmente?</strong></p>
           <div class="manual-company-actions">
             <button id="btnManualCompanyYes" class="button button--primary button--small" type="button">SIM</button>
@@ -466,7 +465,7 @@
           <button class="individual-download" type="button" data-document-title="AUTORIZAÇÃO – LGPD/PRESTAÇÃO DE INFORMAÇÕES"><span>02</span><strong>Autorização – LGPD/prestação de informações</strong><em>Baixar PDF</em></button>
           <button class="individual-download" type="button" data-document-title="DECLARAÇÃO DE CIÊNCIA SOBRE O ÊXITO DO PROJETO"><span>03</span><strong>Declaração de ciência sobre o êxito do projeto</strong><em>Baixar PDF</em></button>
           <button class="individual-download" type="button" data-document-title="DECLARAÇÃO DE INEXISTÊNCIA DE OPERAÇÕES SIMILARES E AUSÊNCIA DE VÍNCULO"><span>04</span><strong>Declaração de inexistência de operações similares e ausência de vínculo</strong><em>Baixar PDF</em></button>
-          <button class="individual-download" type="button" data-document-title="DECLARAÇÃO DE INEXISTÊNCIA DE CONDENAÇÃO"><span>05</span><strong>Declaração de inexistência de condenação</strong><em>Baixar PDF</em></button>
+          <button class="individual-download" type="button" data-document-title="DECLARAÇÃO DE INEXISTÊNCIA DE CONDENAÇÃO POR TRABALHO INFANTIL, TRABALHO ESCRAVO, CRIME CONTRA O MEIO AMBIENTE, ASSÉDIO MORAL OU SEXUAL, VIOLÊNCIA CONTRA A MULHER, OU RACIAL E DE ETNIA"><span>05</span><strong>Declaração de inexistência de condenação por trabalho infantil, trabalho escravo, crime contra o meio ambiente, assédio moral ou sexual, violência contra a mulher, ou racial e de etnia</strong><em>Baixar PDF</em></button>
           <button class="individual-download" type="button" data-document-title="DECLARAÇÃO DE REGULARIDADE JUNTO À CVM E AOS FUNDOS"><span>06</span><strong>Declaração de regularidade junto à CVM e aos fundos</strong><em>Baixar PDF</em></button>
           <button id="simplesDownload" class="individual-download" type="button" data-document-title="DECLARAÇÃO DE OPTANTE PELO SIMPLES NACIONAL" hidden><span>07</span><strong>Declaração de optante pelo Simples Nacional</strong><em>Baixar PDF</em></button>
           <button class="individual-download" type="button" data-document-role="proposal"><span data-download-number>07</span><strong>Proposta de financiamento FCO</strong><em>Baixar PDF</em></button>
