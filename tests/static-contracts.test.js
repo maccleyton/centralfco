@@ -158,6 +158,17 @@ test('hub oferece área própria de redação com editor modular', () => {
   assert.match(read('cnpj-api.js'),/options\.remember !== false/);
 });
 
+test('listas e checklists compartilham alinhamento horizontal na prévia e impressão', () => {
+  const previewStyles = read('redacao.css');
+  const printSource = read('redacao.js');
+  const listRules = source => source.match(/\.paper-list\{[^}]*\}\.paper-list__item\{[^}]*\}\.paper-list__item>span\{[^}]*\}\.paper-list__item>p\{[^}]*\}/)?.[0];
+  assert.ok(listRules(previewStyles));
+  assert.equal(listRules(previewStyles), listRules(printSource));
+  assert.match(listRules(previewStyles), /display:grid;grid-template-columns:minmax\(7mm,max-content\) minmax\(0,1fr\)/);
+  assert.match(listRules(previewStyles), /align-items:baseline/);
+  assert.match(listRules(previewStyles), /overflow-wrap:anywhere/);
+});
+
 test('hub fixa quatro colunas e redação preserva rodapé e cores na impressão', () => {
   const styles = read('styles.css');
   const pageStyles = read('redacao.css');
