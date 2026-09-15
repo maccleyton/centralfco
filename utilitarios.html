@@ -6,7 +6,7 @@
   <meta name="description" content="Ferramentas de apoio da Central Empresas.">
   <title>Central Empresas | Utilitários</title>
   <link rel="stylesheet" href="styles.css?v=21">
-  <link rel="stylesheet" href="relatorios.css?v=14">
+  <link rel="stylesheet" href="relatorios.css?v=15">
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script defer src="agencies.js?v=3"></script>
@@ -18,7 +18,7 @@
   <script defer src="faturamento.js?v=13"></script>
   <script defer src="correios-logo-data.js?v=1"></script>
   <script defer src="correios.js?v=8"></script>
-  <script defer src="public-data-tools.js?v=1"></script>
+  <script defer src="public-data-tools.js?v=2"></script>
   <script defer src="footer.js?v=2"></script>
 </head>
 <body class="reports-body">
@@ -78,9 +78,10 @@
       <div class="form-builders">
         <section id="publicDataPanel" class="report-form-card utility-panel" hidden>
           <div class="report-form-card__head"><div class="report-form-card__badge">IBGE</div><div><span class="report-kicker">APIS PÚBLICAS</span><h3>CEP e informações municipais</h3><p>Consultas diretas no navegador, sem conta ou chave de acesso.</p></div></div>
-          <div class="tools-grid">
-            <article class="tool-card"><h4>Consultar CEP</h4><form id="publicCepForm" class="tool-form"><div class="field"><label for="publicCep">CEP</label><input id="publicCep" inputmode="numeric" maxlength="9" placeholder="00000-000" required></div><button id="publicCepButton" class="button button--primary" type="submit">Consultar ViaCEP</button></form><div id="publicCepResult" class="tool-result" role="status" aria-live="polite"></div></article>
-            <article class="tool-card"><h4>Município e população estimada</h4><div class="tool-form"><button id="publicLoadStates" class="button button--primary" type="button">Carregar estados</button><div class="field"><label for="publicState">UF</label><select id="publicState"><option value="">Carregue os estados</option></select></div><div class="field"><label for="publicMunicipality">Município</label><select id="publicMunicipality" disabled><option value="">Selecione a UF</option></select></div><button id="publicPopulation" class="button button--primary" type="button">Consultar SIDRA</button></div><div id="publicDataMessage" class="tool-result" role="status" aria-live="polite"></div><div id="publicPopulationResult" class="tool-result" role="status" aria-live="polite"></div></article>
+          <div class="tools-grid public-data-grid">
+            <article class="tool-card public-query-card"><div class="public-query-heading"><span>01</span><div><small>ENDEREÇO</small><h4>Consultar CEP</h4></div></div><form id="publicCepForm" class="tool-form public-query-form"><div class="field"><label for="publicCep">CEP</label><input id="publicCep" inputmode="numeric" maxlength="9" placeholder="00000-000" required></div><button id="publicCepButton" class="button button--primary public-query-action" type="submit">Consultar ViaCEP</button></form></article>
+            <article class="tool-card public-query-card"><div class="public-query-heading"><span>02</span><div><small>INDICADOR MUNICIPAL</small><h4>Município e população estimada</h4></div></div><div class="tool-form public-query-form"><div class="field"><label for="publicState">UF</label><select id="publicState" disabled><option value="">Carregando estados...</option></select></div><div class="field"><label for="publicMunicipality">Município</label><select id="publicMunicipality" disabled><option value="">Selecione a UF</option></select></div><button id="publicPopulation" class="button button--primary public-query-action" type="button" disabled>Consultar SIDRA</button></div><div id="publicDataMessage" class="public-query-message" role="status" aria-live="polite"></div></article>
+            <div class="public-results-board"><div id="publicCepResult" class="public-result" role="status" aria-live="polite" hidden></div><div id="publicPopulationResult" class="public-result" role="status" aria-live="polite" hidden></div></div>
           </div>
         </section>
         <section id="pdfCompressorPanel" class="report-form-card utility-panel" hidden>
