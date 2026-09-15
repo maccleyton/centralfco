@@ -4,24 +4,45 @@
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Scanner e Pipeline — Central Empresas</title>
   <link rel="stylesheet" href="styles.css?v=20"><link rel="stylesheet" href="scanner.css">
-  <script defer src="scanner-core.js"></script><script defer src="scanner.js"></script>
+  <script defer src="scanner-core.js"></script><script defer src="scanner-xlsx.js"></script><script defer src="scanner.js"></script>
 </head>
 <body>
   <header class="topbar"><div class="shell topbar__content"><a class="brand" href="index.html">← Central Empresas</a></div></header>
   <main class="shell scanner-page">
     <h1>Scanner de importação</h1>
-    <p>Selecione colunas e registros do CSV e confira as operações antes de migrar.</p>
+    <p>Selecione colunas e registros dos relatórios Excel ou CSV antes de importar.</p>
     <p class="scanner-notice">Prévia em memória. Os dados ainda não são enviados ao banco. Ao fechar ou recarregar a página, a seleção é descartada.</p>
-    <label for="file">CSV ou CSV com esquema do Microsoft Lists</label>
-    <input id="file" type="file" accept=".csv,text/csv">
+    <label for="file">XLSX, CSV ou CSV com esquema do Microsoft Lists</label>
+    <input id="file" type="file" accept=".xlsx,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
     <p id="message" role="status" aria-live="polite"></p>
+    <section id="excelOptions" hidden>
+      <label for="sheet">Aba</label><select id="sheet"></select>
+      <label for="headerStart">Primeira linha do cabeçalho</label><input id="headerStart" type="number" min="1" value="1">
+      <label for="headerDepth">Quantidade de linhas do cabeçalho</label><input id="headerDepth" type="number" min="1" max="8" value="1">
+      <button id="applyHeaders" type="button">Aplicar cabeçalho</button>
+    </section>
     <section id="selection" hidden>
-      <h2>Colunas</h2><p>Os campos obrigatórios do Pipeline permanecem selecionados. Renomeie as colunas para a exportação da seleção.</p>
+      <h2>Colunas</h2><p>Escolha e renomeie as colunas. Os cabeçalhos originais são preservados na leitura; o nome escolhido é usado na exportação.</p>
+      <button id="allColumns" type="button">Selecionar todas as colunas</button><button id="noColumns" type="button">Desmarcar colunas opcionais</button>
+      <label for="modelName">Nome do modelo</label><input id="modelName" placeholder="Ex.: Fluxo de recebimento">
+      <button id="saveModel" type="button">Salvar modelo neste navegador</button>
+      <label for="model">Modelo salvo</label><select id="model"><option value="">Escolha um modelo</option></select><button id="loadModel" type="button">Aplicar modelo</button>
+      <label for="columnSearch">Pesquisar colunas</label><input id="columnSearch" type="search" placeholder="Ex.: faturamento, PIX, vencimento">
       <div id="columns" class="scanner-columns"></div>
       <h2>Registros</h2>
+      <div class="scanner-filter">
+        <label for="filterColumn">Coluna do filtro</label><select id="filterColumn"></select>
+        <label for="filterOperator">Condição</label><select id="filterOperator"><option value="contains">Contém</option><option value="eq">Igual</option><option value="ne">Diferente</option><option value="gt">Número maior que</option><option value="lt">Número menor que</option><option value="between">Número entre</option><option value="before">Data anterior a</option><option value="after">Data posterior a</option><option value="empty">Vazio</option></select>
+        <label for="filterValue">Valor (datas: AAAA-MM-DD; percentuais: 20%)</label><input id="filterValue">
+        <label for="filterUpper">Limite superior para “entre”</label><input id="filterUpper">
+        <button id="addFilter" type="button">Adicionar filtro</button><button id="clearFilters" type="button">Limpar filtros</button>
+        <p id="filters"></p>
+      </div>
       <label for="search">Pesquisar em todas as colunas</label><input id="search" type="search" placeholder="Empresa, proposta, fase…">
       <button id="selectVisible" type="button">Selecionar resultados</button><button id="clearVisible" type="button">Desmarcar resultados</button>
+      <button id="clearAllRows" type="button">Desmarcar todos os registros</button>
       <p id="count"></p><div class="scanner-table"><table><thead id="tableHead"></thead><tbody id="tableBody"></tbody></table></div>
+      <button id="previousPage" type="button">Página anterior</button><button id="nextPage" type="button">Próxima página</button>
       <button id="preview" class="button" type="button">Validar e visualizar Pipeline</button>
       <button id="download" class="button" type="button">Exportar seleção CSV</button>
     </section>

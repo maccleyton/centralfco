@@ -29,3 +29,11 @@ Use `npm run quality` para verificar a sintaxe e executar os testes automatizado
 ## Redação e Automação
 
 A Área de Trabalho 06 oferece composição por blocos, modelos de Ofício, Memorando, Parecer, Relatório, Portaria e Autorização de Faturamento, listas em níveis, checklists e tabelas com somatórios. Na autorização, o vendedor pode ser consultado pelo CNPJ e o endereço de faturamento permanece editável para filiais. O rascunho permanece no navegador e o documento final usa o visualizador temporário da Central.
+
+## Scanner de relatórios
+
+Abra `scanner.html` pelo Hub. Aceita CSV comum, CSV com esquema Microsoft Lists e XLSX. Para Excel, confira a aba, a primeira linha e a quantidade de linhas do cabeçalho detectado. Escolha as colunas, renomeie para exportação e selecione os registros. A pesquisa e os filtros não descartam registros selecionados: use os botões para ajustar a seleção dos resultados.
+
+Modelos de colunas e filtros podem ser salvos neste navegador. Registros dos relatórios permanecem em memória. A prévia Pipeline está disponível para o esquema do Lists; relatórios comerciais são selecionados e exportados para CSV. A integração Supabase ainda não está implementada.
+
+Os XLSX são processados localmente, sem envio de arquivos ou carregamento de bibliotecas externas. Precisam de navegador com suporte a descompressão `deflate-raw`; CSV continua disponível nos demais. Consulte `docs/central-implementation.md` para limites, validações e próximos módulos.

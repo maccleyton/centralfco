@@ -127,7 +127,36 @@
       };
     });
   }
-  const api = Object.freeze({ REQUIRED, parseCsv, money, date, classify, validate });
+  function filterNumber(input) {
+    let text = String(input ?? '').trim();
+    const percentage = text.endsWith('%'); if (percentage) text = text.slice(0, -1).trim();
+    const negative = text.startsWith('-'); text = text.replace(/^[+-]/, '');
+    return money(text) * (negative ? -1 : 1) / (percentage ? 100 : 1);
+  }
+  function matches(row, typedRow, filter) {
+    const display = String(row[filter.column] ?? '').trim();
+    const target = String(filter.value ?? '').trim();
+    const fold = value => value.toLocaleLowerCase('pt-BR');
+    if (filter.operator === 'empty') return !display;
+    if (filter.operator === 'contains') return fold(display).includes(fold(target));
+    if (filter.operator === 'eq') return fold(display) === fold(target);
+    if (filter.operator === 'ne') return fold(display) !== fold(target);
+    if (!display) return false;
+    if (['before', 'after'].includes(filter.operator)) {
+      // ISO dates in exports can include SQL-style timestamps; compare calendar days.
+      const value = /^\d{4}-\d{2}-\d{2}/.test(display) ? display.slice(0, 10) : display;
+      try { const day = date(value, true), reference = date(target, true); return filter.operator === 'before' ? day < reference : day > reference; } catch (_) { return false; }
+    }
+    try {
+      const number = typeof typedRow?.[filter.column] === 'number' ? typedRow[filter.column] : filterNumber(display);
+      const reference = filterNumber(target);
+      if (filter.operator === 'gt') return number > reference;
+      if (filter.operator === 'lt') return number < reference;
+      if (filter.operator === 'between') return number >= reference && number <= filterNumber(filter.upper);
+    } catch (_) {}
+    return false;
+  }
+  const api = Object.freeze({ REQUIRED, parseCsv, money, date, classify, validate, matches, filterNumber });
   root.CentralScanner = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
