@@ -10,9 +10,9 @@
     ['BrasilAPI','ready','CNPJ, CEP e bancos','Ativa no navegador, pública e sem chave.'],
     ['CNPJá Open API','ready','CNPJ, CNAE e QSA','Ativa como fonte pública alternativa para consulta cadastral.'],
     ['Banco Central SGS','ready','Índices e taxas','Ativa no navegador para séries públicas já utilizadas pela Central.'],
-    ['IBGE Localidades','study','Municípios e códigos IBGE','Planejada exclusivamente pela API pública acessível no navegador.'],
-    ['SIDRA IBGE','study','Indicadores regionais','Planejada com tabelas e períodos públicos previamente definidos.'],
-    ['ViaCEP','study','Endereços por CEP','Planejada como alternativa pública, sem chave e compatível com o navegador.']
+    ['IBGE Localidades','ready','Municípios e códigos IBGE','Ativa nos Utilitários pela API pública oficial.'],
+    ['SIDRA IBGE','ready','População estimada municipal','Ativa nos Utilitários para a tabela pública 6579 e o último período publicado.'],
+    ['ViaCEP','ready','Endereços por CEP','Ativa nos Utilitários, sem chave e compatível com o navegador.']
   ];
 
   const paragraph = (text='') => ({id:uid(),type:'paragraph',text});
