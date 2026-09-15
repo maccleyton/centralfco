@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Scanner e Pipeline — Central Empresas</title>
+  <link rel="stylesheet" href="styles.css?v=20"><link rel="stylesheet" href="scanner.css">
+  <script defer src="scanner-core.js"></script><script defer src="scanner.js"></script>
+</head>
+<body>
+  <header class="topbar"><div class="shell topbar__content"><a class="brand" href="index.html">← Central Empresas</a></div></header>
+  <main class="shell scanner-page">
+    <h1>Scanner de importação</h1>
+    <p>Selecione colunas e registros do CSV e confira as operações antes de migrar.</p>
+    <p class="scanner-notice">Prévia em memória. Os dados ainda não são enviados ao banco. Ao fechar ou recarregar a página, a seleção é descartada.</p>
+    <label for="file">CSV ou CSV com esquema do Microsoft Lists</label>
+    <input id="file" type="file" accept=".csv,text/csv">
+    <p id="message" role="status" aria-live="polite"></p>
+    <section id="selection" hidden>
+      <h2>Colunas</h2><p>Os campos obrigatórios do Pipeline permanecem selecionados. Renomeie as colunas para a exportação da seleção.</p>
+      <div id="columns" class="scanner-columns"></div>
+      <h2>Registros</h2>
+      <label for="search">Pesquisar em todas as colunas</label><input id="search" type="search" placeholder="Empresa, proposta, fase…">
+      <button id="selectVisible" type="button">Selecionar resultados</button><button id="clearVisible" type="button">Desmarcar resultados</button>
+      <p id="count"></p><div class="scanner-table"><table><thead id="tableHead"></thead><tbody id="tableBody"></tbody></table></div>
+      <button id="preview" class="button" type="button">Validar e visualizar Pipeline</button>
+      <button id="download" class="button" type="button">Exportar seleção CSV</button>
+    </section>
+    <section id="results" hidden><h2>Validação</h2><div id="validation"></div><h2>Pipeline — fases originais do Lists</h2><p>Esta prévia preserva as fases exportadas. O SLA depende do histórico futuro; a data de entrada da operação não é a data de entrada na fase.</p><div id="board" class="scanner-board"></div></section>
+  </main>
+</body>
+</html>

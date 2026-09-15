@@ -67,7 +67,7 @@ test('hub oferece área própria de redação com editor modular', () => {
   const page = read('redacao.html');
   const source = read('redacao.js');
   assert.match(hub,/href="redacao\.html"/);
-  assert.match(hub,/>6<\/strong><span>áreas de trabalho/);
+  assert.match(hub,/>7<\/strong><span>áreas de trabalho/);
   assert.match(page,/data-add-block="paragraph"/);
   assert.match(page,/data-add-block="table"/);
   assert.match(page,/Autorização de Faturamento/);
