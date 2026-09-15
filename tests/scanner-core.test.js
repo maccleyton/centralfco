@@ -41,3 +41,37 @@ test('unknown and amendment labels require mapping instead of inferred workflows
   assert.ok(record.warnings.some(message => /confirmação/.test(message)));
   assert.equal(record.operation.originalStage, 'Em Análise');
 });
+
+test('medidas e indicadores aceitam formatos dos relatórios sem inventar valores ausentes', () => {
+  assert.equal(scanner.measure('R$ 1.250.000,50'), 1250000.5);
+  assert.equal(scanner.measure('15,5%'), 0.155);
+  assert.equal(scanner.measure(-20), -20);
+  assert.equal(scanner.measure(''), null);
+  assert.equal(scanner.measure('não informado'), null);
+  assert.equal(scanner.flag('Sim'), true);
+  assert.equal(scanner.flag('NÃO'), false);
+  assert.equal(scanner.flag(''), null);
+  assert.equal(scanner.flag('talvez'), null);
+});
+
+test('scanner de oportunidades exige mapeamento e explica cada regra acionada', () => {
+  const rows = [
+    { MCI: '001', Cliente: 'Alfa', Receita: 'R$ 2.000.000,00', Limite: '0', Pix: '1000', Credito: 'Sim', Seguro: 'Não', Consorcio: 'Não' },
+    { MCI: '002', Cliente: 'Beta', Receita: '500000', Limite: '0', Pix: '0', Credito: 'Não', Seguro: 'Não', Consorcio: 'Não' }
+  ];
+  const mappings = { mci: 'MCI', client: 'Cliente', revenue: 'Receita', creditLimit: 'Limite', pixVolume: 'Pix', hasCredit: 'Credito', hasInsurance: 'Seguro', hasConsortium: 'Consorcio' };
+  const result = scanner.analyzeOpportunities(rows, mappings, { minRevenue: '1000000', maxCreditLimit: '0', maxPix: '5000', minConsortiumRevenue: '1000000', weights: { credit: 40, pix: 25, insurance: 20, consortium: 15 } });
+  assert.equal(result.records.length, 1);
+  assert.equal(result.records[0].client, 'Alfa');
+  assert.equal(result.records[0].score, 100);
+  assert.deepEqual(result.records[0].opportunities.map(item => item.key), ['credit', 'pix', 'insurance', 'consortium']);
+  assert.match(result.records[0].opportunities[0].evidence, /faturamento/);
+  assert.ok(result.rules.every(rule => rule.enabled));
+});
+
+test('regra sem coluna confirmada fica desativada e não interpreta siglas', () => {
+  const result = scanner.analyzeOpportunities([{ MCI: '001', RA: '10' }], { mci: 'MCI' }, { minRevenue: 0 });
+  assert.equal(result.records.length, 0);
+  assert.ok(result.rules.every(rule => !rule.enabled));
+  assert.ok(result.rules.find(rule => rule.key === 'pix').missing.includes('pixVolume'));
+});

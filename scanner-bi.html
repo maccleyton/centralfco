@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Scanner BI — Central Empresas</title>
+  <link rel="stylesheet" href="styles.css?v=22"><link rel="stylesheet" href="scanner.css?v=3"><link rel="stylesheet" href="scanner-bi.css?v=1">
+  <script defer src="scanner-bi.js"></script>
+</head>
+<body>
+  <header class="topbar scanner-topbar bi-no-print"><div class="topbar__accent" aria-hidden="true"></div><div class="shell topbar__content">
+    <a class="brand" href="index.html"><span class="brand__symbol" aria-hidden="true"><img src="logo02.png" alt=""></span><span><strong>Central Empresas</strong><small>Scanner · Apresentação BI</small></span></a>
+    <div class="topbar__actions"><a class="header-link" href="scanner.html"><span aria-hidden="true">←</span> Scanner</a><button id="printBi" class="button button--primary" type="button">Imprimir / salvar PDF</button></div>
+  </div></header>
+  <main class="shell bi-page">
+    <section id="biEmpty" class="scanner-panel pipeline-empty" hidden><span>⌕</span><h2>Nenhuma análise disponível</h2><p>Volte ao Scanner, mapeie os indicadores e identifique as oportunidades.</p><a class="button button--primary" href="scanner.html">Abrir Scanner</a></section>
+    <div id="biContent" hidden>
+      <section class="bi-cover">
+        <div><span class="eyebrow">SCANNER · INTELIGÊNCIA COMERCIAL</span><h1>Panorama de oportunidades</h1><p id="biSubtitle"></p></div>
+        <div class="bi-cover__mark"><span>BI</span><small>apresentação local</small></div>
+      </section>
+      <section class="bi-kpis" aria-label="Indicadores principais">
+        <article><span>Registros analisados</span><strong id="biAnalyzed">0</strong><small>seleção do Scanner</small></article>
+        <article><span>Com oportunidade</span><strong id="biOpportunities">0</strong><small>regras acionadas</small></article>
+        <article><span>Carteira priorizada</span><strong id="biPortfolio">0</strong><small>clientes selecionados</small></article>
+        <article><span>Potencial mapeado</span><strong id="biRevenue">R$ 0,00</strong><small>faturamento disponível</small></article>
+      </section>
+      <section class="bi-grid">
+        <article class="bi-card bi-card--wide"><div class="bi-card__head"><div><p>COMPOSIÇÃO</p><h2>Oportunidades por tipo</h2></div><span id="biRuleTotal" class="bi-chip"></span></div><div class="bi-chart-layout"><div id="biDonut" class="bi-donut"><div><strong id="biDonutValue">0</strong><span>indicações</span></div></div><div id="biOpportunityBars" class="bi-bars"></div></div></article>
+        <article class="bi-card"><div class="bi-card__head"><div><p>DISTRIBUIÇÃO</p><h2>Carteiras de origem</h2></div></div><div id="biPortfolioBars" class="bi-bars bi-bars--compact"></div></article>
+        <article class="bi-card"><div class="bi-card__head"><div><p>QUALIDADE DA REGRA</p><h2>Mapeamentos ativos</h2></div></div><div id="biRuleStatus" class="bi-rule-list"></div></article>
+      </section>
+      <section class="bi-card bi-ranking"><div class="bi-card__head"><div><p>PRIORIZAÇÃO</p><h2>Clientes com maior pontuação</h2></div><span class="bi-chip">TOP 10</span></div><div class="scanner-table"><table><thead><tr><th>#</th><th>Cliente</th><th>MCI</th><th>Carteira</th><th>Faturamento</th><th>Pontuação</th><th>Oportunidades</th></tr></thead><tbody id="biRankingBody"></tbody></table></div></section>
+      <p class="bi-footnote">Painel gerado localmente. Os indicadores refletem somente as colunas, limites e pesos confirmados no Scanner.</p>
+    </div>
+  </main>
+</body>
+</html>

@@ -1,52 +1,146 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Scanner e Pipeline — Central Empresas</title>
-  <link rel="stylesheet" href="styles.css?v=20"><link rel="stylesheet" href="scanner.css">
-  <script defer src="scanner-core.js"></script><script defer src="scanner-xlsx.js"></script><script defer src="scanner.js"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Scanner de Importação — Central Empresas</title>
+  <link rel="stylesheet" href="styles.css?v=22">
+  <link rel="stylesheet" href="scanner.css?v=3">
+  <script defer src="scanner-core.js"></script>
+  <script defer src="scanner-xlsx.js"></script>
+  <script defer src="scanner.js"></script>
 </head>
 <body>
-  <header class="topbar"><div class="shell topbar__content"><a class="brand" href="index.html">← Central Empresas</a></div></header>
+  <header class="topbar scanner-topbar">
+    <div class="topbar__accent" aria-hidden="true"></div>
+    <div class="shell topbar__content">
+      <a class="brand" href="index.html" aria-label="Central Empresas - início">
+        <span class="brand__symbol" aria-hidden="true"><img src="logo02.png" alt=""></span>
+        <span><strong>Central Empresas</strong><small>Scanner de Importação</small></span>
+      </a>
+      <a class="header-link" href="index.html"><span aria-hidden="true">←</span> Voltar ao Hub</a>
+    </div>
+  </header>
+
   <main class="shell scanner-page">
-    <h1>Scanner de importação</h1>
-    <p>Selecione colunas e registros dos relatórios Excel ou CSV antes de importar.</p>
-    <p class="scanner-notice">Prévia em memória. Os dados ainda não são enviados ao banco. Ao fechar ou recarregar a página, a seleção é descartada.</p>
-    <label for="file">XLSX, CSV ou CSV com esquema do Microsoft Lists</label>
-    <input id="file" type="file" accept=".xlsx,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
-    <p id="message" role="status" aria-live="polite"></p>
-    <section id="excelOptions" hidden>
-      <label for="sheet">Aba</label><select id="sheet"></select>
-      <label for="headerStart">Primeira linha do cabeçalho</label><input id="headerStart" type="number" min="1" value="1">
-      <label for="headerDepth">Quantidade de linhas do cabeçalho</label><input id="headerDepth" type="number" min="1" max="8" value="1">
-      <button id="applyHeaders" type="button">Aplicar cabeçalho</button>
-    </section>
-    <section id="selection" hidden>
-      <h2>Colunas</h2><p>Escolha e renomeie as colunas. Os cabeçalhos originais são preservados na leitura; o nome escolhido é usado na exportação.</p>
-      <button id="allColumns" type="button">Selecionar todas as colunas</button><button id="noColumns" type="button">Desmarcar colunas opcionais</button>
-      <label for="modelName">Nome do modelo</label><input id="modelName" placeholder="Ex.: Fluxo de recebimento">
-      <button id="saveModel" type="button">Salvar modelo neste navegador</button>
-      <label for="model">Modelo salvo</label><select id="model"><option value="">Escolha um modelo</option></select><button id="loadModel" type="button">Aplicar modelo</button>
-      <label for="columnSearch">Pesquisar colunas</label><input id="columnSearch" type="search" placeholder="Ex.: faturamento, PIX, vencimento">
-      <div id="columns" class="scanner-columns"></div>
-      <h2>Registros</h2>
-      <div class="scanner-filter">
-        <label for="filterColumn">Coluna do filtro</label><select id="filterColumn"></select>
-        <label for="filterOperator">Condição</label><select id="filterOperator"><option value="contains">Contém</option><option value="eq">Igual</option><option value="ne">Diferente</option><option value="gt">Número maior que</option><option value="lt">Número menor que</option><option value="between">Número entre</option><option value="before">Data anterior a</option><option value="after">Data posterior a</option><option value="empty">Vazio</option></select>
-        <label for="filterValue">Valor (datas: AAAA-MM-DD; percentuais: 20%)</label><input id="filterValue">
-        <label for="filterUpper">Limite superior para “entre”</label><input id="filterUpper">
-        <button id="addFilter" type="button">Adicionar filtro</button><button id="clearFilters" type="button">Limpar filtros</button>
-        <p id="filters"></p>
+    <section class="scanner-hero" aria-labelledby="scannerTitle">
+      <div>
+        <span class="eyebrow">INTELIGÊNCIA COMERCIAL LOCAL</span>
+        <h1 id="scannerTitle">Transforme relatórios em ação comercial.</h1>
+        <p>Importe Excel ou CSV, filtre os registros e monte carteiras priorizadas sem enviar dados para servidores.</p>
       </div>
-      <label for="search">Pesquisar em todas as colunas</label><input id="search" type="search" placeholder="Empresa, proposta, fase…">
-      <button id="selectVisible" type="button">Selecionar resultados</button><button id="clearVisible" type="button">Desmarcar resultados</button>
-      <button id="clearAllRows" type="button">Desmarcar todos os registros</button>
-      <p id="count"></p><div class="scanner-table"><table><thead id="tableHead"></thead><tbody id="tableBody"></tbody></table></div>
-      <button id="previousPage" type="button">Página anterior</button><button id="nextPage" type="button">Próxima página</button>
-      <button id="preview" class="button" type="button">Validar e visualizar Pipeline</button>
-      <button id="download" class="button" type="button">Exportar seleção CSV</button>
+      <div class="scanner-hero__flow" aria-label="Etapas do Scanner">
+        <span><b>01</b> Importar</span><span><b>02</b> Selecionar</span><span><b>03</b> Priorizar</span>
+      </div>
     </section>
-    <section id="results" hidden><h2>Validação</h2><div id="validation"></div><h2>Pipeline — fases originais do Lists</h2><p>Esta prévia preserva as fases exportadas. O SLA depende do histórico futuro; a data de entrada da operação não é a data de entrada na fase.</p><div id="board" class="scanner-board"></div></section>
+
+    <section class="scanner-panel scanner-import" aria-labelledby="importTitle">
+      <div class="scanner-section-heading">
+        <span class="scanner-step">01</span>
+        <div><p class="scanner-kicker">ARQUIVO DE ORIGEM</p><h2 id="importTitle">Importar relatório</h2><p>Compatível com XLSX, CSV e exportações do Microsoft Lists.</p></div>
+      </div>
+      <div class="scanner-upload">
+        <label for="file">Selecione o arquivo para começar</label>
+        <input id="file" type="file" accept=".xlsx,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+        <small>Processamento somente neste navegador · limite de 5 MB</small>
+      </div>
+      <p class="scanner-notice"><span aria-hidden="true">✓</span> Os dados ficam na memória e são descartados ao fechar ou recarregar a página.</p>
+      <p id="message" class="scanner-message" role="status" aria-live="polite"></p>
+      <div id="excelOptions" class="scanner-header-options" hidden>
+        <div class="scanner-field scanner-field--wide"><label for="sheet">Aba do arquivo</label><select id="sheet"></select></div>
+        <div class="scanner-field"><label for="headerStart">Primeira linha</label><input id="headerStart" type="number" min="1" value="1"></div>
+        <div class="scanner-field"><label for="headerDepth">Linhas do cabeçalho</label><input id="headerDepth" type="number" min="1" max="8" value="1"></div>
+        <button id="applyHeaders" class="button button--secondary" type="button">Aplicar cabeçalho</button>
+      </div>
+    </section>
+
+    <div id="selection" hidden>
+      <section class="scanner-panel" aria-labelledby="columnsTitle">
+        <div class="scanner-section-heading">
+          <span class="scanner-step">02</span>
+          <div><p class="scanner-kicker">ESTRUTURA DO RELATÓRIO</p><h2 id="columnsTitle">Escolher colunas</h2><p>Marque o que será usado e ajuste somente o nome exibido na exportação.</p></div>
+        </div>
+        <div class="scanner-actions">
+          <button id="allColumns" class="button button--secondary" type="button">Selecionar todas</button>
+          <button id="noColumns" class="button scanner-button-quiet" type="button">Desmarcar opcionais</button>
+        </div>
+        <div class="scanner-model-grid">
+          <div class="scanner-field scanner-field--grow"><label for="modelName">Nome do modelo</label><input id="modelName" placeholder="Ex.: Fluxo de recebimento"></div>
+          <button id="saveModel" class="button button--secondary" type="button">Salvar modelo</button>
+          <div class="scanner-field scanner-field--grow"><label for="model">Modelo salvo</label><select id="model"><option value="">Escolha um modelo</option></select></div>
+          <button id="loadModel" class="button scanner-button-quiet" type="button">Aplicar modelo</button>
+        </div>
+        <div class="scanner-field scanner-search-field"><label for="columnSearch">Pesquisar nas colunas</label><input id="columnSearch" type="search" placeholder="Faturamento, PIX, vencimento…"></div>
+        <div id="columns" class="scanner-columns"></div>
+      </section>
+
+      <section class="scanner-panel" aria-labelledby="recordsTitle">
+        <div class="scanner-section-heading">
+          <span class="scanner-step">03</span>
+          <div><p class="scanner-kicker">RECORTE DE DADOS</p><h2 id="recordsTitle">Filtrar e selecionar registros</h2><p>Combine condições, pesquise e escolha exatamente quais linhas serão analisadas.</p></div>
+        </div>
+        <div class="scanner-filter">
+          <div class="scanner-field"><label for="filterColumn">Coluna</label><select id="filterColumn"></select></div>
+          <div class="scanner-field"><label for="filterOperator">Condição</label><select id="filterOperator"><option value="contains">Contém</option><option value="eq">Igual</option><option value="ne">Diferente</option><option value="gt">Número maior que</option><option value="lt">Número menor que</option><option value="between">Número entre</option><option value="before">Data anterior a</option><option value="after">Data posterior a</option><option value="empty">Vazio</option></select></div>
+          <div class="scanner-field"><label for="filterValue">Valor</label><input id="filterValue" placeholder="Texto, número, data ou 20%"></div>
+          <div class="scanner-field"><label for="filterUpper">Limite superior</label><input id="filterUpper" placeholder="Usado em “entre”"></div>
+          <div class="scanner-filter__actions"><button id="addFilter" class="button button--primary" type="button">Adicionar filtro</button><button id="clearFilters" class="button scanner-button-quiet" type="button">Limpar</button></div>
+          <p id="filters" class="scanner-filter__summary"></p>
+        </div>
+        <div class="scanner-field scanner-search-field"><label for="search">Pesquisar em todas as colunas</label><input id="search" type="search" placeholder="Empresa, proposta, fase…"></div>
+        <div class="scanner-actions scanner-actions--selection">
+          <button id="selectVisible" class="button button--secondary" type="button">Selecionar resultados</button>
+          <button id="clearVisible" class="button scanner-button-quiet" type="button">Desmarcar resultados</button>
+          <button id="clearAllRows" class="button scanner-button-quiet" type="button">Limpar seleção</button>
+        </div>
+        <p id="count" class="scanner-count"></p>
+        <div class="scanner-table"><table><thead id="tableHead"></thead><tbody id="tableBody"></tbody></table></div>
+        <div class="scanner-table-actions">
+          <div><button id="previousPage" class="button scanner-button-quiet" type="button">← Anterior</button><button id="nextPage" class="button scanner-button-quiet" type="button">Próxima →</button></div>
+          <div><button id="preview" class="button button--secondary" type="button">Enviar ao Pipeline</button><button id="download" class="button button--primary" type="button">Exportar seleção CSV</button></div>
+        </div>
+      </section>
+
+      <section class="scanner-panel scanner-intelligence" aria-labelledby="intelligenceTitle">
+        <div class="scanner-section-heading scanner-section-heading--intelligence">
+          <span class="scanner-step">04</span>
+          <div><p class="scanner-kicker">ANÁLISE LOCAL</p><h2 id="intelligenceTitle">Oportunidades e carteiras</h2><p>Confirme o significado das colunas. Siglas e informações ausentes não são interpretadas automaticamente.</p></div>
+        </div>
+        <h3 class="scanner-subtitle">Mapeamento dos indicadores</h3>
+        <div id="semanticMappings" class="scanner-mapping-grid"></div>
+        <div class="scanner-rule-grid">
+          <div>
+            <h3 class="scanner-subtitle">Limites das regras</h3>
+            <div class="scanner-settings-grid">
+              <label>Faturamento mínimo<input id="minRevenue" inputmode="decimal" value="1000000"></label>
+              <label>Limite de crédito máximo<input id="maxCreditLimit" inputmode="decimal" value="0"></label>
+              <label>Volume PIX máximo<input id="maxPix" inputmode="decimal" value="0"></label>
+              <label>Faturamento mínimo para consórcio<input id="minConsortiumRevenue" inputmode="decimal" value="1000000"></label>
+            </div>
+          </div>
+          <div>
+            <h3 class="scanner-subtitle">Pesos no ranking</h3>
+            <div class="scanner-settings-grid scanner-settings-grid--weights">
+              <label>Crédito<input id="weightCredit" type="number" min="0" value="40"></label>
+              <label>PIX<input id="weightPix" type="number" min="0" value="25"></label>
+              <label>Seguros<input id="weightInsurance" type="number" min="0" value="20"></label>
+              <label>Consórcio<input id="weightConsortium" type="number" min="0" value="15"></label>
+              <label>Tamanho da carteira<select id="portfolioSize"><option>10</option><option>20</option><option>30</option><option>50</option><option>100</option></select></label>
+            </div>
+          </div>
+        </div>
+        <div class="scanner-intelligence__action"><div><strong>Configuração pronta?</strong><span>O resultado mostrará a regra e a evidência encontrada.</span></div><button id="analyze" class="button button--generate" type="button">Identificar oportunidades</button></div>
+      </section>
+    </div>
+
+    <section id="opportunityResults" hidden class="scanner-panel scanner-opportunity-results">
+      <div class="scanner-section-heading"><span class="scanner-step">✓</span><div><p class="scanner-kicker">CARTEIRA PRIORIZADA</p><h2>Oportunidades identificadas</h2><p id="opportunitySummary"></p></div></div>
+      <div id="ruleStatus" class="scanner-rule-status"></div>
+      <div class="scanner-table"><table><thead id="opportunityHead"></thead><tbody id="opportunityBody"></tbody></table></div>
+      <div class="scanner-actions"><button id="openBi" class="button button--generate" type="button">Abrir apresentação BI</button><button id="downloadPortfolio" class="button button--primary" type="button">Baixar carteira CSV</button></div>
+    </section>
   </main>
+
+  <footer class="footer"><div class="shell"><span>Central Empresas · Scanner local</span><span class="footer-credit">Dados processados somente no navegador</span><span>Agência 1031</span></div></footer>
 </body>
 </html>

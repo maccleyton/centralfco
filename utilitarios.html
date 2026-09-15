@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Ferramentas de apoio da Central Empresas.">
   <title>Central Empresas | Utilitários</title>
-  <link rel="stylesheet" href="styles.css?v=21">
-  <link rel="stylesheet" href="relatorios.css?v=15">
+  <link rel="stylesheet" href="styles.css?v=22">
+  <link rel="stylesheet" href="relatorios.css?v=16">
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script defer src="agencies.js?v=3"></script>
@@ -86,11 +86,22 @@
         </section>
         <section id="pdfCompressorPanel" class="report-form-card utility-panel" hidden>
           <div class="report-form-card__head"><div class="report-form-card__badge report-form-card__badge--yellow">PDF</div><div><span class="report-kicker">PROCESSAMENTO LOCAL</span><h3>Compactador de PDF</h3><p>Escolha o arquivo e o nível de compressão. Nada é enviado para um servidor.</p></div></div>
-          <article class="tool-card">
-            <form id="pdfCompressorForm" class="tool-form">
-              <div class="field"><label for="pdfCompressorInput">Arquivo PDF</label><input id="pdfCompressorInput" type="file" accept="application/pdf,.pdf" required><small>Selecione o nível conforme a qualidade necessária para leitura e protocolo.</small></div>
-              <div class="field"><label for="pdfCompressionQuality">Nível de compressão</label><select id="pdfCompressionQuality"><option value="extreme">Extrema - preto e branco, leitura</option><option value="high" selected>Alta - colorido e otimizado</option><option value="medium">Média - boa resolução</option><option value="low">Baixa - próxima do original</option></select></div>
-              <button id="pdfCompressorButton" class="button button--primary tool-submit" type="submit">Compactar PDF</button>
+          <article class="tool-card pdf-compressor-card">
+            <form id="pdfCompressorForm" class="tool-form pdf-compressor-form">
+              <div class="field pdf-file-field">
+                <label id="pdfCompressorInputLabel" for="pdfCompressorInput">Arquivo PDF</label>
+                <div class="pdf-file-picker">
+                  <input id="pdfCompressorInput" class="pdf-file-picker__input" type="file" accept="application/pdf,.pdf" aria-labelledby="pdfCompressorInputLabel" aria-describedby="pdfCompressorFileName pdfCompressorHint" required>
+                  <span class="pdf-file-picker__icon" aria-hidden="true">PDF</span>
+                  <span class="pdf-file-picker__copy"><strong>Selecionar arquivo</strong><small id="pdfCompressorFileName">Nenhum PDF selecionado</small></span>
+                  <span class="pdf-file-picker__action" aria-hidden="true">Procurar</span>
+                </div>
+                <small id="pdfCompressorHint">O arquivo permanece neste navegador durante todo o processamento.</small>
+              </div>
+              <div class="pdf-compressor-actions">
+                <div class="field"><label for="pdfCompressionQuality">Nível de compressão</label><select id="pdfCompressionQuality"><option value="extreme">Extrema - preto e branco, leitura</option><option value="high" selected>Alta - colorido e otimizado</option><option value="medium">Média - boa resolução</option><option value="low">Baixa - próxima do original</option></select></div>
+                <button id="pdfCompressorButton" class="button button--primary tool-submit pdf-compressor-submit" type="submit">Compactar PDF</button>
+              </div>
             </form>
             <div id="pdfProgress" class="tool-progress" hidden><progress id="pdfProgressBar" value="0" max="100"></progress><span id="pdfProgressText">Preparando arquivo...</span></div>
             <div id="pdfCompressorResult" class="tool-result" role="status" aria-live="polite"></div>

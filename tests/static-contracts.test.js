@@ -141,7 +141,7 @@ test('hub oferece área própria de redação com editor modular', () => {
   const page = read('redacao.html');
   const source = read('redacao.js');
   assert.match(hub,/href="redacao\.html"/);
-  assert.match(hub,/>7<\/strong><span>áreas de trabalho/);
+  assert.match(hub,/>8<\/strong><span>áreas de trabalho/);
   assert.match(page,/data-add-block="paragraph"/);
   assert.match(page,/data-add-block="table"/);
   assert.match(page,/Autorização de Faturamento/);
@@ -180,4 +180,92 @@ test('hub fixa quatro colunas e redação preserva rodapé e cores na impressão
   assert.match(source,/print-color-adjust:exact!important/);
   assert.match(source,/\.paper-footer\{position:absolute/);
   assert.match(source,/background:#29298f!important/);
+});
+
+test('compactador usa seletor de arquivo estilizado e ações proporcionais', () => {
+  const html = read('utilitarios.html');
+  const css = read('relatorios.css');
+  const source = read('relatorios-ferramentas.js');
+  assert.match(html, /class="pdf-file-picker"/);
+  assert.match(html, /id="pdfCompressorFileName"/);
+  assert.match(html, /class="pdf-compressor-actions"/);
+  assert.match(css, /\.pdf-compressor-submit\{width:auto;min-width:172px/);
+  assert.match(source, /pdfCompressorFileName/);
+});
+
+test('scanner gera oportunidades e carteiras localmente com mapeamento semântico explícito', () => {
+  const page = read('scanner.html');
+  const source = read('scanner.js');
+  const core = read('scanner-core.js');
+  assert.match(page,/id="semanticMappings"/);
+  assert.match(page,/id="portfolioSize"/);
+  assert.match(page,/id="downloadPortfolio"/);
+  assert.match(source,/CentralScanner\.analyzeOpportunities/);
+  assert.match(source,/central-carteira-oportunidades\.csv/);
+  assert.match(source,/semanticMappings:\s*mappingValues\(\)/);
+  assert.match(source,/opportunitySettings:\s*settingValues\(\)/);
+  assert.match(core,/function analyzeOpportunities/);
+  assert.match(core,/falta mapear|missing/);
+  assert.doesNotMatch(source,/pixVolume\s*:\s*['"]RA['"]|\[['"]pixVolume['"],\s*['"]RA['"]\]/i);
+});
+
+test('scanner preserva a identidade visual da Central e não comprime nomes de colunas', () => {
+  const page = read('scanner.html');
+  const styles = read('scanner.css');
+  assert.match(page,/class="topbar scanner-topbar"/);
+  assert.match(page,/class="brand__symbol"[^>]*>[\s\S]*logo02\.png/);
+  assert.match(page,/class="scanner-hero"/);
+  assert.match(page,/class="scanner-panel scanner-intelligence"/);
+  assert.match(styles,/\.scanner-columns\{display:grid;grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+  assert.match(styles,/\.scanner-columns label\{display:grid;grid-template-columns:20px minmax\(135px,\.8fr\) minmax\(180px,1\.2fr\)/);
+  assert.match(styles,/\.scanner-columns span\{min-width:0;overflow-wrap:anywhere/);
+  assert.doesNotMatch(styles,/\.scanner-columns label\{[^}]*flex:1 1 420px/);
+  assert.match(styles,/\.scanner-mapping-grid label,[^{]*\.scanner-settings-grid label\{[^}]*font-weight:500/);
+});
+
+test('hub separa Scanner e Pipeline e oferece BI, tabela colunar e Kanban', () => {
+  const hub = read('index.html'), scannerPage = read('scanner.html'), scannerSource = read('scanner.js');
+  const pipelinePage = read('pipeline.html'), pipelineSource = read('pipeline.js'), biPage = read('scanner-bi.html');
+  assert.match(hub,/href="scanner\.html"[\s\S]*<strong>Scanner<\/strong>/);
+  assert.match(hub,/href="pipeline\.html"[\s\S]*<strong>Pipeline<\/strong>/);
+  assert.doesNotMatch(hub,/<strong>Scanner e Pipeline<\/strong>/);
+  assert.match(scannerPage,/id="openBi"/);
+  assert.match(scannerSource,/centralPipelineV1/);
+  assert.match(scannerSource,/centralScannerBiV1/);
+  assert.match(pipelinePage,/id="viewColumns"/);
+  assert.match(pipelinePage,/id="viewKanban"/);
+  assert.match(pipelinePage,/id="pipelineTableBody"/);
+  assert.match(pipelinePage,/id="kanbanView"/);
+  assert.match(pipelineSource,/CentralPipeline\.groupByStage/);
+  assert.match(biPage,/id="biOpportunityBars"/);
+  assert.match(biPage,/id="biRankingBody"/);
+});
+
+test('Pipeline permite cadastrar e configurar operações sem atalho superior do Scanner', () => {
+  const page = read('pipeline.html'), source = read('pipeline.js'), core = read('pipeline-core.js'), database = read('pipeline-db.js');
+  assert.doesNotMatch(page, /class="header-link" href="scanner\.html"/);
+  assert.match(page, /data-new-operation/);
+  assert.match(page, /data-open-settings/);
+  assert.match(page, /id="operationDialog"/);
+  assert.match(page, /id="settingsDialog"/);
+  assert.match(page, /sql\.js\/1\.13\.0\/sql-wasm\.js/);
+  assert.match(source, /CentralPipelineDb\.open/);
+  assert.match(database, /CREATE TABLE IF NOT EXISTS pipeline_categories/);
+  assert.match(database, /CREATE TABLE IF NOT EXISTS pipeline_custom_fields/);
+  assert.match(database, /indexedDB\.open/);
+  assert.match(core, /FIELD_DEFINITIONS/);
+  assert.match(core, /normalizeConfig/);
+});
+
+test('todos os módulos usam barras de rolagem e carregadores de arquivo padronizados', () => {
+  const styles = read('styles.css');
+  const scannerStyles = read('scanner.css');
+  const pages = ['index.html', 'scanner.html', 'scanner-bi.html', 'pipeline.html', 'utilitarios.html', 'redacao.html', 'declaracoes.html', 'credit-lines.html', 'relatorios.html'];
+  assert.match(styles, /scrollbar-width:thin/);
+  assert.match(styles, /\*::-webkit-scrollbar\{width:10px;height:10px\}/);
+  assert.match(styles, /\*::-webkit-scrollbar-thumb\{/);
+  assert.match(styles, /input\[type="file"\]:not\(\.pdf-file-picker__input\)::file-selector-button/);
+  assert.match(scannerStyles, /\.scanner-upload input\[type=file\]\{width:100%/);
+  assert.match(scannerStyles, /\.scanner-columns,\.scanner-table\{scrollbar-gutter:stable\}/);
+  pages.forEach(page => assert.match(read(page), /styles\.css\?v=22/));
 });

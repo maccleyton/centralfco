@@ -1,9 +1,16 @@
 (function () {
   'use strict';
   const $ = id => document.getElementById(id);
-  let data = null, selected = new Set(), columns = [], workbook = null, filters = [], page = 0, fileVersion = 0;
+  let data = null, selected = new Set(), columns = [], workbook = null, filters = [], page = 0, fileVersion = 0, currentPortfolio = [];
   const PAGE_SIZE = 50;
   const MODEL_KEY = "centralScannerModelsV1";
+  const PIPELINE_KEY = "centralPipelineV1";
+  const BI_KEY = "centralScannerBiV1";
+  const MAPPING_FIELDS = [
+    ['mci', 'MCI'], ['client', 'Cliente ou razão social'], ['portfolio', 'Carteira'],
+    ['revenue', 'Faturamento'], ['creditLimit', 'Limite de crédito'], ['pixVolume', 'Volume PIX'],
+    ['hasCredit', 'Possui crédito?'], ['hasInsurance', 'Possui seguro?'], ['hasConsortium', 'Possui consórcio?']
+  ];
   const element = (tag, text, className) => {
     const node = document.createElement(tag); if (text != null) node.textContent = text; if (className) node.className = className; return node;
   };
@@ -11,7 +18,7 @@
     Object.values(row).some(value => value.toLocaleLowerCase('pt-BR').includes($('search').value.toLocaleLowerCase('pt-BR')))
     && filters.every(filter => CentralScanner.matches(row, data.typedRows?.[index], filter)));
   const chosen = () => data.rows.filter((_, index) => selected.has(index));
-  const invalidate = () => { $('results').hidden = true; };
+  const invalidate = () => { $('opportunityResults').hidden = true; currentPortfolio = []; };
   function render() {
     invalidate();
     const active = columns.filter(column => column.enabled);
@@ -43,7 +50,19 @@
     $('filterColumn').replaceChildren(...data.headers.map(key => { const option = element('option', key); option.value = key; return option; }));
     $('preview').disabled = !pipeline;
     $('message').textContent = `${data.rows.length} registros · ${data.headers.length} colunas${data.sheet ? ' · aba ' + data.sheet : ''}. ${pipeline ? 'Pipeline disponível.' : 'Relatório disponível para seleção, filtros e exportação.'} ${(data.warnings || []).join(' ')}`;
-    $('selection').hidden = false; drawColumns(); render();
+    $('selection').hidden = false; drawColumns(); drawMappings(); render();
+  }
+  function drawMappings() {
+    $('semanticMappings').replaceChildren();
+    for (const [field, labelText] of MAPPING_FIELDS) {
+      const label = element('label', labelText), select = element('select'); select.id = `mapping-${field}`;
+      const empty = element('option', 'Não mapear'); empty.value = ''; select.append(empty);
+      for (const header of data.headers) { const option = element('option', header); option.value = header; select.append(option); }
+      const exact = data.headers.find(header => header.toLocaleLowerCase('pt-BR') === labelText.toLocaleLowerCase('pt-BR'));
+      const safeDefaults = { mci: ['MCI', 'MCl'], client: ['Razão Social', 'Cliente'], portfolio: ['Carteira'] };
+      select.value = exact || safeDefaults[field]?.find(name => data.headers.includes(name)) || '';
+      select.addEventListener('change', invalidate); label.append(select); $('semanticMappings').append(label);
+    }
   }
   function drawColumns() {
     $('columns').replaceChildren();
@@ -112,8 +131,8 @@
     const name = $('modelName').value.trim(); if (!name) { $('message').textContent = 'Informe um nome para o modelo.'; return; }
     try {
       const models = readModels();
-      Object.defineProperty(models, name, { value: { columns, filters, headerStart: Number($('headerStart').value), headerDepth: Number($('headerDepth').value) }, enumerable: true, configurable: true });
-      localStorage.setItem(MODEL_KEY, JSON.stringify(models)); listModels(); $('message').textContent = 'Modelo salvo com colunas e filtros. Os registros não são salvos.';
+      Object.defineProperty(models, name, { value: { columns, filters, headerStart: Number($('headerStart').value), headerDepth: Number($('headerDepth').value), semanticMappings: mappingValues(), opportunitySettings: settingValues(), portfolioSize: $('portfolioSize').value }, enumerable: true, configurable: true });
+      localStorage.setItem(MODEL_KEY, JSON.stringify(models)); listModels(); $('message').textContent = 'Modelo salvo com colunas, filtros e regras de oportunidade. Os registros não são salvos.';
     } catch (_) { $('message').textContent = 'Não foi possível salvar o modelo neste navegador.'; }
   });
   $('loadModel').addEventListener('click', () => {
@@ -124,7 +143,17 @@
     const missing = model.columns.filter(column => column.enabled && !data.headers.includes(column.key));
     if (missing.length || model.filters.some(filter => !data.headers.includes(filter.column))) { $('message').textContent = 'Este arquivo não tem todas as colunas usadas pelo modelo; confira a estrutura.'; return; }
     columns.forEach(column => { const saved = model.columns.find(item => item.key === column.key); column.enabled = column.required || !!saved?.enabled; column.name = saved?.name || column.key; });
-    filters = model.filters.map(filter => ({ ...filter })); page = 0; drawColumns(); showFilters(); render(); $('message').textContent = 'Modelo aplicado. Confira as colunas e os resultados.';
+    filters = model.filters.map(filter => ({ ...filter })); page = 0; drawColumns(); showFilters();
+    if (model.semanticMappings && typeof model.semanticMappings === 'object') {
+      for (const [field] of MAPPING_FIELDS) { const saved = model.semanticMappings[field]; if (saved && data.headers.includes(saved)) $(`mapping-${field}`).value = saved; }
+    }
+    const settings = model.opportunitySettings;
+    if (settings && typeof settings === 'object') {
+      const values = { minRevenue: settings.minRevenue, maxCreditLimit: settings.maxCreditLimit, maxPix: settings.maxPix, minConsortiumRevenue: settings.minConsortiumRevenue, weightCredit: settings.weights?.credit, weightPix: settings.weights?.pix, weightInsurance: settings.weights?.insurance, weightConsortium: settings.weights?.consortium };
+      for (const [id, value] of Object.entries(values)) if (value != null) $(id).value = value;
+    }
+    if (['10', '20', '30', '50', '100'].includes(String(model.portfolioSize))) $('portfolioSize').value = String(model.portfolioSize);
+    render(); $('message').textContent = 'Modelo aplicado. Confira as colunas, os filtros e as regras de oportunidade.';
   });
   listModels();
   $('search').addEventListener('input', () => { if (data) { page = 0; render(); } });
@@ -133,37 +162,75 @@
   $('clearAllRows').addEventListener('click', () => { selected.clear(); render(); });
   $('preview').addEventListener('click', () => {
     const checked = CentralScanner.validate(chosen());
-    $('validation').replaceChildren(); $('board').replaceChildren(); $('results').hidden = false;
     const invalid = checked.filter(record => record.errors.length);
-    $('validation').append(element('p', `${checked.length} selecionadas · ${invalid.length} com erro · ${checked.filter(record => record.warnings.length).length} com avisos`));
-    for (const record of checked) {
-      const messages = [...record.errors, ...record.warnings];
-      if (messages.length) $('validation').append(element('p', `Proposta ${record.operation.proposal}: ${messages.join(' ')}`, record.errors.length ? 'scanner-error' : 'scanner-warning'));
+    if (!checked.length) { $('message').textContent = 'Selecione ao menos uma operação para enviar ao Pipeline.'; return; }
+    if (invalid.length) {
+      const first = invalid[0];
+      $('message').textContent = `${invalid.length} operação(ões) com erro. Proposta ${first.operation.proposal || first.sourceRow}: ${first.errors.join(' ')}`;
+      return;
     }
-    if (invalid.length || !checked.length) { $('validation').append(element('p', 'Selecione registros válidos para visualizar o Pipeline.')); return; }
-    const groups = new Map();
-    for (const { operation } of checked) {
-      if (!groups.has(operation.originalStage)) groups.set(operation.originalStage, []);
-      groups.get(operation.originalStage).push(operation);
+    try {
+      sessionStorage.setItem(PIPELINE_KEY, JSON.stringify({ version: 1, createdAt: new Date().toISOString(), sourceName: $('file').files[0]?.name || 'Scanner', operations: checked.map(record => record.operation) }));
+      window.location.href = 'pipeline.html';
+    } catch (_) { $('message').textContent = 'Não foi possível transferir as operações nesta sessão. Reduza a seleção e tente novamente.'; }
+  });
+  const mappingValues = () => Object.fromEntries(MAPPING_FIELDS.map(([field]) => [field, $(`mapping-${field}`).value]));
+  const settingValues = () => ({
+    minRevenue: $('minRevenue').value, maxCreditLimit: $('maxCreditLimit').value, maxPix: $('maxPix').value,
+    minConsortiumRevenue: $('minConsortiumRevenue').value,
+    weights: { credit: $('weightCredit').value, pix: $('weightPix').value, insurance: $('weightInsurance').value, consortium: $('weightConsortium').value }
+  });
+  const currency = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+  $('analyze').addEventListener('click', () => {
+    if (!selected.size) { $('message').textContent = 'Selecione pelo menos um registro para analisar.'; return; }
+    const analysis = CentralScanner.analyzeOpportunities(chosen(), mappingValues(), settingValues());
+    $('ruleStatus').replaceChildren();
+    for (const rule of analysis.rules) {
+      const status = element('span', rule.enabled ? `${rule.label}: ativa` : `${rule.label}: falta mapear ${rule.missing.join(' e ')}`, rule.enabled ? '' : 'is-disabled');
+      $('ruleStatus').append(status);
     }
-    const currency = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
-    for (const [stage, operations] of groups) {
-      const lane = element('section', null, 'scanner-lane'); lane.append(element('h3', `${stage} (${operations.length})`));
-      for (const operation of operations) {
-        const card = element('article', null, 'scanner-card'); card.append(element('strong', operation.legalName));
-        for (const line of [`Proposta ${operation.proposal} · MCI ${operation.mci}`, operation.originalType, currency.format(operation.amount), `Responsável: ${operation.responsibleLabel}`, `Entrada: ${operation.enteredAt}`, `Prazo: ${operation.deadline || 'não informado'}`, operation.notes]) if (line) card.append(element('p', line));
-        lane.append(card);
-      }
-      $('board').append(lane);
+    const size = Number($('portfolioSize').value);
+    currentPortfolio = analysis.records.slice(0, size);
+    const presentationRecords = analysis.records.map(({ source, ...record }) => record);
+    const presentationPortfolio = currentPortfolio.map(({ source, ...record }) => record);
+    try {
+      sessionStorage.setItem(BI_KEY, JSON.stringify({ version: 1, createdAt: new Date().toISOString(), sourceName: $('file').files[0]?.name || 'Scanner', analyzedCount: chosen().length, rules: analysis.rules, records: presentationRecords, portfolio: presentationPortfolio }));
+    } catch (_) { $('message').textContent = 'A análise foi concluída, mas a apresentação BI não pôde ser armazenada nesta sessão.'; }
+    $('opportunitySummary').textContent = `${analysis.records.length} registros com oportunidade · ${currentPortfolio.length} priorizados na carteira. O ranking soma apenas os pesos das regras comprovadas pelos campos mapeados.`;
+    const head = element('tr'); for (const title of ['Prioridade', 'Cliente', 'MCI', 'Carteira', 'Faturamento', 'Oportunidades e evidências']) head.append(element('th', title));
+    $('opportunityHead').replaceChildren(head); $('opportunityBody').replaceChildren();
+    currentPortfolio.forEach((record, index) => {
+      const tr = element('tr');
+      const score = element('span', String(record.score), 'scanner-score'); const rank = element('td'); rank.append(score);
+      tr.append(rank, element('td', `${index + 1}. ${record.client}`), element('td', record.mci || '—'), element('td', record.portfolio || '—'), element('td', record.revenue == null ? '—' : currency.format(record.revenue)));
+      const details = element('td');
+      for (const opportunity of record.opportunities) { details.append(element('strong', opportunity.label), element('p', opportunity.evidence, 'scanner-evidence')); }
+      tr.append(details); $('opportunityBody').append(tr);
+    });
+    if (!currentPortfolio.length) {
+      const tr = element('tr'), td = element('td', 'Nenhuma oportunidade satisfez simultaneamente os limites e os campos mapeados.'); td.colSpan = 6; tr.append(td); $('opportunityBody').append(tr);
     }
+    $('downloadPortfolio').disabled = !currentPortfolio.length; $('opportunityResults').hidden = false; $('opportunityResults').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+  $('openBi').addEventListener('click', () => {
+    if (!currentPortfolio.length) { $('message').textContent = 'Identifique oportunidades antes de abrir a apresentação BI.'; return; }
+    window.location.href = 'scanner-bi.html';
+  });
+  const quoteCsv = value => { let text = String(value ?? ''); if (/^[\s]*[=+@-]/.test(text)) text = "'" + text; return `"${text.replace(/"/g, '""')}"`; };
+  $('downloadPortfolio').addEventListener('click', () => {
+    if (!currentPortfolio.length) return;
+    const header = ['Prioridade', 'Pontuação', 'Cliente', 'MCI', 'Carteira', 'Faturamento', 'Oportunidades', 'Evidências'];
+    const lines = [header, ...currentPortfolio.map((record, index) => [index + 1, record.score, record.client, record.mci, record.portfolio, record.revenue ?? '', record.opportunities.map(item => item.label).join(' | '), record.opportunities.map(item => item.evidence).join(' | ')])]
+      .map(row => row.map(quoteCsv).join(','));
+    const url = URL.createObjectURL(new Blob(['\uFEFF' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' }));
+    const link = element('a'); link.href = url; link.download = 'central-carteira-oportunidades.csv'; document.body.append(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
   });
   $('download').addEventListener('click', () => {
     const active = columns.filter(column => column.enabled);
     if (!selected.size || !active.length) { $('message').textContent = 'Selecione pelo menos uma coluna e um registro.'; return; }
     if (active.some(column => !column.name) || new Set(active.map(column => column.name)).size !== active.length) { $('message').textContent = 'Use nomes de coluna preenchidos e diferentes entre si.'; return; }
     // Prevent formula execution when this CSV is opened in spreadsheet software.
-    const quote = value => { let text = String(value ?? ''); if (/^[\s]*[=+@-]/.test(text)) text = "'" + text; return `"${text.replace(/"/g, '""')}"`; };
-    const lines = [active.map(column => quote(column.name)).join(','), ...chosen().map(row => active.map(column => quote(row[column.key])).join(','))];
+    const lines = [active.map(column => quoteCsv(column.name)).join(','), ...chosen().map(row => active.map(column => quoteCsv(row[column.key])).join(','))];
     const url = URL.createObjectURL(new Blob(['\uFEFF' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' }));
     const link = element('a'); link.href = url; link.download = 'central-selecao.csv'; document.body.append(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
   });

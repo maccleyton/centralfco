@@ -246,6 +246,15 @@ async function consultFullCompany(event) {
 
 const pdfCompressorForm = toolElement('pdfCompressorForm');
 if (pdfCompressorForm) pdfCompressorForm.addEventListener('submit', compressPdf);
+const pdfCompressorInput = toolElement('pdfCompressorInput');
+if (pdfCompressorInput) {
+  pdfCompressorInput.addEventListener('change', () => {
+    const selectedFile = pdfCompressorInput.files[0];
+    toolElement('pdfCompressorFileName').textContent = selectedFile
+      ? `${selectedFile.name} · ${formatBytes(selectedFile.size)}`
+      : 'Nenhum PDF selecionado';
+  });
+}
 
 const companyLookupForm = toolElement('companyLookupForm');
 const companyLookupDocument = toolElement('companyLookupDocument');

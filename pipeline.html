@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Pipeline — Central Empresas</title>
+  <link rel="stylesheet" href="styles.css?v=22"><link rel="stylesheet" href="scanner.css?v=3"><link rel="stylesheet" href="pipeline.css?v=3">
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.13.0/sql-wasm.js"></script><script defer src="pipeline-core.js"></script><script defer src="pipeline-db.js"></script><script defer src="pipeline.js"></script>
+</head>
+<body>
+  <header class="topbar scanner-topbar"><div class="topbar__accent" aria-hidden="true"></div><div class="shell topbar__content">
+    <a class="brand" href="index.html"><span class="brand__symbol" aria-hidden="true"><img src="logo02.png" alt=""></span><span><strong>Central Empresas</strong><small>Pipeline de Operações</small></span></a>
+    <div class="topbar__actions"><a class="header-link" href="index.html">Voltar ao Hub</a></div>
+  </div></header>
+  <main class="shell scanner-page pipeline-page">
+    <section class="pipeline-hero">
+      <div><span class="eyebrow">GESTÃO DE OPERAÇÕES</span><h1>Do panorama geral ao detalhe de cada proposta.</h1><p>Cadastre operações, personalize o formulário e acompanhe a carteira nas visões colunar e Kanban.</p></div>
+      <div class="pipeline-view-switch" role="group" aria-label="Modo de visualização"><button id="viewColumns" type="button" aria-pressed="true">▤ <span>Colunar</span></button><button id="viewKanban" type="button" aria-pressed="false">▥ <span>Kanban</span></button></div>
+    </section>
+    <section id="pipelineEmpty" class="scanner-panel pipeline-empty" hidden><span>▥</span><h2>Nenhuma operação cadastrada</h2><p>Crie a primeira operação ou configure antes os campos, fases e responsáveis do cadastro.</p><div class="pipeline-empty__actions"><button class="button button--primary" type="button" data-new-operation>Nova operação</button><button class="button scanner-button-quiet" type="button" data-open-settings>Configurar cadastro</button></div></section>
+    <div id="pipelineContent" hidden>
+      <section class="pipeline-kpis" aria-label="Resumo do Pipeline">
+        <article><span>Operações</span><strong id="metricCount">0</strong><small>na visão atual</small></article>
+        <article><span>Valor total</span><strong id="metricAmount">R$ 0,00</strong><small>somatório das propostas</small></article>
+        <article><span>Fases</span><strong id="metricStages">0</strong><small>rótulos preservados</small></article>
+        <article><span>Responsáveis</span><strong id="metricResponsibles">0</strong><small>nomes informados</small></article>
+      </section>
+      <section class="scanner-panel pipeline-workspace">
+        <div class="pipeline-heading"><div><p class="scanner-kicker">VISÃO OPERACIONAL</p><h2>Operações do Pipeline</h2><p id="pipelineSource"></p></div><div class="pipeline-heading__actions"><span id="pipelineResultCount" class="scanner-count"></span><button class="button scanner-button-quiet" type="button" data-open-settings>Configurar cadastro</button><button class="button button--primary" type="button" data-new-operation>+ Nova operação</button></div></div>
+        <div class="pipeline-filters">
+          <div class="scanner-field pipeline-search"><label for="pipelineSearch">Pesquisar</label><input id="pipelineSearch" type="search" placeholder="Empresa, MCI, proposta, produto…"></div>
+          <div class="scanner-field"><label for="pipelineStage">Fase</label><select id="pipelineStage"><option value="">Todas as fases</option></select></div>
+          <div class="scanner-field"><label for="pipelineResponsible">Responsável</label><select id="pipelineResponsible"><option value="">Todos os responsáveis</option></select></div>
+          <button id="clearPipelineFilters" class="button scanner-button-quiet" type="button">Limpar filtros</button>
+        </div>
+        <div id="columnView" class="pipeline-column-view"><div class="scanner-table pipeline-table"><table><thead><tr><th>Proposta</th><th>Cliente</th><th>MCI</th><th>Tipo</th><th>Valor</th><th>Fase</th><th>Responsável</th><th>Entrada</th><th>Prazo</th><th><span class="sr-only">Ações</span></th></tr></thead><tbody id="pipelineTableBody"></tbody></table></div></div>
+        <div id="kanbanView" class="pipeline-kanban" hidden></div>
+      </section>
+      <p class="pipeline-caveat">Operações importadas preservam a fase original. Nos novos cadastros, as opções de fase e responsável são definidas em “Configurar cadastro”.</p>
+    </div>
+  </main>
+  <dialog id="operationDialog" class="pipeline-dialog">
+    <form id="operationForm" class="pipeline-dialog__card">
+      <div class="pipeline-dialog__head"><div><p class="scanner-kicker">CADASTRO OPERACIONAL</p><h2 id="operationDialogTitle">Nova operação</h2><p>Preencha os campos configurados para incluir a operação nas duas visões.</p></div><button class="pipeline-dialog__close" type="button" data-close-dialog="operationDialog" aria-label="Fechar">×</button></div>
+      <div id="operationFields" class="pipeline-operation-fields"></div>
+      <p id="operationMessage" class="pipeline-form-message" role="status" aria-live="polite"></p>
+      <div class="pipeline-dialog__actions"><button class="button scanner-button-quiet" type="button" data-close-dialog="operationDialog">Cancelar</button><button class="button button--primary" type="submit">Salvar operação</button></div>
+    </form>
+  </dialog>
+  <dialog id="settingsDialog" class="pipeline-dialog pipeline-dialog--wide">
+    <form id="settingsForm" class="pipeline-dialog__card">
+      <div class="pipeline-dialog__head"><div><p class="scanner-kicker">PERSONALIZAÇÃO</p><h2>Configurar tela de cadastro</h2><p>Escolha os campos exibidos, a obrigatoriedade e as opções usadas no formulário.</p></div><button class="pipeline-dialog__close" type="button" data-close-dialog="settingsDialog" aria-label="Fechar">×</button></div>
+      <section class="pipeline-settings-section"><div class="pipeline-settings-heading"><div><h3>Categorias, tipos e fases</h3><span>Cada categoria monta seu próprio formulário e fluxo.</span></div></div><div class="pipeline-inline-builder"><input id="newCategoryName" placeholder="Nova categoria, ex.: Garantias"><button id="addPipelineCategory" class="button scanner-button-quiet" type="button">Adicionar categoria</button></div><div id="categoryConfigList" class="pipeline-category-config"></div></section>
+      <section class="pipeline-settings-section"><div class="pipeline-settings-heading"><div><h3>Novo campo condicional</h3><span>O campo pode valer para a categoria inteira ou somente para um tipo.</span></div></div><div class="pipeline-custom-field-builder"><label>Nome do campo<input id="newFieldLabel" placeholder="Ex.: Finalidade do investimento"></label><label>Categoria<select id="newFieldCategory"></select></label><label>Aplicar ao tipo<select id="newFieldType"><option value="">Todos os tipos</option></select></label><label>Formato<select id="newFieldInputType"><option value="text">Texto</option><option value="number">Número</option><option value="date">Data</option><option value="select">Lista de opções</option><option value="textarea">Texto longo</option></select></label><label id="newFieldOptionsWrap" data-wide="true" hidden>Opções da lista<span>Uma opção por linha</span><textarea id="newFieldOptions" rows="3"></textarea></label><label class="pipeline-required-option"><input id="newFieldRequired" type="checkbox"> Campo obrigatório</label><button id="addPipelineField" class="button button--primary" type="button">Adicionar campo</button></div><div id="customFieldList" class="pipeline-custom-field-list"></div></section>
+      <section class="pipeline-settings-grid pipeline-settings-grid--single"><label>Responsáveis disponíveis<span>Um nome por linha</span><textarea id="settingsResponsibles" rows="5" placeholder="Ex.: Ana Silva"></textarea></label></section>
+      <p id="settingsMessage" class="pipeline-form-message" role="status" aria-live="polite"></p>
+      <div class="pipeline-dialog__actions pipeline-dialog__actions--spread"><button id="restorePipelineSettings" class="button scanner-button-quiet" type="button">Restaurar estrutura inicial</button><div><button class="button scanner-button-quiet" type="button" data-close-dialog="settingsDialog">Cancelar</button><button class="button button--primary" type="submit">Salvar configuração</button></div></div>
+    </form>
+  </dialog>
+  <footer class="footer"><div class="shell"><span>Central Empresas · Pipeline</span><span class="footer-credit">Dados salvos neste navegador</span><span>Uso interno</span></div></footer>
+</body>
+</html>

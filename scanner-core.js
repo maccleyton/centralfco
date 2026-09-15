@@ -156,7 +156,92 @@
     } catch (_) {}
     return false;
   }
-  const api = Object.freeze({ REQUIRED, parseCsv, money, date, classify, validate, matches, filterNumber });
+
+  function measure(value) {
+    if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+    let text = String(value ?? '').trim();
+    if (!text) return null;
+    const percentage = text.endsWith('%');
+    if (percentage) text = text.slice(0, -1).trim();
+    text = text.replace(/^R\$\s*/, '').replace(/\s/g, '');
+    const negative = /^-/.test(text); text = text.replace(/^[+-]/, '');
+    if (/^\d{1,3}(,\d{3})+(\.\d+)?$/.test(text)) text = text.replace(/,/g, '');
+    else if (/^\d{1,3}(\.\d{3})+(,\d+)?$/.test(text)) text = text.replace(/\./g, '').replace(',', '.');
+    else if (/^\d+,\d+$/.test(text)) text = text.replace(',', '.');
+    if (!/^\d+(\.\d+)?$/.test(text)) return null;
+    const result = Number(text) * (negative ? -1 : 1) / (percentage ? 100 : 1);
+    return Number.isFinite(result) ? result : null;
+  }
+
+  function flag(value) {
+    if (typeof value === 'boolean') return value;
+    if (typeof value === 'number') return value === 1 ? true : value === 0 ? false : null;
+    const text = String(value ?? '').trim().toLocaleLowerCase('pt-BR');
+    if (['sim', 's', 'yes', 'true', '1', 'x'].includes(text)) return true;
+    if (['não', 'nao', 'n', 'no', 'false', '0'].includes(text)) return false;
+    return null;
+  }
+
+  function analyzeOpportunities(rows, mappings, settings = {}) {
+    const map = mappings || {};
+    const config = {
+      minRevenue: measure(settings.minRevenue) ?? 0,
+      maxCreditLimit: measure(settings.maxCreditLimit) ?? 0,
+      maxPix: measure(settings.maxPix) ?? 0,
+      minConsortiumRevenue: measure(settings.minConsortiumRevenue) ?? (measure(settings.minRevenue) ?? 0),
+      weights: {
+        credit: measure(settings.weights?.credit) ?? 40,
+        pix: measure(settings.weights?.pix) ?? 25,
+        insurance: measure(settings.weights?.insurance) ?? 20,
+        consortium: measure(settings.weights?.consortium) ?? 15
+      }
+    };
+    const definitions = [
+      { key: 'credit', label: 'Potencial de crédito', needs: ['revenue', 'creditLimit'] },
+      { key: 'pix', label: 'Captura de fluxo PIX', needs: ['revenue', 'pixVolume'] },
+      { key: 'insurance', label: 'Oportunidade de seguros', needs: ['hasCredit', 'hasInsurance'] },
+      { key: 'consortium', label: 'Oportunidade de consórcio', needs: ['revenue', 'hasConsortium'] }
+    ];
+    const rules = definitions.map(rule => {
+      const missing = rule.needs.filter(field => !map[field]);
+      return { ...rule, enabled: !missing.length, missing };
+    });
+    const value = (row, field) => map[field] ? row[map[field]] : null;
+    const results = rows.map((row, index) => {
+      const revenue = measure(value(row, 'revenue'));
+      const creditLimit = measure(value(row, 'creditLimit'));
+      const pixVolume = measure(value(row, 'pixVolume'));
+      const hasCredit = flag(value(row, 'hasCredit'));
+      const hasInsurance = flag(value(row, 'hasInsurance'));
+      const hasConsortium = flag(value(row, 'hasConsortium'));
+      const opportunities = [];
+      if (rules[0].enabled && revenue != null && creditLimit != null && revenue > config.minRevenue && creditLimit <= config.maxCreditLimit) {
+        opportunities.push({ key: 'credit', label: rules[0].label, weight: config.weights.credit, evidence: `faturamento ${revenue} > ${config.minRevenue}; limite ${creditLimit} ≤ ${config.maxCreditLimit}` });
+      }
+      if (rules[1].enabled && revenue != null && pixVolume != null && revenue > config.minRevenue && pixVolume <= config.maxPix) {
+        opportunities.push({ key: 'pix', label: rules[1].label, weight: config.weights.pix, evidence: `faturamento ${revenue} > ${config.minRevenue}; PIX ${pixVolume} ≤ ${config.maxPix}` });
+      }
+      if (rules[2].enabled && hasCredit === true && hasInsurance === false) {
+        opportunities.push({ key: 'insurance', label: rules[2].label, weight: config.weights.insurance, evidence: 'crédito informado como sim; seguro informado como não' });
+      }
+      if (rules[3].enabled && revenue != null && hasConsortium === false && revenue > config.minConsortiumRevenue) {
+        opportunities.push({ key: 'consortium', label: rules[3].label, weight: config.weights.consortium, evidence: `faturamento ${revenue} > ${config.minConsortiumRevenue}; consórcio informado como não` });
+      }
+      return {
+        sourceIndex: index,
+        source: row,
+        mci: String(value(row, 'mci') ?? '').trim(),
+        client: String(value(row, 'client') ?? value(row, 'mci') ?? `Registro ${index + 1}`).trim(),
+        portfolio: String(value(row, 'portfolio') ?? '').trim(),
+        revenue,
+        opportunities,
+        score: opportunities.reduce((sum, item) => sum + item.weight, 0)
+      };
+    }).filter(record => record.opportunities.length)
+      .sort((a, b) => b.score - a.score || (b.revenue ?? -Infinity) - (a.revenue ?? -Infinity) || a.sourceIndex - b.sourceIndex);
+    return { config, rules, records: results };
+  }
+  const api = Object.freeze({ REQUIRED, parseCsv, money, date, classify, validate, matches, filterNumber, measure, flag, analyzeOpportunities });
   root.CentralScanner = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
