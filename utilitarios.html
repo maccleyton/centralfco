@@ -5,19 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Ferramentas de apoio da Central Empresas.">
   <title>Central Empresas | Utilitários</title>
-  <link rel="stylesheet" href="styles.css?v=17">
-  <link rel="stylesheet" href="relatorios.css?v=14">
+  <link rel="stylesheet" href="styles.css?v=21">
+  <link rel="stylesheet" href="relatorios.css?v=15">
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script defer src="agencies.js?v=3"></script>
   <script defer src="central-data.js?v=1"></script>
-  <script defer src="cnpj-api.js?v=3"></script>
-  <script defer src="document-core.js?v=2"></script>
+  <script defer src="cnpj-api.js?v=4"></script>
+  <script defer src="public-data-api.js?v=1"></script>
+  <script defer src="document-core.js?v=4"></script>
   <script defer src="relatorios-ferramentas.js?v=4"></script>
-  <script defer src="faturamento.js?v=12"></script>
+  <script defer src="faturamento.js?v=13"></script>
   <script defer src="correios-logo-data.js?v=1"></script>
-  <script defer src="correios.js?v=7"></script>
-  <script defer src="footer.js?v=1"></script>
+  <script defer src="correios.js?v=8"></script>
+  <script defer src="public-data-tools.js?v=2"></script>
+  <script defer src="footer.js?v=2"></script>
 </head>
 <body class="reports-body">
   <header class="topbar">
@@ -39,6 +41,7 @@
         <a href="#billingPanel" data-open-tool="billingPanel"><strong>02</strong><span>Gerador de Faturamento</span></a>
         <a href="#companyLookupPanel" data-open-tool="companyLookupPanel"><strong>03</strong><span>Consulta CNPJ</span></a>
         <a href="#correiosPanel" data-open-tool="correiosPanel"><strong>04</strong><span>AR e Etiqueta</span></a>
+        <a href="#publicDataPanel" data-open-tool="publicDataPanel"><strong>05</strong><span>CEP, municípios e SIDRA</span></a>
       </nav>
     </section>
 
@@ -65,9 +68,22 @@
           <div class="document-card__content"><span class="document-card__type">CORRESPONDÊNCIA</span><h3>AR e Etiqueta dos Correios</h3><p>Consulte o destinatário pelo CNPJ e gere o aviso de recebimento e a etiqueta com os dados da agência remetente.</p><div class="document-note"><strong>Preenchimento automático:</strong> remetente pela agência da sessão e destinatário pela consulta cadastral.</div></div>
           <div class="document-card__actions"><button class="report-button report-button--primary" type="button" data-open-tool="correiosPanel">Abrir gerador <span aria-hidden="true">↓</span></button></div>
         </article>
+        <article class="document-card">
+          <div class="document-card__icon" aria-hidden="true">IBGE</div>
+          <div class="document-card__content"><span class="document-card__type">DADOS PÚBLICOS</span><h3>CEP, municípios e SIDRA</h3><p>Consulte endereços, códigos municipais e a estimativa populacional mais recente publicada.</p><div class="document-note"><strong>Fontes:</strong> ViaCEP e APIs oficiais de Localidades e SIDRA do IBGE.</div></div>
+          <div class="document-card__actions"><button class="report-button report-button--primary" type="button" data-open-tool="publicDataPanel">Abrir consultas <span aria-hidden="true">↓</span></button></div>
+        </article>
       </div>
 
       <div class="form-builders">
+        <section id="publicDataPanel" class="report-form-card utility-panel" hidden>
+          <div class="report-form-card__head"><div class="report-form-card__badge">IBGE</div><div><span class="report-kicker">APIS PÚBLICAS</span><h3>CEP e informações municipais</h3><p>Consultas diretas no navegador, sem conta ou chave de acesso.</p></div></div>
+          <div class="tools-grid public-data-grid">
+            <article class="tool-card public-query-card"><div class="public-query-heading"><span>01</span><div><small>ENDEREÇO</small><h4>Consultar CEP</h4></div></div><form id="publicCepForm" class="tool-form public-query-form"><div class="field"><label for="publicCep">CEP</label><input id="publicCep" inputmode="numeric" maxlength="9" placeholder="00000-000" required></div><button id="publicCepButton" class="button button--primary public-query-action" type="submit">Consultar ViaCEP</button></form></article>
+            <article class="tool-card public-query-card"><div class="public-query-heading"><span>02</span><div><small>INDICADOR MUNICIPAL</small><h4>Município e população estimada</h4></div></div><div class="tool-form public-query-form"><div class="field"><label for="publicState">UF</label><select id="publicState" disabled><option value="">Carregando estados...</option></select></div><div class="field"><label for="publicMunicipality">Município</label><select id="publicMunicipality" disabled><option value="">Selecione a UF</option></select></div><button id="publicPopulation" class="button button--primary public-query-action" type="button" disabled>Consultar SIDRA</button></div><div id="publicDataMessage" class="public-query-message" role="status" aria-live="polite"></div></article>
+            <div class="public-results-board"><div id="publicCepResult" class="public-result" role="status" aria-live="polite" hidden></div><div id="publicPopulationResult" class="public-result" role="status" aria-live="polite" hidden></div></div>
+          </div>
+        </section>
         <section id="pdfCompressorPanel" class="report-form-card utility-panel" hidden>
           <div class="report-form-card__head"><div class="report-form-card__badge report-form-card__badge--yellow">PDF</div><div><span class="report-kicker">PROCESSAMENTO LOCAL</span><h3>Compactador de PDF</h3><p>Escolha o arquivo e o nível de compressão. Nada é enviado para um servidor.</p></div></div>
           <article class="tool-card">

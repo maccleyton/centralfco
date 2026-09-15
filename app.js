@@ -25,11 +25,14 @@ const guaranteesList = $('#guaranteesList');
 const automaticGuaranteesList = $('#automaticGuaranteesList');
 const formMessage = $('#formMessage');
 const btnGenerate = $('#btnGenerate');
+const individualDownloadList = $('#individualDownloadList');
+const individualDownloadStatus = $('#individualDownloadStatus');
 const personMessage = $('#personMessage');
 const guaranteeMessage = $('#guaranteeMessage');
 const loginMessage = $('#loginMessage');
 const lowercaseNameWords = new Set(['da', 'do', 'das', 'dos', 'de', 'com']);
 const sessionKey = 'centralFcoSessionV1';
+const MAX_ASSOCIATED_WORKING_CAPITAL_RATE = 0.30;
 
 function formatPersonName(value) {
   return String(value || '').trim().replace(/\s+/g, ' ').toLocaleLowerCase('pt-BR').split(' ').map(word => {
@@ -145,6 +148,7 @@ cnpjInput.addEventListener('input', event => {
   if (state.empresa && cleanDocument(event.target.value) !== state.empresa.cnpj) {
     state.empresa = null;
     companyCard.hidden = true;
+    syncIndividualDownloads();
   }
   clearMessage(companyMessage);
   resetManualCompanyFlow();
@@ -183,7 +187,7 @@ $('#carencia').addEventListener('input', () => validateTermInputs(true));
 $('#loginAgency').addEventListener('change', event => consultAgency(event.target.value));
 $$('.money-input:not([readonly])').forEach(input => input.addEventListener('input', event => {
   event.target.value = formatMoneyInput(event.target.value);
-  calculateOwnResources();
+  updateFinancingValues({ showLimitMessage: event.target.id === 'valorGiro' || event.target.id === 'valorOrcamento' });
 }));
 $('#personCpf').addEventListener('input', event => { event.target.value = formatCpf(event.target.value); clearMessage(personMessage); });
 $('#spouseCpf').addEventListener('input', event => { event.target.value = formatCpf(event.target.value); clearMessage(personMessage); });
@@ -197,6 +201,7 @@ $('#guaranteeCnpj').addEventListener('input', event => { event.target.value = fo
 $('#giroAssociado').addEventListener('change', syncConditionalFields);
 $('#situacaoFundos').addEventListener('change', syncConditionalFields);
 form.addEventListener('submit', generateReports);
+individualDownloadList.addEventListener('click', downloadIndividualReport);
 
 peopleList.addEventListener('click', event => {
   const button = event.target.closest('[data-action="remove-person"]');
@@ -342,13 +347,40 @@ async function enterApplication(event) {
   window.scrollTo({ top: 0, behavior: 'instant' });
 }
 
-function calculateOwnResources() {
+function updateFinancingValues({ showLimitMessage = false } = {}) {
   const budget = moneyValue($('#valorOrcamento').value);
-  const financedBase = moneyValue($('#valorFinanciado').value);
-  const associatedWorkingCapital = $('#giroAssociado').checked ? moneyValue($('#valorGiro').value) : 0;
+  const ownResourcesInput = $('#recursosProprios');
+  const ownResources = moneyValue(ownResourcesInput.value);
+  const workingCapitalInput = $('#valorGiro');
+  const workingCapitalHint = $('#valorGiroHint');
+  const includesWorkingCapital = $('#giroAssociado').checked;
+  const workingCapitalLimit = Math.round(budget * MAX_ASSOCIATED_WORKING_CAPITAL_RATE * 100) / 100;
+  let associatedWorkingCapital = includesWorkingCapital ? moneyValue(workingCapitalInput.value) : 0;
+  const exceededWorkingCapitalLimit = associatedWorkingCapital > workingCapitalLimit;
+
+  if (exceededWorkingCapitalLimit) {
+    associatedWorkingCapital = workingCapitalLimit;
+    workingCapitalInput.value = formatMoneyValue(workingCapitalLimit);
+  }
+
+  const ownResourcesExceedBudget = ownResources > budget;
+  ownResourcesInput.setCustomValidity(ownResourcesExceedBudget ? 'Os recursos próprios não podem superar o valor do orçamento.' : '');
+  $('#recursosPropriosHint').textContent = ownResourcesExceedBudget
+    ? 'Os recursos próprios não podem superar o valor do orçamento.'
+    : 'Informe a contrapartida com recursos próprios.';
+  $('#recursosPropriosHint').classList.toggle('field-error', ownResourcesExceedBudget);
+
+  const financedBase = Math.max(0, budget - ownResources);
   const totalFinanced = financedBase + associatedWorkingCapital;
-  $('#recursosProprios').value = formatMoneyValue(Math.max(0, budget - totalFinanced));
-  $('#totalFinanciadoHint').textContent = `Total financiado: R$ ${formatMoneyValue(totalFinanced)}.`;
+  $('#valorFinanciado').value = formatMoneyValue(totalFinanced);
+  $('#totalFinanciadoHint').textContent = `Cálculo: R$ ${formatMoneyValue(budget)} − R$ ${formatMoneyValue(ownResources)} + R$ ${formatMoneyValue(associatedWorkingCapital)} = R$ ${formatMoneyValue(totalFinanced)}.`;
+
+  if (workingCapitalHint) {
+    workingCapitalHint.textContent = exceededWorkingCapitalLimit && showLimitMessage
+      ? `Valor limitado automaticamente a R$ ${formatMoneyValue(workingCapitalLimit)} (30% do orçamento).`
+      : `Limite disponível: R$ ${formatMoneyValue(workingCapitalLimit)} (30% do orçamento).`;
+    workingCapitalHint.classList.toggle('field-error', exceededWorkingCapitalLimit && showLimitMessage);
+  }
 }
 
 async function consultCompany() {
@@ -495,6 +527,15 @@ function renderCompany() {
   $('#companyStatus').textContent = company.situacao || 'Consultado';
   $('#companyStatus').className = company.preenchimentoManual ? 'badge' : 'badge badge--success';
   companyCard.hidden = false;
+  syncIndividualDownloads();
+}
+
+function syncIndividualDownloads() {
+  const includeSimples = state.empresa?.simplesOptante === true;
+  const simplesButton = $('#simplesDownload');
+  if (simplesButton) simplesButton.hidden = !includeSimples;
+  const proposalNumber = individualDownloadList?.querySelector('[data-document-role="proposal"] [data-download-number]');
+  if (proposalNumber) proposalNumber.textContent = includeSimples ? '08' : '07';
 }
 
 async function loadAgencies() {
@@ -864,7 +905,8 @@ function syncConditionalFields() {
     $$('[name="modalidades"]').forEach(input => { input.checked = false; });
   }
   $('#valorGiroField').hidden = !$('#giroAssociado').checked;
-  calculateOwnResources();
+  $('#valorGiro').required = $('#giroAssociado').checked;
+  updateFinancingValues({ showLimitMessage: true });
   $('#fundsGroup').hidden = $('#situacaoFundos').value !== 'beneficiaria';
   syncTermRules();
 }
@@ -872,9 +914,10 @@ function syncConditionalFields() {
 function collectStaticData() {
   const data = new FormData(form);
   const valorOrcamento = moneyValue(data.get('valorOrcamento'));
-  const valorFinanciadoBase = moneyValue(data.get('valorFinanciado'));
+  const recursosProprios = moneyValue(data.get('recursosProprios'));
   const giroAssociado = data.get('giroAssociado') === 'on';
   const valorGiroAssociado = giroAssociado ? moneyValue(data.get('valorGiro')) : 0;
+  const valorFinanciadoBase = Math.max(0, valorOrcamento - recursosProprios);
   const valorFinanciado = valorFinanciadoBase + valorGiroAssociado;
   return {
     empresa: state.empresa,
@@ -885,7 +928,7 @@ function collectStaticData() {
       finalidade: data.get('finalidade'), modalidades: data.getAll('modalidades'), finalidadesGiro: data.getAll('finalidadesGiro'), fcoMulher: data.get('fcoMulher') === 'on',
       descricao: data.get('descricaoFinalidade'), localEmpreendimento: data.get('localEmpreendimento'),
       valorOrcamento, valorFinanciadoBase, valorFinanciado,
-      recursosProprios: Math.max(0, valorOrcamento - valorFinanciado), prazoTotalMeses: numberValue(data.get('prazoTotal')),
+      recursosProprios, prazoTotalMeses: numberValue(data.get('prazoTotal')),
       carenciaMeses: numberValue(data.get('carencia')), giroAssociado,
       valorGiroAssociado, agenciaDebito: data.get('agenciaDebito'), contaDebito: data.get('contaDebito'),
       outrasInformacoes: data.get('outrasInformacoes'), itens: [],
@@ -922,9 +965,11 @@ function validatePayload(payload) {
   if (!payload.operacao.finalidade.trim()) errors.push('Informe a finalidade.');
   if (!payload.operacao.descricao.trim()) errors.push('Informe a descrição.');
   if (payload.operacao.valorOrcamento <= 0) errors.push('Informe o valor do orçamento.');
+  if (payload.operacao.recursosProprios > payload.operacao.valorOrcamento) errors.push('Os recursos próprios não podem superar o valor do orçamento.');
   if (payload.operacao.valorFinanciado <= 0) errors.push('Informe o valor a financiar.');
   if (payload.operacao.giroAssociado && payload.operacao.valorGiroAssociado <= 0) errors.push('Informe o valor do giro associado.');
-  if (payload.operacao.valorFinanciado > payload.operacao.valorOrcamento) errors.push('O valor a financiar não pode superar o valor do orçamento.');
+  const maxAssociatedWorkingCapital = Math.round(payload.operacao.valorOrcamento * MAX_ASSOCIATED_WORKING_CAPITAL_RATE * 100) / 100;
+  if (payload.operacao.valorGiroAssociado > maxAssociatedWorkingCapital) errors.push('O giro associado não pode superar 30% do valor do orçamento.');
   if (payload.operacao.prazoTotalMeses <= 0) errors.push('Informe o prazo total.');
   errors.push(...termRuleErrors(payload.operacao));
   if (!validBankReference(payload.operacao.agenciaDebito, 4)) errors.push('Informe a agência para débito no formato XXXX-X.');
@@ -953,6 +998,45 @@ function validatePayload(payload) {
   });
   if (payload.declaracoes.situacaoFundos === 'beneficiaria' && !payload.declaracoes.fundos.length) errors.push('Selecione ao menos um fundo beneficiário.');
   return [...new Set(errors)];
+}
+
+async function downloadIndividualReport(event) {
+  const button = event.target.closest('.individual-download');
+  if (!button || button.hidden) return;
+  clearMessage(formMessage);
+  individualDownloadStatus.textContent = '';
+  individualDownloadStatus.className = 'individual-download-status';
+  const payload = collectStaticData();
+  const errors = validatePayload(payload);
+  if (errors.length) {
+    showMessage(formMessage, errors.join(' '), 'error');
+    formMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+  const title = button.dataset.documentRole === 'proposal'
+    ? (payload.operacao.tipo === 'investimento'
+      ? 'PROPOSTA DE FINANCIAMENTO – FCO INVESTIMENTO'
+      : 'PROPOSTA DE FINANCIAMENTO – FCO CAPITAL DE GIRO DISSOCIADO')
+    : button.dataset.documentTitle;
+  const buttons = [...individualDownloadList.querySelectorAll('button')];
+  buttons.forEach(item => { item.disabled = true; });
+  const action = button.querySelector('em');
+  const previousAction = action.textContent;
+  action.textContent = 'Preparando…';
+  individualDownloadStatus.textContent = `Preparando ${title}…`;
+  try {
+    const dossier = await window.FCOReports.renderDossier(payload);
+    await window.CentralDocuments.downloadDocumentFromHtml(dossier, title);
+    individualDownloadStatus.textContent = `${title} baixado em PDF.`;
+    individualDownloadStatus.classList.add('is-success');
+  } catch (error) {
+    console.error(error);
+    individualDownloadStatus.textContent = error.message || `Não foi possível baixar ${title}. Tente novamente.`;
+    individualDownloadStatus.classList.add('is-error');
+  } finally {
+    action.textContent = previousAction;
+    buttons.forEach(item => { item.disabled = false; });
+  }
 }
 
 async function generateReports(event) {

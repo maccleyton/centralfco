@@ -285,22 +285,12 @@ async function fetchBillingIndex(reference, code) {
   const startText = `${String(start.getDate()).padStart(2, '0')}/${String(start.getMonth() + 1).padStart(2, '0')}/${start.getFullYear()}`;
   const endText = `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
   const officialUrl = `https://api.bcb.gov.br/dados/serie/bcdata.sgs.${code}/dados?formato=json&dataInicial=${encodeURIComponent(startText)}&dataFinal=${encodeURIComponent(endText)}`;
-  const proxyUrl = `/api/sgs?code=${code}&start=${encodeURIComponent(startText)}&end=${encodeURIComponent(endText)}`;
-  let data = null;
-  let lastError = null;
-  for (const url of [proxyUrl, officialUrl]) {
-    try {
-      const response = await fetch(url, { headers: { Accept: 'application/json' } });
-      if (!response.ok) throw new Error(`resposta ${response.status}`);
-      const contentType = response.headers.get('content-type') || '';
-      if (!contentType.includes('json')) throw new Error('resposta não estruturada');
-      const candidate = await response.json();
-      if (!Array.isArray(candidate)) throw new Error('formato inesperado');
-      data = candidate;
-      break;
-    } catch (error) { lastError = error; }
-  }
-  if (!data) throw new Error(`A fonte oficial não respondeu (${lastError?.message || 'falha de conexão'}).`);
+  const response = await fetch(officialUrl, { headers: { Accept: 'application/json' } });
+  if (!response.ok) throw new Error(`A fonte oficial não respondeu (resposta ${response.status}).`);
+  const contentType = response.headers.get('content-type') || '';
+  if (!contentType.includes('json')) throw new Error('A fonte oficial retornou uma resposta não estruturada.');
+  const data = await response.json();
+  if (!Array.isArray(data)) throw new Error('A fonte oficial retornou um formato inesperado.');
   const referenceKey = monthKey(ref);
   return (Array.isArray(data) ? data : []).map(item => {
     const match = String(item.data || '').match(/^(\d{2})\/(\d{2})\/(\d{4})$/);

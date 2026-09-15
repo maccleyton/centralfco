@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="description" content="Editor modular de documentos oficiais da Central Empresas.">
   <title>Redação e Automação | Central Empresas</title>
-  <link rel="stylesheet" href="styles.css?v=19">
-  <link rel="stylesheet" href="redacao.css?v=3">
+  <link rel="stylesheet" href="styles.css?v=21">
+  <link rel="stylesheet" href="redacao.css?v=4">
   <script defer src="central-data.js?v=1"></script>
   <script defer src="cnpj-api.js?v=4"></script>
-  <script defer src="document-core.js?v=2"></script>
-  <script defer src="redacao.js?v=4"></script>
-  <script defer src="footer.js?v=1"></script>
+  <script defer src="document-core.js?v=4"></script>
+  <script defer src="redacao.js?v=6"></script>
+  <script defer src="footer.js?v=2"></script>
 </head>
 <body class="writing-body">
   <header class="topbar">
@@ -104,10 +104,10 @@
     </section>
 
     <section id="integracoes" class="writing-section" aria-labelledby="integrationsTitle">
-      <div class="writing-section__heading"><span class="section-number">02</span><div><span class="writing-kicker">ARQUITETURA FUTURA</span><h2 id="integrationsTitle">Mapa de integrações</h2><p>Catálogo de possibilidades levantadas na documentação, sem confundir ideia com recurso já implantado.</p></div></div>
-      <div class="integration-legend"><span><i class="status-dot status-dot--ready"></i>Pública, adequada ao navegador</span><span><i class="status-dot status-dot--protected"></i>Exige serviço protegido</span><span><i class="status-dot status-dot--study"></i>Precisa de estudo ou convênio</span></div>
+      <div class="writing-section__heading"><span class="section-number">02</span><div><span class="writing-kicker">FRONTEND AUTÔNOMO</span><h2 id="integrationsTitle">Integrações compatíveis com o navegador</h2><p>Somente fontes públicas e sem chave privada fazem parte do mapa de evolução da Central.</p></div></div>
+      <div class="integration-legend"><span><i class="status-dot status-dot--ready"></i>Ativa no navegador</span><span><i class="status-dot status-dot--study"></i>Planejada para o frontend</span></div>
       <div id="integrationGrid" class="integration-grid"></div>
-      <p class="integration-note"><strong>Regra de segurança:</strong> chaves privadas, serviços pagos e dados autorizados do cliente nunca devem ficar gravados no código do navegador.</p>
+      <p class="integration-note"><strong>Arquitetura:</strong> a aplicação não exige backend. Serviços com chave privada, contratação, convênio ou dados autorizados ficam fora do escopo.</p>
     </section>
   </main>
 

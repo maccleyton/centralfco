@@ -5,14 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Central integrada para propostas empresariais, declarações e utilitários.">
   <title>Central Empresas</title>
-  <link rel="stylesheet" href="styles.css?v=20">
+  <link rel="stylesheet" href="styles.css?v=21">
   <script defer src="agencies.js?v=3"></script>
   <script defer src="central-data.js?v=1"></script>
-  <script defer src="document-core.js?v=2"></script>
-  <script defer src="reports.js?v=20"></script>
-  <script defer src="cnpj-api.js?v=3"></script>
-  <script defer src="app.js?v=24"></script>
-  <script defer src="footer.js?v=1"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script defer src="document-core.js?v=4"></script>
+  <script defer src="reports.js?v=22"></script>
+  <script defer src="cnpj-api.js?v=4"></script>
+  <script defer src="app.js?v=26"></script>
+  <script defer src="footer.js?v=2"></script>
 </head>
 <body>
   <main id="loginScreen" class="login-screen">
@@ -134,8 +136,7 @@
 
         <section id="manualCompanyPrompt" class="manual-company-prompt" role="alert" aria-labelledby="manualCompanyPromptTitle" hidden>
           <h3 id="manualCompanyPromptTitle">⚠️ Não foi possível consultar os dados.</h3>
-          <p><strong>Possível causa:</strong><br>Perfil sem o papel: <strong>BLOGS (GMWG04A)</strong>.</p>
-          <p>Caso o acesso tenha sido liberado hoje, a disponibilização ocorre normalmente em D+1.</p>
+          <p>A fonte pública pode estar temporariamente indisponível ou a conexão do navegador pode ter sido bloqueada.</p>
           <p><strong>Deseja preencher os dados manualmente?</strong></p>
           <div class="manual-company-actions">
             <button id="btnManualCompanyYes" class="button button--primary button--small" type="button">SIM</button>
@@ -266,14 +267,14 @@
             <div class="input-prefix"><span>R$</span><input id="valorOrcamento" name="valorOrcamento" class="money-input" type="text" inputmode="numeric" autocomplete="off" placeholder="0,00" required></div>
           </div>
           <div class="field">
-            <label for="valorFinanciado">Valor a financiar, sem giro</label>
-            <div class="input-prefix"><span>R$</span><input id="valorFinanciado" name="valorFinanciado" class="money-input" type="text" inputmode="numeric" autocomplete="off" placeholder="0,00" required></div>
-            <small id="totalFinanciadoHint">Total financiado: R$ 0,00.</small>
+            <label for="recursosProprios">Recursos próprios</label>
+            <div class="input-prefix"><span>R$</span><input id="recursosProprios" name="recursosProprios" class="money-input" type="text" inputmode="numeric" autocomplete="off" value="0,00" required></div>
+            <small id="recursosPropriosHint" aria-live="polite">Informe a contrapartida com recursos próprios.</small>
           </div>
           <div class="field">
-            <label for="recursosProprios">Recursos próprios</label>
-            <div class="input-prefix"><span>R$</span><input id="recursosProprios" class="money-input" type="text" value="0,00" readonly></div>
-            <small>Calculado automaticamente: orçamento menos o total financiado.</small>
+            <label for="valorFinanciado">Valor a financiar</label>
+            <div class="input-prefix"><span>R$</span><input id="valorFinanciado" name="valorFinanciado" class="money-input" type="text" value="0,00" readonly></div>
+            <small id="totalFinanciadoHint" aria-live="polite">Calculado automaticamente: orçamento − recursos próprios + giro associado.</small>
           </div>
           <div class="field">
             <label for="prazoTotal">Prazo total</label>
@@ -291,6 +292,7 @@
           <div id="valorGiroField" class="field" hidden>
             <label for="valorGiro">Valor do giro associado</label>
             <div class="input-prefix"><span>R$</span><input id="valorGiro" name="valorGiro" class="money-input" type="text" inputmode="numeric" autocomplete="off" value="0,00"></div>
+            <small id="valorGiroHint" aria-live="polite">Limite: 30% do valor do orçamento.</small>
           </div>
           <div class="field">
             <label for="agenciaDebito">Agência para débito</label>
@@ -449,6 +451,27 @@
           <span aria-hidden="true">↓</span>
           Gerar Relatórios
         </button>
+      </section>
+      <section class="individual-downloads" aria-labelledby="individualDownloadsTitle">
+        <div class="individual-downloads__heading">
+          <div>
+            <span class="eyebrow">DOWNLOADS INDIVIDUAIS</span>
+            <h2 id="individualDownloadsTitle">Baixar cada formulário</h2>
+            <p>Baixe somente o documento necessário, já preenchido com os dados acima.</p>
+          </div>
+          <span class="badge">PDF A4</span>
+        </div>
+        <div id="individualDownloadList" class="individual-download-list">
+          <button class="individual-download" type="button" data-document-title="AUTORIZAÇÃO DE DÉBITO"><span>01</span><strong>Autorização de débito</strong><em>Baixar PDF</em></button>
+          <button class="individual-download" type="button" data-document-title="AUTORIZAÇÃO – LGPD/PRESTAÇÃO DE INFORMAÇÕES"><span>02</span><strong>Autorização – LGPD/prestação de informações</strong><em>Baixar PDF</em></button>
+          <button class="individual-download" type="button" data-document-title="DECLARAÇÃO DE CIÊNCIA SOBRE O ÊXITO DO PROJETO"><span>03</span><strong>Declaração de ciência sobre o êxito do projeto</strong><em>Baixar PDF</em></button>
+          <button class="individual-download" type="button" data-document-title="DECLARAÇÃO DE INEXISTÊNCIA DE OPERAÇÕES SIMILARES E AUSÊNCIA DE VÍNCULO"><span>04</span><strong>Declaração de inexistência de operações similares e ausência de vínculo</strong><em>Baixar PDF</em></button>
+          <button class="individual-download" type="button" data-document-title="DECLARAÇÃO DE INEXISTÊNCIA DE CONDENAÇÃO POR TRABALHO INFANTIL, TRABALHO ESCRAVO, CRIME CONTRA O MEIO AMBIENTE, ASSÉDIO MORAL OU SEXUAL, VIOLÊNCIA CONTRA A MULHER, OU RACIAL E DE ETNIA"><span>05</span><strong>Declaração de inexistência de condenação por trabalho infantil, trabalho escravo, crime contra o meio ambiente, assédio moral ou sexual, violência contra a mulher, ou racial e de etnia</strong><em>Baixar PDF</em></button>
+          <button class="individual-download" type="button" data-document-title="DECLARAÇÃO DE REGULARIDADE JUNTO À CVM E AOS FUNDOS"><span>06</span><strong>Declaração de regularidade junto à CVM e aos fundos</strong><em>Baixar PDF</em></button>
+          <button id="simplesDownload" class="individual-download" type="button" data-document-title="DECLARAÇÃO DE OPTANTE PELO SIMPLES NACIONAL" hidden><span>07</span><strong>Declaração de optante pelo Simples Nacional</strong><em>Baixar PDF</em></button>
+          <button class="individual-download" type="button" data-document-role="proposal"><span data-download-number>07</span><strong>Proposta de financiamento FCO</strong><em>Baixar PDF</em></button>
+        </div>
+        <p id="individualDownloadStatus" class="individual-download-status" role="status" aria-live="polite"></p>
       </section>
       <div id="formMessage" class="form-message" role="status" aria-live="polite"></div>
     </form>

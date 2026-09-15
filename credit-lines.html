@@ -5,13 +5,15 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="description" content="Catálogo versionado, triagem e cálculos documentados de crédito empresarial.">
   <title>Crédito Empresarial | Central Empresas</title>
-  <link rel="stylesheet" href="styles.css?v=18">
-  <link rel="stylesheet" href="credit-lines.css?v=1">
+  <link rel="stylesheet" href="styles.css?v=21">
+  <link rel="stylesheet" href="credit-lines.css?v=5">
   <script defer src="credit-catalog.js?v=2"></script>
-  <script defer src="credit-eligibility.js?v=1"></script>
-  <script defer src="financial-engine.js?v=1"></script>
-  <script defer src="credit-lines.js?v=2"></script>
-  <script defer src="footer.js?v=1"></script>
+  <script defer src="credit-rules.js?v=2"></script>
+  <script defer src="credit-eligibility.js?v=2"></script>
+  <script defer src="financial-engine.js?v=3"></script>
+  <script defer src="document-core.js?v=4"></script>
+  <script defer src="credit-lines.js?v=8"></script>
+  <script defer src="footer.js?v=2"></script>
 </head>
 <body>
   <header class="topbar">
@@ -22,6 +24,53 @@
     <section class="credit-hero"><div><span class="eyebrow">MAPA DE EVOLUÇÃO · CRÉDITO</span><h1>Linhas de crédito com fonte e versão.</h1><p>Consulte condições documentadas, faça uma triagem preliminar e use somente cálculos com fórmula conhecida.</p></div><div class="catalog-stamp"><strong id="catalogCount">—</strong><span>linhas catalogadas</span><small id="catalogVersion">Versão —</small></div></section>
 
     <section class="credit-notice" role="note"><strong>Consulta orientativa</strong><span>A aprovação e a precificação dependem das normas, limites e parâmetros vigentes. O sistema não presume taxas nem completa fórmulas ausentes.</span></section>
+
+    <section class="pj-simulator" aria-labelledby="simulatorTitle">
+      <div class="section-heading section-heading--action"><span class="section-number">01</span><div><h2 id="simulatorTitle">Simulador comparativo PJ</h2><p>Informe a operação, identifique linhas compatíveis e compare cenários SAC e Price.</p></div><button id="addScenario" class="button button--secondary" type="button">+ Adicionar cenário</button></div>
+      <form id="pjSimulatorForm">
+        <div class="simulator-operation">
+          <label>Valor do crédito (R$)<input id="simulationPrincipal" inputmode="decimal" placeholder="250.000,00" required></label>
+          <label>Faturamento bruto anual (R$)<input id="simulationRevenue" inputmode="decimal" placeholder="1.200.000,00" required></label>
+          <label>Prazo desejado (meses)<input id="simulationTerm" type="number" min="1" max="600" value="48" required></label>
+          <label>Carência desejada (meses)<input id="simulationGrace" type="number" min="0" max="120" value="6" required></label>
+          <label>Finalidade<select id="simulationPurpose"><option value="working_capital">Capital de giro</option><option value="investment">Investimento</option><option value="receivables">Antecipação de recebíveis</option><option value="other">Outra finalidade</option></select></label>
+          <label>Atividade<select id="simulationActivity"><option value="non_rural">Não rural</option><option value="rural">Rural</option></select></label>
+          <label class="simulator-check"><input id="simulationWomen" type="checkbox"><span>Empresa com mulher sócia-majoritária ou administradora</span></label>
+          <div class="selic-field"><span>Selic oficial</span><strong id="selicValue">Não consultada</strong><button id="loadSelic" class="quiet-credit-button" type="button">Atualizar pelo BCB</button><small id="selicMessage" role="status"></small></div>
+        </div>
+        <details class="simulation-library">
+          <summary>Simulações salvas neste navegador <span id="savedSimulationCount">(nenhuma)</span></summary>
+          <div class="simulation-library__grid">
+            <label>Nome da simulação<input id="simulationSaveName" maxlength="80" placeholder="Ex.: Capital de giro — Cliente ABC"></label>
+            <button id="saveSimulation" class="button button--secondary" type="button">Salvar simulação</button>
+            <label>Recuperar simulação<select id="savedSimulation"><option value="">Nenhuma simulação salva</option></select></label>
+            <button id="loadSimulation" class="button button--secondary" type="button" disabled>Carregar</button>
+          </div>
+          <p id="simulationStorageMessage" class="simulation-storage-message" role="status" aria-live="polite"></p>
+        </details>
+        <details class="exclusive-fields"><summary>Campos exigidos pelas linhas selecionadas <span id="specificFieldCount"></span></summary><div class="exclusive-fields__grid">
+          <label class="product-specific-field" data-products="procred-360">Constituição da empresa<input id="simulationEstablished" type="month"></label>
+          <label class="product-specific-field" data-products="procred-360 pronampe-atual peac-fgi giro-cashback">Habilitação Dicre<select id="simulationDicre"><option value="unknown">Não conferida</option><option value="yes">Sim</option><option value="no">Não</option></select></label>
+          <label class="product-specific-field" data-products="bndes-digital peac-fgi">FGI/PEAC disponível<select id="simulationFgi"><option value="unknown">Não conferido</option><option value="yes">Sim</option><option value="no">Não</option></select></label>
+          <label class="product-specific-field" data-products="fies-empreendedor">Elegibilidade FIES<select id="simulationFies"><option value="unknown">Não conferida</option><option value="yes">Sócio elegível e adimplente</option><option value="no">Não atende</option></select></label>
+          <label class="product-specific-field" data-products="bndes-giro">Risco do cliente BNDES<select id="simulationClientRisk"><option value="unknown">Não conferido</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="other">Outro</option></select></label>
+          <label class="product-specific-field" data-products="bndes-giro">Risco da operação BNDES<select id="simulationOperationRisk"><option value="unknown">Não conferido</option><option value="AA">AA</option><option value="A">A</option><option value="B">B</option><option value="other">Outro</option></select></label>
+          <label class="product-specific-field" data-products="peac-fgi">FBA mensal do ano anterior<select id="simulationFbaHistory"><option value="unknown">Não conferido</option><option value="yes">Completo de janeiro a dezembro</option><option value="no">Incompleto</option></select></label>
+          <label class="product-specific-field" data-products="peac-fgi">Regularidade com a Seguridade Social<select id="simulationSocialSecurity"><option value="unknown">Não conferida</option><option value="yes">Regular</option><option value="no">Irregular</option></select></label>
+          <label class="product-specific-field" data-products="peac-fgi">Atrasos superiores a 14 dias<select id="simulationNoOverdue"><option value="unknown">Não conferido</option><option value="yes">Não possui</option><option value="no">Possui</option></select></label>
+          <label class="product-specific-field" data-products="peac-fgi bndes-giro">Atividade/CNAE permitido<select id="simulationActivityAllowed"><option value="unknown">Não conferido</option><option value="yes">Permitido</option><option value="no">Vedado ou restrito</option></select></label>
+          <label class="product-specific-field" data-products="bndes-digital peac-fgi">Cobertura total das garantias (%)<input id="simulationGuaranteeCoverage" type="number" min="0" max="999" step="0.01" placeholder="100"></label>
+          <label class="product-specific-field" data-products="giro-cashback">Requisitos comerciais do cashback<select id="simulationCashbackEligible"><option value="unknown">Não conferidos</option><option value="yes">Todos confirmados</option><option value="no">Não atende</option></select></label>
+        </div></details>
+        <div class="compatibility-actions"><button id="identifyLines" class="button button--secondary" type="button">Identificar linhas compatíveis</button><span>Triagem local baseada somente nos limites encontrados nos documentos.</span></div>
+        <section id="compatibilityResults" class="compatibility-results" aria-live="polite" hidden></section>
+        <div class="scenario-heading"><div><span>CENÁRIOS</span><h3>Condições para comparação</h3></div><p>Taxas documentadas são sugeridas automaticamente. Informe IOF, tarifas e encargos conforme a proposta vigente para calcular o CET.</p></div>
+        <div id="scenarioList" class="scenario-list"></div>
+        <div class="simulator-actions"><button class="button button--primary" type="submit">Calcular comparação</button><span id="simulationMessage" role="status" aria-live="polite"></span></div>
+      </form>
+      <div id="simulationResults" class="simulation-results" hidden></div>
+      <p class="simulation-disclaimer"><strong>Estimativa:</strong> valores meramente estimativos. O cronograma definitivo dependerá da data efetiva de contratação, liberação dos recursos, encargos e condições vigentes.</p>
+    </section>
 
     <section class="credit-workspace">
       <aside class="credit-browser" aria-label="Catálogo de linhas">

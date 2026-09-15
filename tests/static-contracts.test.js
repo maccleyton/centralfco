@@ -36,17 +36,52 @@ test('visualizador aplica expiração e remove o conteúdo', () => {
   assert.match(read('document-core.js'),/5 \* 60 \* 1000/);
 });
 
-test('visualizador baixa formulários separados e mantém a impressão consolidada', () => {
-  const html = read('report-viewer.html');
-  const source = read('report-viewer.js');
-  assert.match(html,/id="viewerDownloadList"/);
-  assert.match(html,/html2canvas\/1\.4\.1/);
-  assert.match(html,/jspdf\/2\.5\.1/);
-  assert.match(source,/querySelectorAll\('\.document\[data-documento\]'\)/);
-  assert.match(source,/current\?\.title === title/);
-  assert.match(source,/window\.html2canvas/);
-  assert.match(source,/pdf\.save\(filename\)/);
-  assert.match(source,/reportFrame\.contentWindow\.print\(\)/);
+test('formulário baixa documentos separados e visualizador mantém a impressão consolidada responsiva', () => {
+  const form = read('index.html');
+  const core = read('document-core.js');
+  const viewer = read('report-viewer.js');
+  assert.match(form,/id="individualDownloadList"/);
+  assert.match(form,/html2canvas\/1\.4\.1/);
+  assert.match(form,/jspdf\/2\.5\.1/);
+  assert.match(core,/querySelectorAll\('\.document\[data-documento\]'\)/);
+  assert.match(core,/current\?\.title === title/);
+  assert.match(core,/downloadDocumentFromHtml/);
+  assert.match(core,/pdf\.save\(filename\)/);
+  assert.match(viewer,/reportPage\?\.getBoundingClientRect\(\)\.width/);
+  assert.match(viewer,/reportFrame\.style\.width = `\$\{naturalWidth\}px`/);
+  assert.match(viewer,/reportFrameShell\.clientWidth \/ reportFrame\.offsetWidth/);
+  assert.match(viewer,/reportFrame\.contentWindow\.print\(\)/);
+});
+
+test('declaração de condenação usa o título integral do template', () => {
+  const expected = 'DECLARAÇÃO DE INEXISTÊNCIA DE CONDENAÇÃO POR TRABALHO INFANTIL, TRABALHO ESCRAVO, CRIME CONTRA O MEIO AMBIENTE, ASSÉDIO MORAL OU SEXUAL, VIOLÊNCIA CONTRA A MULHER, OU RACIAL E DE ETNIA';
+  assert.match(read('reports.js'), new RegExp(expected));
+  assert.match(read('index.html'), new RegExp(`data-document-title="${expected}"`));
+});
+
+test('composição financeira calcula o financiamento e limita o giro a trinta por cento', () => {
+  const form = read('index.html');
+  const source = read('app.js');
+  const budgetPosition = form.indexOf('id="valorOrcamento"');
+  const ownResourcesPosition = form.indexOf('id="recursosProprios"');
+  const financedPosition = form.indexOf('id="valorFinanciado"');
+
+  assert.ok(budgetPosition < ownResourcesPosition && ownResourcesPosition < financedPosition);
+  assert.match(form,/id="recursosProprios" name="recursosProprios"[^>]*required/);
+  assert.match(form,/id="valorFinanciado" name="valorFinanciado"[^>]*readonly/);
+  assert.match(form,/id="valorGiroHint"[^>]*>Limite: 30%/);
+  assert.match(source,/MAX_ASSOCIATED_WORKING_CAPITAL_RATE = 0\.30/);
+  assert.match(source,/workingCapitalLimit = Math\.round\(budget \* MAX_ASSOCIATED_WORKING_CAPITAL_RATE \* 100\) \/ 100/);
+  assert.match(source,/workingCapitalInput\.value = formatMoneyValue\(workingCapitalLimit\)/);
+  assert.match(source,/valorFinanciadoBase = Math\.max\(0, valorOrcamento - recursosProprios\)/);
+  assert.match(source,/valorFinanciado = valorFinanciadoBase \+ valorGiroAssociado/);
+});
+
+test('download individual possui logotipo incorporado para não contaminar o canvas', () => {
+  const source = read('reports.js');
+  assert.match(source,/embeddedReportLogo = 'data:image\/png;base64,/);
+  assert.match(source,/return embeddedReportLogo/);
+  assert.doesNotMatch(source,/catch\s*\{\s*return new URL\('logo02\.png'/);
 });
 
 test('consulta completa de CNPJ pertence somente aos utilitários', () => {
@@ -55,10 +90,49 @@ test('consulta completa de CNPJ pertence somente aos utilitários', () => {
   assert.match(read('utilitarios.html'),/id="companyLookupForm"/);
 });
 
-test('declaração de regularidade reserva uma página e mantém o rodapé ancorado', () => {
+test('aplicação mantém arquitetura frontend sem rotas ou integrações protegidas', () => {
+  const cnpjApi = read('cnpj-api.js');
+  const billing = read('faturamento.js');
+  const integrations = read('redacao.js');
+  const integrationsPage = read('redacao.html');
+  const readme = read('README.md');
+  assert.doesNotMatch(cnpjApi,/servidor local|url:\s*`\/api\//);
+  assert.doesNotMatch(billing,/proxyUrl|`\/api\/sgs/);
+  assert.match(billing,/fetch\(officialUrl/);
+  assert.doesNotMatch(integrations,/ReceitaWS|Open Finance|SERPRO|backend protegido|status-dot--protected/);
+  assert.doesNotMatch(integrationsPage,/status-dot--protected|Exige serviço protegido/);
+  assert.match(integrationsPage,/a aplicação não exige backend/i);
+  assert.match(readme,/Aplicação 100% frontend/);
+  assert.match(readme,/Não existe rota `\/api`/);
+});
+
+test('login local da Central preserva a identificação na sessão e nos relatórios', () => {
+  const page = read('index.html');
+  const source = read('app.js');
+  const documents = read('document-core.js');
+  const footer = read('footer.js');
+  assert.match(page,/id="loginForm"/);
+  assert.match(page,/id="btnLogout"/);
+  assert.match(source,/centralFcoSessionV1/);
+  assert.match(source,/sessionStorage\.setItem\(sessionKey/);
+  assert.match(source,/payload\.acesso\?\.matricula/);
+  assert.match(documents,/sessionStorage/);
+  assert.match(footer,/centralFcoSessionV1/);
+  assert.match(read('reports.js'),/data\.acesso\.matricula/);
+  assert.match(read('README.md'),/login local da Central e o controle de sessão permanecem obrigatórios/i);
+});
+
+test('código não oferece assinatura digital e preserva apenas assinatura manual dos modelos', () => {
+  const sources = ['app.js','document-core.js','reports.js','relatorios.js','redacao.js','faturamento.js'].map(read).join('\n');
+  assert.doesNotMatch(sources,/assinatura digital|certificado digital|ICP-Brasil|e-CPF|e-CNPJ/i);
+  assert.match(read('README.md'),/espaços de assinatura manual/);
+});
+
+test('declaração de regularidade preserva a página e mantém o rodapé ancorado', () => {
   const source = read('reports.js');
   assert.match(source,/regularity-document/);
-  assert.match(source,/\.regularity-document\{height:297mm/);
+  assert.doesNotMatch(source,/\.regularity-document\{height:297mm/);
+  assert.match(source,/\.regularity-document \.document-body\{font-size:10\.25pt/);
   assert.match(source,/\.document-footer\{position:absolute/);
 });
 
@@ -82,6 +156,17 @@ test('hub oferece área própria de redação com editor modular', () => {
   assert.match(source,/PROPRIETÁRIO FIDUCIÁRIO ou BENEFICIÁRIO DO PENHOR/);
   assert.match(source,/id="clientLookup"|\$\('#clientLookup'\)/);
   assert.match(read('cnpj-api.js'),/options\.remember !== false/);
+});
+
+test('listas e checklists compartilham alinhamento horizontal na prévia e impressão', () => {
+  const previewStyles = read('redacao.css');
+  const printSource = read('redacao.js');
+  const listRules = source => source.match(/\.paper-list\{[^}]*\}\.paper-list__item\{[^}]*\}\.paper-list__item>span\{[^}]*\}\.paper-list__item>p\{[^}]*\}/)?.[0];
+  assert.ok(listRules(previewStyles));
+  assert.equal(listRules(previewStyles), listRules(printSource));
+  assert.match(listRules(previewStyles), /display:grid;grid-template-columns:minmax\(7mm,max-content\) minmax\(0,1fr\)/);
+  assert.match(listRules(previewStyles), /align-items:baseline/);
+  assert.match(listRules(previewStyles), /overflow-wrap:anywhere/);
 });
 
 test('hub fixa quatro colunas e redação preserva rodapé e cores na impressão', () => {

@@ -1,10 +1,14 @@
 # Central Empresas
 
-Versão integralmente executada no navegador. O preenchimento, as regras de cálculo, a lista de agências e a geração dos relatórios não dependem de servidor Python.
+Aplicação 100% frontend, integralmente executada no navegador. Preenchimento, armazenamento, regras de cálculo, lista de agências, simulações e geração de documentos não dependem de backend.
 
 ## Execução
 
 Publique esta pasta em qualquer hospedagem de arquivos estáticos e abra `index.html`.
+
+Não existe rota `/api`, banco de dados remoto, segredo de aplicação ou serviço intermediário obrigatório. As consultas externas permitidas usam somente endpoints públicos sem chave e com acesso direto pelo navegador; quando indisponíveis, o preenchimento local continua disponível.
+
+O login local da Central e o controle de sessão permanecem obrigatórios porque identificam agência, matrícula e responsável nos relatórios. A aplicação não implementa login em serviços externos, integrações protegidas nem assinatura digital. Os documentos mantêm apenas os espaços de assinatura manual exigidos pelos modelos impressos.
 
 Para testar localmente, use qualquer servidor HTTP estático. Abrir diretamente pelo protocolo `file://` pode bloquear a consulta de CNPJ e o carregamento da logo por regras de segurança do navegador.
 
@@ -12,7 +16,7 @@ Para testar localmente, use qualquer servidor HTTP estático. Abrir diretamente 
 
 O botão **Gerar Relatórios** abre o dossiê A4 no visualizador temporário, pronto para imprimir ou salvar como PDF. Nenhuma cópia HTML é baixada; o conteúdo permanece somente na memória e expira após cinco minutos. A proposta de investimento e a proposta de capital de giro são mutuamente exclusivas conforme o tipo informado.
 
-A consulta de CNPJ usa a BrasilAPI como fonte principal e a API pública CNPJá como fallback automático. A verificação do Simples Nacional consulta as duas fontes até obter um indicador conclusivo. Se nenhuma consulta estiver disponível, a Central apresenta a orientação sobre o papel BLOGS e permite cadastrar manualmente a razão social, o tipo de sociedade e o endereço. Ambas requerem conexão com a internet, podem apresentar defasagem e dependem de permissão de CORS no navegador.
+A consulta de CNPJ usa a BrasilAPI como fonte principal e a API pública CNPJá como fallback automático. A verificação do Simples Nacional consulta as duas fontes até obter um indicador conclusivo. Se nenhuma consulta estiver disponível, a Central permite cadastrar manualmente a razão social, o tipo de sociedade e o endereço. Ambas requerem conexão com a internet, podem apresentar defasagem e dependem de permissão de CORS no navegador.
 
 ## Cadastro compartilhado
 
@@ -20,7 +24,7 @@ As consultas cadastrais alimentam um registro único local. A última empresa co
 
 ## Relatórios, crédito e ferramentas
 
-O botão **Utilitários** reúne o compactador local de PDF, faturamento e documentos dos Correios. **Autorizações e Declarações** contém residência, renda, NIF e SCR. Quando a consulta do CNPJ confirma que a empresa é optante pelo Simples Nacional, a declaração correspondente é incluída automaticamente no dossiê do FCO. **Linhas de Crédito** apresenta catálogo versionado, classificação das fontes, triagem preliminar e apenas os cálculos que possuem fórmula documentada.
+O botão **Utilitários** reúne o compactador local de PDF, faturamento e documentos dos Correios. **Autorizações e Declarações** contém residência, renda, NIF e SCR. Quando a consulta do CNPJ confirma que a empresa é optante pelo Simples Nacional, a declaração correspondente é incluída automaticamente no dossiê do FCO. **Linhas de Crédito** apresenta catálogo versionado, classificação das fontes, triagem preliminar e apenas os cálculos que possuem fórmula documentada. As simulações podem ser nomeadas, salvas e recuperadas no próprio navegador, e o comparativo completo pode ser impresso ou salvo em PDF com os cronogramas de cada cenário.
 
 ## Qualidade
 
