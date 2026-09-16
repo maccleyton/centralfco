@@ -59,7 +59,7 @@ test('declaração de condenação usa o título integral do template', () => {
   assert.match(reports, new RegExp(expected));
   assert.match(read('index.html'), new RegExp(`data-document-title="${expected}"`));
   assert.match(reports, /titleLength > 130 \? ' document-header--dense'/);
-  assert.match(reports, /\.document-header--dense strong\{font-size:8\.25pt/);
+  assert.match(reports, /\.document-header--dense strong\{font-size:10pt;line-height:1\}/);
   assert.match(reports, /\.document-header--compact strong\{font-size:10\.5pt/);
   assert.match(read('document-core.js'), /document-header--dense/);
 });
