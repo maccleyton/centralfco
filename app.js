@@ -829,8 +829,8 @@ function renderEmpty(container, text) {
 function getTermRule(type, fcoMulher) {
   if (type === 'giro_dissociado') {
     return fcoMulher
-      ? { maxTotal: 48, maxGrace: 6, maxRepayment: null, label: 'Capital de Giro · FCO Mulher' }
-      : { maxTotal: 24, maxGrace: 3, maxRepayment: null, label: 'Capital de Giro' };
+      ? { maxTotal: 48, maxGrace: 18, maxRepayment: null, label: 'Capital de Giro · FCO Mulher' }
+      : { maxTotal: 24, maxGrace: 6, maxRepayment: null, label: 'Capital de Giro' };
   }
   return fcoMulher
     ? { maxTotal: 168, maxGrace: 48, maxRepayment: 144, label: 'Investimento · FCO Mulher' }

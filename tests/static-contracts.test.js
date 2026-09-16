@@ -55,8 +55,21 @@ test('formulário baixa documentos separados e visualizador mantém a impressão
 
 test('declaração de condenação usa o título integral do template', () => {
   const expected = 'DECLARAÇÃO DE INEXISTÊNCIA DE CONDENAÇÃO POR TRABALHO INFANTIL, TRABALHO ESCRAVO, CRIME CONTRA O MEIO AMBIENTE, ASSÉDIO MORAL OU SEXUAL, VIOLÊNCIA CONTRA A MULHER, OU RACIAL E DE ETNIA';
-  assert.match(read('reports.js'), new RegExp(expected));
+  const reports = read('reports.js');
+  assert.match(reports, new RegExp(expected));
   assert.match(read('index.html'), new RegExp(`data-document-title="${expected}"`));
+  assert.match(reports, /titleLength > 130 \? ' document-header--dense'/);
+  assert.match(reports, /\.document-header--dense strong\{font-size:8\.25pt/);
+  assert.match(reports, /\.document-header--compact strong\{font-size:10\.5pt/);
+  assert.match(read('document-core.js'), /document-header--dense/);
+});
+
+test('FCO Giro aplica carência de seis meses e dezoito meses para FCO Mulher', () => {
+  const source = read('app.js');
+  assert.match(source, /maxTotal: 48, maxGrace: 18[^\n]+Capital de Giro · FCO Mulher/);
+  assert.match(source, /maxTotal: 24, maxGrace: 6[^\n]+Capital de Giro/);
+  assert.doesNotMatch(source, /maxTotal: 48, maxGrace: 6[^\n]+Capital de Giro · FCO Mulher/);
+  assert.doesNotMatch(source, /maxTotal: 24, maxGrace: 3[^\n]+Capital de Giro/);
 });
 
 test('composição financeira calcula o financiamento e limita o giro a trinta por cento', () => {

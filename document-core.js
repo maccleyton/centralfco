@@ -41,7 +41,9 @@
   }
 
   function page({ title, logo, body, className = '', footerClass = 'document-footer' }) {
-    return `<section class="document ${escapeHtml(className)}"><header class="document-header"><img src="${escapeHtml(logo)}" alt="Banco do Brasil"><div><span>CENTRAL EMPRESAS</span><strong>${escapeHtml(title)}</strong></div></header><main class="document-body">${body}</main>${supportFooter(footerClass)}</section>`;
+    const titleLength = Array.from(String(title ?? '')).length;
+    const titleClass = titleLength > 130 ? ' document-header--dense' : titleLength > 68 ? ' document-header--compact' : '';
+    return `<section class="document ${escapeHtml(className)}"><header class="document-header${titleClass}"><img src="${escapeHtml(logo)}" alt="Banco do Brasil"><div><span>CENTRAL EMPRESAS</span><strong>${escapeHtml(title)}</strong></div></header><main class="document-body">${body}</main>${supportFooter(footerClass)}</section>`;
   }
 
   function enrich(html) {
